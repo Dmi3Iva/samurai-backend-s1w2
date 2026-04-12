@@ -1,6 +1,5 @@
-import { Response } from "express";
 import { Router } from "express";
-import { db } from "../../db/db";
+import type { Response } from "express";
 import type { CreateBlogModel, ViewBlog } from "./models";
 import type {
   RequestWithBody,

@@ -52,4 +52,7 @@ export const blogsRepository = {
     blogs.splice(idToRemove, 1);
     return true;
   },
+  removeAll() {
+    blogs.splice(0, blogs.length);
+  },
 };

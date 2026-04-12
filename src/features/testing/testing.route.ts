@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { db } from "../../db/db";
+import { blogsRepository } from "../repository/blogs.repository";
 
 export const testingRouter = Router();
 
 testingRouter.delete("/delete-all", (req, res) => {
-  db.blogs = [];
+  blogsRepository.removeAll();
   res.status(204).send();
 });
