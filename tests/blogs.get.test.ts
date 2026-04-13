@@ -9,10 +9,9 @@ describe("GET /blogs", () => {
   });
 
   it("should return empty array when no blogs exist", async () => {
-    const response = await blogsTestManager.getEntities();
+    const blogs = await blogsTestManager.getEntities();
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual([]);
+    expect(blogs).toEqual([]);
   });
 
   it("should return all blogs", async () => {
@@ -28,10 +27,9 @@ describe("GET /blogs", () => {
       websiteUrl: "https://blog2.com",
     });
 
-    const response = await blogsTestManager.getEntities();
+    const blogs = await blogsTestManager.getEntities();
 
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(2);
-    expect(response.body[0].name).toBe("Blog 1");
+    expect(blogs).toHaveLength(2);
+    expect(blogs[0].name).toBe("Blog 1");
   });
 });

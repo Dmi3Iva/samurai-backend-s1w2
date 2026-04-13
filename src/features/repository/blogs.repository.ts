@@ -37,9 +37,10 @@ export const blogsRepository = {
 
     return searchResult;
   },
-  createBlog(createBlogModelData: CreateBlogModel): void {
+  createBlog(createBlogModelData: CreateBlogModel): BlogType {
     const newBlog = { ...createBlogModelData, id: String(new Date()) };
     blogs.push(newBlog);
+    return newBlog;
   },
   findBlog(id?: string) {
     const foundBlog = blogs.find(({ id: blogId }) => id === blogId);

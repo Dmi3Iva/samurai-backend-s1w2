@@ -9,25 +9,21 @@ describe("GET /blogs/:id", () => {
   });
 
   it("should return blog by id", async () => {
-    const createResponse = await blogsTestManager.createEntity({
+    const createdBlog = await blogsTestManager.createEntity({
       name: "Test Blog",
       description: "Test Description",
       websiteUrl: "https://test.com",
     });
 
-    const blogId = createResponse.body.id;
+    const blog = await blogsTestManager.getEntity(createdBlog.id);
 
-    const response = await blogsTestManager.getEntity(blogId);
-
-    expect(response.status).toBe(200);
-    expect(response.body.id).toBe(blogId);
-    expect(response.body.name).toBe("Test Blog");
+    expect(blog.id).toBe(createdBlog.id);
+    expect(blog.name).toBe("Test Blog");
   });
 
   it("should return 404 for non-existent blog", async () => {
-    const response = await blogsTestManager.getEntity("999");
+    const blog = await blogsTestManager.getEntity("999", 404);
 
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({ message: "Blog not found" });
+    expect(blog).toEqual({ message: "Blog not found" });
   });
 });

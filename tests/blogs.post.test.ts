@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
+import { blogsTestManager } from "./blogsTestManager";
 
 describe("POST /blogs", () => {
   beforeEach(async () => {
@@ -8,41 +9,41 @@ describe("POST /blogs", () => {
   });
 
   it("should create new blog", async () => {
-    const newBlog = {
+    const blog = await blogsTestManager.createEntity({
       name: "New Blog",
       description: "New Description",
       websiteUrl: "https://newblog.com",
-    };
+    });
 
-    const response = await request(app).post("/blogs").send(newBlog);
-
-    expect(response.status).toBe(201);
-    expect(response.body).toHaveProperty("id");
-    expect(response.body.name).toBe("New Blog");
-    expect(response.body.description).toBe("New Description");
-    expect(response.body.websiteUrl).toBe("https://newblog.com");
+    expect(blog).toHaveProperty("id");
+    expect(blog.name).toBe("New Blog");
+    expect(blog.description).toBe("New Description");
+    expect(blog.websiteUrl).toBe("https://newblog.com");
   });
 
   it("should return 400 when missing required fields", async () => {
-    const response = await request(app).post("/blogs").send({ name: "Only Name" });
+    const error = await blogsTestManager.createEntity(
+      {
+        name: "Only Name",
+        description: "",
+        websiteUrl: "",
+      },
+      400,
+    );
 
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({ message: "Missing required fields" });
+    expect(error).toEqual({ message: "Missing required fields" });
   });
 
   it("should save blog to db", async () => {
-    const newBlog = {
+    await blogsTestManager.createEntity({
       name: "Saved Blog",
       description: "Saved Description",
       websiteUrl: "https://saved.com",
-    };
+    });
 
-    await request(app).post("/blogs").send(newBlog);
+    const blogs = await blogsTestManager.getEntities();
 
-    const response = await request(app).get("/blogs");
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(1);
-    expect(response.body[0].name).toBe("Saved Blog");
+    expect(blogs).toHaveLength(1);
+    expect(blogs[0].name).toBe("Saved Blog");
   });
 });

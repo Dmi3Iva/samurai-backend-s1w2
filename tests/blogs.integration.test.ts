@@ -10,33 +10,28 @@ describe("Blogs Integration Tests", () => {
 
   it("should handle full blog lifecycle", async () => {
     // Create
-    const createResponse = await blogsTestManager.createEntity({
+    const createdBlog = await blogsTestManager.createEntity({
       name: "Test Blog",
       description: "Test Description",
       websiteUrl: "https://test.com",
     });
 
-    expect(createResponse.status).toBe(201);
-    expect(createResponse.body).toHaveProperty("id");
+    expect(createdBlog).toHaveProperty("id");
 
-    const blogId = createResponse.body.id;
+    const blogId = createdBlog.id;
 
     // Get all
-    const getAllResponse = await blogsTestManager.getEntities();
-    expect(getAllResponse.status).toBe(200);
-    expect(getAllResponse.body).toHaveLength(1);
+    const blogs = await blogsTestManager.getEntities();
+    expect(blogs).toHaveLength(1);
 
     // Get by id
-    const getByIdResponse = await blogsTestManager.getEntity(blogId);
-    expect(getByIdResponse.status).toBe(200);
-    expect(getByIdResponse.body.id).toBe(blogId);
+    const blog = await blogsTestManager.getEntity(blogId);
+    expect(blog.id).toBe(blogId);
 
     // Delete
-    const deleteResponse = await blogsTestManager.deleteEntity(blogId);
-    expect(deleteResponse.status).toBe(204);
+    await blogsTestManager.deleteEntity(blogId);
 
     // Verify deleted
-    const verifyResponse = await blogsTestManager.getEntity(blogId);
-    expect(verifyResponse.status).toBe(404);
+    await blogsTestManager.getEntity(blogId, 404);
   });
 });

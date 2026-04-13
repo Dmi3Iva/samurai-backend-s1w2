@@ -20,13 +20,13 @@ export const blogsRouter = Router();
 blogsRouter.get(
   "/",
   (req: RequestWithQuery<IFindBlogsSearchTerm>, res: Response) => {
-    const blogs = blogsRepository.findBlogs(req.body);
+    const blogs = blogsRepository.findBlogs(req.query);
     res.send(blogs);
   },
 );
 
 blogsRouter.get("/:id", (req: RequestWithParams<BlogParams>, res: Response) => {
-  const blog = blogsRepository.findBlog(req.body.id);
+  const blog = blogsRepository.findBlog(req.params.id);
 
   if (!blog) {
     res.status(404).json({ message: "Blog not found" });

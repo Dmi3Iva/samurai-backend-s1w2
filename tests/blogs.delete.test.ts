@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
+import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
 
 describe("DELETE /blogs/:id", () => {
   beforeEach(async () => {
-    await request(await import("../src/app")).then(m => request(m.app)).delete("/testing/delete-all");
+    await request(app).delete("/testing/delete-all");
   });
 
   it("should delete blog by id", async () => {
@@ -21,22 +22,18 @@ describe("DELETE /blogs/:id", () => {
     });
 
     const blogsBeforeDelete = await blogsTestManager.getEntities();
-    const firstBlogId = blogsBeforeDelete.body[0].id;
+    const firstBlogId = blogsBeforeDelete[0].id;
 
-    const response = await blogsTestManager.deleteEntity(firstBlogId);
-
-    expect(response.status).toBe(204);
-    expect(response.body).toEqual({});
+    await blogsTestManager.deleteEntity(firstBlogId);
 
     const blogsAfterDelete = await blogsTestManager.getEntities();
-    expect(blogsAfterDelete.body).toHaveLength(1);
-    expect(blogsAfterDelete.body[0].name).toBe("Blog 2");
+    expect(blogsAfterDelete).toHaveLength(1);
+    expect(blogsAfterDelete[0].name).toBe("Blog 2");
   });
 
   it("should return 404 when deleting non-existent blog", async () => {
-    const response = await blogsTestManager.deleteEntity("999");
+    const error = await blogsTestManager.deleteEntity("999", 404);
 
-    expect(response.status).toBe(404);
-    expect(response.body).toEqual({ message: "Blog not found" });
+    expect(error).toEqual({ message: "Blog not found" });
   });
 });
