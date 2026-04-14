@@ -26,7 +26,7 @@ class BlogsTestManager {
   }
 
   async getEntity(id: string, expectedStatus = 200) {
-    const response = await request(app).get(`/blogs/${id}`);
+    const response = await request(app).get(`${ROUTES.blogs}/${id}`);
     expect(response.status).toBe(expectedStatus);
     return response.body;
   }
