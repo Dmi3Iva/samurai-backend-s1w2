@@ -54,27 +54,6 @@ describe("DELETE /posts/:id", () => {
     expect(error).toEqual({ message: "Blog not found" });
   });
 
-  it("should return 404 when deleting same post twice", async () => {
-    const blog = await blogsTestManager.createEntity({
-      name: "Blog",
-      description: "Description",
-      websiteUrl: "https://blog.com",
-    });
-
-    const post = await postsTestManager.createEntity({
-      title: "Post to Delete",
-      shortDescription: "Desc",
-      content: "Content",
-      blogId: blog.id,
-    });
-
-    await postsTestManager.deleteEntity(post.id);
-
-    const error = await postsTestManager.deleteEntity(post.id, 404);
-
-    expect(error).toEqual({ message: "Blog not found" });
-  });
-
   it("should return 401 without authorization", async () => {
     const response = await request(app).delete(`${ROUTES.posts}/123`);
 

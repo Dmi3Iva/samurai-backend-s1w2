@@ -27,11 +27,14 @@ export const postsRepository = {
     updatedPost: IPostUpadteModel;
   }): boolean => {
     const idToUpdate = posts.findIndex((p) => p.id === id);
-    if (idToUpdate === -1) {
+    if (idToUpdate === -1 || !posts[idToUpdate]) {
       return false;
     }
 
-    posts[idToUpdate] = { ...updatedPost, id };
+    posts[idToUpdate].blogId = updatedPost.blogId;
+    posts[idToUpdate].content = updatedPost.content;
+    posts[idToUpdate].shortDescription = updatedPost.shortDescription;
+    posts[idToUpdate].title = updatedPost.title;
     return true;
   },
   deletePost: (id: string): boolean => {

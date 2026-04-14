@@ -18,7 +18,7 @@ import {
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { blogsRepository } from "../blogs/repository/blogs.repository";
 
-interface BlogIdParam {
+interface PostsIdParam {
   id: string;
 }
 
@@ -114,7 +114,7 @@ postsRouter.post(
 );
 
 postsRouter.get("/:id", param("id"), inputValidationMiddleware, (req, res) => {
-  const data = matchedData<BlogIdParam>(req);
+  const data = matchedData<PostsIdParam>(req);
   const post = postsRepository.getPost(data.id);
 
   if (!post) {
@@ -135,7 +135,7 @@ postsRouter.put(
   blogIdValidation,
   inputValidationMiddleware,
   (req, res) => {
-    const data = matchedData<IPostUpadteModel & BlogIdParam>(req);
+    const data = matchedData<IPostUpadteModel & PostsIdParam>(req);
 
     const blog = blogsRepository.findBlog(data.blogId);
     if (!blog) {
@@ -163,7 +163,7 @@ postsRouter.delete(
   param("id"),
   inputValidationMiddleware,
   (req, res) => {
-    const data = matchedData<BlogIdParam>(req);
+    const data = matchedData<PostsIdParam>(req);
     const isRemoved = postsRepository.deletePost(data.id);
 
     if (!isRemoved) {
