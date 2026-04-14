@@ -59,16 +59,104 @@ describe("POST /posts", () => {
     expect(error).toContain("There is no blog with id");
   });
 
-  it("should return 400 when missing required fields", async () => {
+  it("should return validation errors for all missing fields", async () => {
     const response = await request(app)
       .post(`${ROUTES.posts}`)
       .set("Authorization", "Basic YWRtaW46cXdlcnR5")
-      .send({
-        title: "Only Title",
-      });
+      .send({});
 
     expect(response.status).toBe(400);
     expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("should return validation error when title exceeds max length", async () => {
+    const blog = await blogsTestManager.createEntity({
+      name: "Blog",
+      description: "Description",
+      websiteUrl: "https://blog.com",
+    });
+
+    const error = await postsTestManager.createEntity(
+      {
+        title: "a".repeat(31),
+        shortDescription: "Desc",
+        content: "Content",
+        blogId: blog.id,
+      },
+      400,
+    );
+
+    expect(error).toBeInstanceOf(Array);
+    expect(
+      error.some((e: unknown) => (e as { path: string }).path === "title"),
+    ).toBe(true);
+  });
+
+  it("should return validation error when shortDescription exceeds max length", async () => {
+    const blog = await blogsTestManager.createEntity({
+      name: "Blog",
+      description: "Description",
+      websiteUrl: "https://blog.com",
+    });
+
+    const error = await postsTestManager.createEntity(
+      {
+        title: "Post",
+        shortDescription: "a".repeat(101),
+        content: "Content",
+        blogId: blog.id,
+      },
+      400,
+    );
+
+    expect(error).toBeInstanceOf(Array);
+    expect(
+      error.some((e: unknown) => (e as { path: string }).path === "shortDescription"),
+    ).toBe(true);
+  });
+
+  it("should return validation error when content exceeds max length", async () => {
+    const blog = await blogsTestManager.createEntity({
+      name: "Blog",
+      description: "Description",
+      websiteUrl: "https://blog.com",
+    });
+
+    const error = await postsTestManager.createEntity(
+      {
+        title: "Post",
+        shortDescription: "Desc",
+        content: "a".repeat(101),
+        blogId: blog.id,
+      },
+      400,
+    );
+
+    expect(error).toBeInstanceOf(Array);
+    expect(
+      error.some((e: unknown) => (e as { path: string }).path === "content"),
+    ).toBe(true);
+  });
+
+  it("should return validation error when title is not a string", async () => {
+    const blog = await blogsTestManager.createEntity({
+      name: "Blog",
+      description: "Description",
+      websiteUrl: "https://blog.com",
+    });
+
+    const error = await postsTestManager.createEntity(
+      {
+        title: 123,
+        shortDescription: "Desc",
+        content: "Content",
+        blogId: blog.id,
+      },
+      400,
+    );
+
+    expect(error).toBeInstanceOf(Array);
   });
 
   it("should save post to db", async () => {
