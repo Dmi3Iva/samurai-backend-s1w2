@@ -130,7 +130,7 @@ blogsRouter.put(
   (req, res) => {
     const data = matchedData<UpdateBlogModel & BlogIdParam>(req);
 
-    const updatedBlog = blogsRepository.updateBlog({
+    const isBlogUpdated = blogsRepository.updateBlog({
       id: data.id,
       updateBlogModelData: {
         name: data.name,
@@ -139,8 +139,8 @@ blogsRouter.put(
       },
     });
 
-    if (!updatedBlog) {
-      res.status(404).json(`Not found blog with id ${data.id}`);
+    if (!isBlogUpdated) {
+      return res.status(404).json(`Not found blog with id ${data.id}`);
     }
 
     res.sendStatus(204);

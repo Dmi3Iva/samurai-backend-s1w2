@@ -59,7 +59,7 @@ describe("POST /posts", () => {
     expect(response.status).toBe(401);
   });
 
-  it("should return 400 when blog does not exist", async () => {
+  it("should return 404 when blog does not exist", async () => {
     const error = await postsTestManager.createEntity(
       {
         title: "Post",
@@ -67,7 +67,7 @@ describe("POST /posts", () => {
         content: "Content",
         blogId: "non-existent-blog-id",
       },
-      400,
+      404,
     );
 
     expect(error).toContain("There is no blog with id");

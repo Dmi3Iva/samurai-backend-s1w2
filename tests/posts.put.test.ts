@@ -64,7 +64,7 @@ describe("PUT /posts/:id", () => {
     expect(error).toContain("Not found blog with id");
   });
 
-  it("should return 400 when blog does not exist", async () => {
+  it("should return 404 when blog does not exist", async () => {
     const blog = await blogsTestManager.createEntity({
       name: "Blog 1",
       description: "Desc 1",
@@ -86,7 +86,7 @@ describe("PUT /posts/:id", () => {
         content: "Updated",
         blogId: "non-existent-blog",
       },
-      400,
+      404,
     );
 
     expect(error).toContain("There is no blog with id");

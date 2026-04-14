@@ -50,13 +50,15 @@ export const blogsRepository = {
   }: {
     id?: string;
     updateBlogModelData: UpdateBlogModel;
-  }): BlogType | null {
-    const foundBlog = blogs.find(({ id: blogId }) => id === blogId);
-    if (!foundBlog) return null;
+  }): boolean {
+    const indexToUpdate = blogs.findIndex(({ id: blogId }) => id === blogId);
+    if (indexToUpdate === -1 || !blogs[indexToUpdate]) return false;
 
-    Object.assign(foundBlog, updateBlogModelData);
+    blogs[indexToUpdate].description = updateBlogModelData.description;
+    blogs[indexToUpdate].name = updateBlogModelData.name;
+    blogs[indexToUpdate].websiteUrl = updateBlogModelData.websiteUrl;
 
-    return foundBlog;
+    return true;
   },
   removeAll() {
     blogs.splice(0, blogs.length);
