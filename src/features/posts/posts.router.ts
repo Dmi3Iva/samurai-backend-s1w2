@@ -29,6 +29,9 @@ const titleValidation = body("title")
   .withMessage("title is required field")
   .isString()
   .withMessage("title should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("title is empty")
   .isLength({ max: 30 })
   .withMessage("title length should be from 0 to 30");
 
@@ -37,6 +40,9 @@ const shortDescriptionValidation = body("shortDescription")
   .withMessage("shortDescription is required field")
   .isString()
   .withMessage("shortDescription should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("shortDescription is empty")
   .isLength({ max: 100 })
   .withMessage("shortDescription should be a string max length 100");
 
@@ -45,6 +51,9 @@ const contentValidation = body("content")
   .withMessage("content is required field")
   .isString()
   .withMessage("content should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("content is empty")
   .isLength({ max: 100 })
   .withMessage("content should be a string max length 100");
 
