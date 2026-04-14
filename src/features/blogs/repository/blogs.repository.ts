@@ -1,4 +1,4 @@
-import type { CreateBlogModel } from "../blogs/models";
+import type { CreateBlogModel, UpdateBlogModel } from "../models/models";
 
 export interface BlogType {
   id: string;
@@ -25,15 +25,6 @@ export const blogsRepository = {
     if (!findBlogsSearchTerm) return blogs;
 
     let searchResult: BlogType[] = blogs;
-    if (findBlogsSearchTerm.name) {
-      searchResult = searchResult.filter(
-        (i) => i.name.indexOf(findBlogsSearchTerm.name) > -1,
-      );
-    }
-    if (findBlogsSearchTerm.description) {
-    }
-    if (findBlogsSearchTerm.websiteUrl) {
-    }
 
     return searchResult;
   },
@@ -52,6 +43,20 @@ export const blogsRepository = {
 
     blogs.splice(idToRemove, 1);
     return true;
+  },
+  updateBlog({
+    id,
+    updateBlogModelData,
+  }: {
+    id?: string;
+    updateBlogModelData: UpdateBlogModel;
+  }): BlogType | null {
+    const foundBlog = blogs.find(({ id: blogId }) => id === blogId);
+    if (!foundBlog) return null;
+
+    Object.assign(foundBlog, updateBlogModelData);
+
+    return foundBlog;
   },
   removeAll() {
     blogs.splice(0, blogs.length);

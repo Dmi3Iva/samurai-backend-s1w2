@@ -10,3 +10,9 @@ export interface CreateBlogModel {
   description: string;
   websiteUrl: string;
 }
+
+export interface UpdateBlogModel {
+  name: string;
+  description: string;
+  websiteUrl: string;
+}

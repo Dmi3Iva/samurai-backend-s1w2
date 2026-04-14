@@ -1,32 +1,92 @@
 import { Router } from "express";
-import type { Response } from "express";
-import type { CreateBlogModel, ViewBlog } from "./models";
+import type { RequestHandler, Response } from "express";
+import type {
+  CreateBlogModel,
+  UpdateBlogModel,
+  ViewBlog,
+} from "./models/models";
 import type {
   RequestWithBody,
-  RequestWithParams,
   RequestWithQuery,
 } from "../../types/request.type";
 import {
   blogsRepository,
   type IFindBlogsSearchTerm,
-} from "../repository/blogs.repository";
+} from "./repository/blogs.repository";
+import { body, matchedData, param, validationResult } from "express-validator";
+import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 
-interface BlogParams {
+interface BlogIdParam {
   id: string;
 }
 
 export const blogsRouter = Router();
 
+const nameValidation = body("name")
+  .exists()
+  .withMessage("name is required field")
+  .isString()
+  .withMessage("name should be a string")
+  .isLength({ max: 15 })
+  .withMessage("name length should be from 0 to 15");
+
+const descriptionValidation = body("description")
+  .exists()
+  .withMessage("description is required field")
+  .isString()
+  .withMessage("description should be a string")
+  .isLength({ max: 500 })
+  .withMessage("description should be a string max length 500");
+
+const websiteUrlValidationRegex =
+  /^https:\/\/([a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*\/?$/;
+const websiteUrlValidation = body("websiteUrl")
+  .exists()
+  .withMessage("websiteUrl is required field")
+  .isString()
+  .withMessage("websiteUrl should be a string")
+  .isLength({ max: 100 })
+  .withMessage("websiteUrl max length is 100")
+  .matches(websiteUrlValidationRegex)
+  .withMessage(
+    `websiterUrl should match regex ${websiteUrlValidationRegex.toString()}`,
+  );
+
+const inputValidationMiddleware: RequestHandler = (req, res, next) => {
+  const errors = validationResult(req);
+  if (errors.isEmpty()) {
+    return next();
+  }
+
+  res.status(400).send(errors.array());
+};
+
 blogsRouter.get(
   "/",
-  (req: RequestWithQuery<IFindBlogsSearchTerm>, res: Response) => {
+  (req: RequestWithQuery<IFindBlogsSearchTerm>, res: Response<ViewBlog[]>) => {
     const blogs = blogsRepository.findBlogs(req.query);
     res.send(blogs);
   },
 );
 
-blogsRouter.get("/:id", (req: RequestWithParams<BlogParams>, res: Response) => {
-  const blog = blogsRepository.findBlog(req.params.id);
+blogsRouter.post(
+  "/",
+  authorizationMiddleware,
+  nameValidation,
+  descriptionValidation,
+  websiteUrlValidation,
+  inputValidationMiddleware,
+  (req: RequestWithBody<CreateBlogModel>, res: Response) => {
+    const data = matchedData<CreateBlogModel>(req);
+    const newBlog = blogsRepository.createBlog(data);
+
+    res.status(201).json(newBlog);
+  },
+);
+
+blogsRouter.get("/:id", param("id"), inputValidationMiddleware, (req, res) => {
+  const data = matchedData<BlogIdParam>(req);
+  const blog = blogsRepository.findBlog(data.id);
 
   if (!blog) {
     res.status(404).json({ message: "Blog not found" });
@@ -36,29 +96,47 @@ blogsRouter.get("/:id", (req: RequestWithParams<BlogParams>, res: Response) => {
   res.status(200).json(blog);
 });
 
-blogsRouter.post(
-  "/",
-  (req: RequestWithBody<CreateBlogModel>, res: Response) => {
-    const { name, description, websiteUrl } = req.body;
+blogsRouter.put(
+  "/:id",
+  authorizationMiddleware,
+  param("id"),
+  nameValidation,
+  descriptionValidation,
+  websiteUrlValidation,
+  inputValidationMiddleware,
+  (req, res) => {
+    const data = matchedData<UpdateBlogModel & BlogIdParam>(req);
 
-    if (!name || !description || !websiteUrl) {
-      res.status(400).json({ message: "Missing required fields" });
-      return;
+    const updatedBlog = blogsRepository.updateBlog({
+      id: data.id,
+      updateBlogModelData: {
+        name: data.name,
+        description: data.description,
+        websiteUrl: data.websiteUrl,
+      },
+    });
+
+    if (!updatedBlog) {
+      res.status(404).json(`Not found blog with id  ${data.id}`);
     }
 
-    const newBlog = blogsRepository.createBlog(req.body);
-
-    res.status(201).json(newBlog);
+    res.sendStatus(204);
   },
 );
 
 blogsRouter.delete(
   "/:id",
-  (req: RequestWithParams<BlogParams>, res: Response) => {
-    if (blogsRepository.deleteBlog(req.params.id)) {
-      res.status(204).send();
-    } else {
-      res.status(404).json({ message: "Blog not found" });
+  authorizationMiddleware,
+  param("id"),
+  inputValidationMiddleware,
+  (req, res) => {
+    const data = matchedData<BlogIdParam>(req);
+    const isRemoved = blogsRepository.deleteBlog(data.id);
+
+    if (!isRemoved) {
+      return res.status(404).json({ message: "Blog not found" });
     }
+
+    return res.status(204).send();
   },
 );
