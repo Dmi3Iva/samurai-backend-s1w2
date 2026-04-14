@@ -4,7 +4,7 @@ import type {
   CreateBlogModel,
   UpdateBlogModel,
   ViewBlog,
-} from "./models/models";
+} from "./models/blog.model";
 import type {
   RequestWithBody,
   RequestWithQuery,

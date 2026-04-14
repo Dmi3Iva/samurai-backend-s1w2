@@ -1,4 +1,4 @@
-import type { CreateBlogModel, UpdateBlogModel } from "../models/models";
+import type { CreateBlogModel, UpdateBlogModel } from "../models/blog.model";
 
 export interface BlogType {
   id: string;

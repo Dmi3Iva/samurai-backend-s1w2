@@ -14,8 +14,8 @@ export const authorizationMiddleware = (
     return res.status(401).send("Empty Basic token");
   }
   const decodedString = Buffer.from(authToken, "base64").toString("utf-8");
-  const [login, password] = decodedString.split(" ");
-  if (login !== ADMIN_LOGIN && ADMIN_PASS !== password) {
+  const [login, password] = decodedString.split(":");
+  if (login !== ADMIN_LOGIN || ADMIN_PASS !== password) {
     return res.status(401).send("Incorrect login and password");
   }
 

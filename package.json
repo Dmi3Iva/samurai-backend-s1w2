@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "watch": "tsc --watch",
-    "dev": "node --watch  dist/index.js",
+    "dev": "concurrently 'node --watch  dist/index.js' 'tsc --watch'",
+    "build": "tsc",
     "test": "vitest run"
   },
   "dependencies": {

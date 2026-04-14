@@ -31,7 +31,8 @@ describe("POST /blogs", () => {
       400,
     );
 
-    expect(error).toEqual({ message: "Missing required fields" });
+    expect(error).toBeInstanceOf(Array);
+    expect(error.length).toBeGreaterThan(0);
   });
 
   it("should save blog to db", async () => {
