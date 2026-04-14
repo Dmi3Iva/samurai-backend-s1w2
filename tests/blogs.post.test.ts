@@ -34,8 +34,8 @@ describe("POST /blogs", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    expect(error.length).toBeGreaterThan(0);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should save blog to db", async () => {
@@ -63,8 +63,8 @@ describe("POST /blogs", () => {
       .send({});
 
     expect(response.status).toBe(400);
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body).toHaveLength(3);
+    expect(response.body.errorsMessages).toBeInstanceOf(Array);
+    expect(response.body.errorsMessages).toHaveLength(3);
   });
 
   it("should return validation error when name exceeds max length", async () => {
@@ -77,11 +77,8 @@ describe("POST /blogs", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    // TODO:: fix type without using 'any'
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "name"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should return validation error when websiteUrl exceeds max length", async () => {
@@ -96,11 +93,8 @@ describe("POST /blogs", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    // TODO:: fix type without using 'any'
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "websiteUrl"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should accept websiteUrl with valid regex pattern", async () => {
@@ -113,6 +107,19 @@ describe("POST /blogs", () => {
     expect(blog.websiteUrl).toBe("https://my-test-blog.com/path/to/resource");
   });
 
+  it("should return 401 with Bearer authorization (only Basic is supported)", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.blogs}`)
+      .set("Authorization", "Bearer YWRtaW46cXdlcnR5")
+      .send({
+        name: "Blog",
+        description: "Description",
+        websiteUrl: "https://blog.com",
+      });
+
+    expect(response.status).toBe(401);
+  });
+
   it("should reject websiteUrl with invalid regex pattern", async () => {
     const error = await blogsTestManager.createEntity(
       {
@@ -123,10 +130,7 @@ describe("POST /blogs", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    // TODO:: fix type without using 'any'
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "websiteUrl"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 });

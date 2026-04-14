@@ -13,7 +13,13 @@ import {
   blogsRepository,
   type IFindBlogsSearchTerm,
 } from "./repository/blogs.repository";
-import { body, matchedData, param, validationResult } from "express-validator";
+import {
+  body,
+  matchedData,
+  param,
+  validationResult,
+  type FieldValidationError,
+} from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 
 interface BlogIdParam {
@@ -58,11 +64,15 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
     return next();
   }
 
-  res.status(400).send(
-    errors.array({
+  const errorsMessages = errors
+    .array({
       onlyFirstError: true,
-    }),
-  );
+    })
+    .map((e) => ({ message: e.msg, field: (e as FieldValidationError).path }));
+
+  res.status(400).send({
+    errorsMessages,
+  });
 };
 
 blogsRouter.get(
@@ -88,7 +98,7 @@ blogsRouter.post(
   },
 );
 
-blogsRouter.get("/:id", param("id"), inputValidationMiddleware, (req, res) => {
+blogsRouter.get("/:id", inputValidationMiddleware, param("id"), (req, res) => {
   const data = matchedData<BlogIdParam>(req);
   const blog = blogsRepository.findBlog(data.id);
 
@@ -121,7 +131,7 @@ blogsRouter.put(
     });
 
     if (!updatedBlog) {
-      res.status(404).json(`Not found blog with id  ${data.id}`);
+      res.status(404).json(`Not found blog with id ${data.id}`);
     }
 
     res.sendStatus(204);

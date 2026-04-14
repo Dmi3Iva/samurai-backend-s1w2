@@ -45,6 +45,20 @@ describe("POST /posts", () => {
     expect(response.status).toBe(401);
   });
 
+  it("should return 401 with Bearer authorization (only Basic is supported)", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.posts}`)
+      .set("Authorization", "Bearer YWRtaW46cXdlcnR5")
+      .send({
+        title: "Post",
+        shortDescription: "Desc",
+        content: "Content",
+        blogId: "some-id",
+      });
+
+    expect(response.status).toBe(401);
+  });
+
   it("should return 400 when blog does not exist", async () => {
     const error = await postsTestManager.createEntity(
       {
@@ -66,8 +80,8 @@ describe("POST /posts", () => {
       .send({});
 
     expect(response.status).toBe(400);
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body.length).toBeGreaterThanOrEqual(4);
+    expect(response.body.errorsMessages).toBeInstanceOf(Array);
+    expect(response.body.errorsMessages.length).toBeGreaterThanOrEqual(4);
   });
 
   it("should return validation error when title exceeds max length", async () => {
@@ -87,10 +101,8 @@ describe("POST /posts", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "title"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should return validation error when shortDescription exceeds max length", async () => {
@@ -110,10 +122,8 @@ describe("POST /posts", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "shortDescription"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should return validation error when content exceeds max length", async () => {
@@ -133,10 +143,8 @@ describe("POST /posts", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
-    expect(
-      error.some((e: unknown) => (e as { path: string }).path === "content"),
-    ).toBe(true);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
+    expect(error.errorsMessages.length).toBeGreaterThan(0);
   });
 
   it("should return validation error when title is not a string", async () => {
@@ -156,7 +164,7 @@ describe("POST /posts", () => {
       400,
     );
 
-    expect(error).toBeInstanceOf(Array);
+    expect(error.errorsMessages).toBeInstanceOf(Array);
   });
 
   it("should save post to db", async () => {

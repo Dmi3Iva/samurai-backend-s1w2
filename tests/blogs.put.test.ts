@@ -78,6 +78,6 @@ describe("PUT /blogs/:id", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.errorsMessages).toBeInstanceOf(Array);
   });
 });

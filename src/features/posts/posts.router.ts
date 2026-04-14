@@ -8,7 +8,13 @@ import type {
 } from "./models/post.model";
 import type { RequestWithBody } from "../../types/request.type";
 import { postsRepository } from "./repository/posts.repository";
-import { body, matchedData, param, validationResult } from "express-validator";
+import {
+  body,
+  matchedData,
+  param,
+  validationResult,
+  type FieldValidationError,
+} from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { blogsRepository } from "../blogs/repository/blogs.repository";
 
@@ -62,11 +68,15 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
     return next();
   }
 
-  res.status(400).send(
-    errors.array({
+  const errorsMessages = errors
+    .array({
       onlyFirstError: true,
-    }),
-  );
+    })
+    .map((e) => ({ message: e.msg, field: (e as FieldValidationError).path }));
+
+  res.status(400).send({
+    errorsMessages,
+  });
 };
 
 postsRouter.get("/", (req: Request, res: Response<IPostView[]>) => {
@@ -86,7 +96,7 @@ postsRouter.post(
     const data = matchedData<IPostCreateModel>(req);
     const blog = blogsRepository.findBlog(data.blogId);
     if (!blog) {
-      return res.status(400).json(`There is no blog with id ${data.blogId}`);
+      return res.status(404).json(`There is no blog with id ${data.blogId}`);
     }
     const newBlog = postsRepository.createPost(data);
 
@@ -120,7 +130,7 @@ postsRouter.put(
 
     const blog = blogsRepository.findBlog(data.blogId);
     if (!blog) {
-      return res.status(400).json(`There is no blog with id ${data.blogId}`);
+      return res.status(404).json(`There is no blog with id ${data.blogId}`);
     }
 
     const updatedBlog = postsRepository.updatePost({

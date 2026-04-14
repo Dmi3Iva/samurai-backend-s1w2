@@ -9,8 +9,11 @@ export const authorizationMiddleware = (
   next: NextFunction,
 ) => {
   const authorizationHeader = req.headers["authorization"];
-  const authToken = authorizationHeader?.substring("Basic ".length);
-  if (!authToken) {
+  const [authTitle, authToken] = authorizationHeader?.split(" ") || [];
+  if (authTitle !== "Basic") {
+    return res.status(401).send("Incorrect token title");
+  }
+  if (!authToken?.length) {
     return res.status(401).send("Empty Basic token");
   }
   const decodedString = Buffer.from(authToken, "base64").toString("utf-8");
