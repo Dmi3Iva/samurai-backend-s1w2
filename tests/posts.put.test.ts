@@ -3,10 +3,11 @@ import request from "supertest";
 import { app } from "../src/app";
 import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("PUT /posts/:id", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should update post by id", async () => {
@@ -21,7 +22,6 @@ describe("PUT /posts/:id", () => {
       shortDescription: "Original Short Desc",
       content: "Original Content",
       blogId: blog.id,
-      blogName: "Blog 1",
     });
 
     await postsTestManager.updateEntity(createdPost.id, {
@@ -29,14 +29,18 @@ describe("PUT /posts/:id", () => {
       shortDescription: "Updated Short Desc",
       content: "Updated Content",
       blogId: blog.id,
-      blogName: "Blog 1",
     });
 
     const updatedPost = await postsTestManager.getEntity(createdPost.id);
 
-    expect(updatedPost.title).toBe("Updated Title");
-    expect(updatedPost.shortDescription).toBe("Updated Short Desc");
-    expect(updatedPost.content).toBe("Updated Content");
+    expect(updatedPost).toEqual({
+      id: createdPost.id,
+      title: "Updated Title",
+      shortDescription: "Updated Short Desc",
+      content: "Updated Content",
+      blogId: blog.id,
+      blogName: "Blog 1",
+    });
   });
 
   it("should return 404 when updating non-existent post", async () => {
@@ -53,7 +57,6 @@ describe("PUT /posts/:id", () => {
         shortDescription: "Updated",
         content: "Updated",
         blogId: blog.id,
-        blogName: "Blog 1",
       },
       404,
     );
@@ -73,7 +76,6 @@ describe("PUT /posts/:id", () => {
       shortDescription: "Short Desc",
       content: "Content",
       blogId: blog.id,
-      blogName: "Blog 1",
     });
 
     const error = await postsTestManager.updateEntity(
@@ -83,7 +85,6 @@ describe("PUT /posts/:id", () => {
         shortDescription: "Updated",
         content: "Updated",
         blogId: "non-existent-blog",
-        blogName: "Blog",
       },
       400,
     );
@@ -92,7 +93,7 @@ describe("PUT /posts/:id", () => {
   });
 
   it("should return 401 without authorization", async () => {
-    const response = await request(app).put("/posts/123").send({
+    const response = await request(app).put(`${ROUTES.posts}/123`).send({
       title: "Updated",
       shortDescription: "Updated",
       content: "Updated",

@@ -3,10 +3,11 @@ import request from "supertest";
 import { app } from "../src/app";
 import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("Posts Integration Tests", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should handle full post lifecycle", async () => {
@@ -22,7 +23,6 @@ describe("Posts Integration Tests", () => {
       shortDescription: "Test Short Desc",
       content: "Test Content",
       blogId: blog.id,
-      blogName: "Test Blog",
     });
 
     expect(createdPost).toHaveProperty("id");
@@ -43,7 +43,6 @@ describe("Posts Integration Tests", () => {
       shortDescription: "Updated Short Desc",
       content: "Updated Content",
       blogId: blog.id,
-      blogName: "Test Blog",
     });
 
     const updatedPost = await postsTestManager.getEntity(postId);

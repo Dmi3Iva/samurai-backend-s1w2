@@ -14,7 +14,7 @@ export const postsRepository = {
     return posts;
   },
   createPost: (postBody: IPostCreateModel): IPostType => {
-    const id = String(new Date());
+    const id = String(Number(new Date()));
     const newPost = { ...postBody, id };
     posts.push(newPost);
     return newPost;

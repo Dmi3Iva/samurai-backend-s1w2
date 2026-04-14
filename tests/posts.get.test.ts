@@ -3,10 +3,11 @@ import request from "supertest";
 import { app } from "../src/app";
 import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("GET /posts", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should return empty array when no posts exist", async () => {
@@ -27,7 +28,6 @@ describe("GET /posts", () => {
       shortDescription: "Short desc 1",
       content: "Content 1",
       blogId: blog.id,
-      blogName: "Blog 1",
     });
 
     await postsTestManager.createEntity({
@@ -35,13 +35,26 @@ describe("GET /posts", () => {
       shortDescription: "Short desc 2",
       content: "Content 2",
       blogId: blog.id,
-      blogName: "Blog 1",
     });
 
     const posts = await postsTestManager.getEntities();
 
     expect(posts).toHaveLength(2);
-    expect(posts[0].title).toBe("Post 1");
-    expect(posts[1].title).toBe("Post 2");
+    expect(posts[0]).toEqual({
+      id: expect.any(String),
+      title: "Post 1",
+      shortDescription: "Short desc 1",
+      content: "Content 1",
+      blogId: blog.id,
+      blogName: "Blog 1",
+    });
+    expect(posts[1]).toEqual({
+      id: expect.any(String),
+      title: "Post 2",
+      shortDescription: "Short desc 2",
+      content: "Content 2",
+      blogId: blog.id,
+      blogName: "Blog 1",
+    });
   });
 });

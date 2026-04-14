@@ -3,10 +3,11 @@ import request from "supertest";
 import { app } from "../src/app";
 import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("POST /posts", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should create new post", async () => {
@@ -21,18 +22,20 @@ describe("POST /posts", () => {
       shortDescription: "New Short Description",
       content: "New Content",
       blogId: blog.id,
-      blogName: "New Blog",
     });
 
-    expect(post).toHaveProperty("id");
-    expect(post.title).toBe("New Post");
-    expect(post.shortDescription).toBe("New Short Description");
-    expect(post.content).toBe("New Content");
-    expect(post.blogId).toBe(blog.id);
+    expect(post).toEqual({
+      id: expect.any(String),
+      title: "New Post",
+      shortDescription: "New Short Description",
+      content: "New Content",
+      blogId: blog.id,
+      blogName: "New Blog",
+    });
   });
 
   it("should return 401 without authorization", async () => {
-    const response = await request(app).post("/posts").send({
+    const response = await request(app).post(`${ROUTES.posts}`).send({
       title: "Post",
       shortDescription: "Desc",
       content: "Content",
@@ -49,7 +52,6 @@ describe("POST /posts", () => {
         shortDescription: "Desc",
         content: "Content",
         blogId: "non-existent-blog-id",
-        blogName: "Blog",
       },
       400,
     );
@@ -59,7 +61,7 @@ describe("POST /posts", () => {
 
   it("should return 400 when missing required fields", async () => {
     const response = await request(app)
-      .post("/posts")
+      .post(`${ROUTES.posts}`)
       .set("Authorization", "Basic YWRtaW46cXdlcnR5")
       .send({
         title: "Only Title",
@@ -81,12 +83,18 @@ describe("POST /posts", () => {
       shortDescription: "Saved Short Desc",
       content: "Saved Content",
       blogId: blog.id,
-      blogName: "Saved Blog",
     });
 
     const posts = await postsTestManager.getEntities();
 
     expect(posts).toHaveLength(1);
-    expect(posts[0].title).toBe("Saved Post");
+    expect(posts[0]).toEqual({
+      id: expect.any(String),
+      title: "Saved Post",
+      shortDescription: "Saved Short Desc",
+      content: "Saved Content",
+      blogId: blog.id,
+      blogName: "Saved Blog",
+    });
   });
 });

@@ -3,10 +3,11 @@ import request from "supertest";
 import { app } from "../src/app";
 import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("GET /posts/:id", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should return post by id", async () => {
@@ -21,14 +22,18 @@ describe("GET /posts/:id", () => {
       shortDescription: "Test Short Desc",
       content: "Test Content",
       blogId: blog.id,
-      blogName: "Test Blog",
     });
 
     const post = await postsTestManager.getEntity(createdPost.id);
 
-    expect(post.id).toBe(createdPost.id);
-    expect(post.title).toBe("Test Post");
-    expect(post.content).toBe("Test Content");
+    expect(post).toEqual({
+      id: createdPost.id,
+      title: "Test Post",
+      shortDescription: "Test Short Desc",
+      content: "Test Content",
+      blogId: blog.id,
+      blogName: "Test Blog",
+    });
   });
 
   it("should return 404 for non-existent post", async () => {

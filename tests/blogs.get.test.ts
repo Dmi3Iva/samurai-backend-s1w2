@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("GET /blogs", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should return empty array when no blogs exist", async () => {
@@ -30,6 +31,17 @@ describe("GET /blogs", () => {
     const blogs = await blogsTestManager.getEntities();
 
     expect(blogs).toHaveLength(2);
-    expect(blogs[0].name).toBe("Blog 1");
+    expect(blogs[0]).toEqual({
+      id: expect.any(String),
+      name: "Blog 1",
+      description: "Desc 1",
+      websiteUrl: "https://blog1.com",
+    });
+    expect(blogs[1]).toEqual({
+      id: expect.any(String),
+      name: "Blog 2",
+      description: "Desc 2",
+      websiteUrl: "https://blog2.com",
+    });
   });
 });

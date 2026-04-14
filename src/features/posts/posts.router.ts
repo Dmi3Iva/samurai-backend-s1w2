@@ -3,7 +3,8 @@ import type { RequestHandler, Response, Request } from "express";
 import type {
   IPostUpadteModel,
   IPostCreateModel,
-  IViewPost,
+  IPostView as IPostView,
+  IPostType,
 } from "./models/post.model";
 import type { RequestWithBody } from "../../types/request.type";
 import { postsRepository } from "./repository/posts.repository";
@@ -47,6 +48,14 @@ const blogIdValidation = body("blogId")
   .isString()
   .withMessage("blogId should be a string");
 
+const mapToPostView = (p: IPostType): IPostView => {
+  const blogName = blogsRepository.findBlog(p.blogId)?.name || "";
+  return {
+    ...p,
+    blogName,
+  };
+};
+
 const inputValidationMiddleware: RequestHandler = (req, res, next) => {
   const errors = validationResult(req);
   if (errors.isEmpty()) {
@@ -56,9 +65,9 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
   res.status(400).send(errors.array());
 };
 
-postsRouter.get("/", (req: Request, res: Response<IViewPost[]>) => {
+postsRouter.get("/", (req: Request, res: Response<IPostView[]>) => {
   const posts = postsRepository.getPosts();
-  res.send(posts);
+  res.send(posts.map(mapToPostView));
 });
 
 postsRouter.post(
@@ -77,20 +86,20 @@ postsRouter.post(
     }
     const newBlog = postsRepository.createPost(data);
 
-    res.status(201).json(newBlog);
+    res.status(201).json(mapToPostView(newBlog));
   },
 );
 
 postsRouter.get("/:id", param("id"), inputValidationMiddleware, (req, res) => {
   const data = matchedData<BlogIdParam>(req);
-  const blog = postsRepository.getPost(data.id);
+  const post = postsRepository.getPost(data.id);
 
-  if (!blog) {
+  if (!post) {
     res.status(404).json({ message: "Post not found" });
     return;
   }
 
-  res.status(200).json(blog);
+  res.status(200).json(mapToPostView(post));
 });
 
 postsRouter.put(

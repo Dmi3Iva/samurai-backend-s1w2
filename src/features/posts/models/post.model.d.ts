@@ -4,9 +4,10 @@ export interface IPostType {
   shortDescription: string;
   content: string;
   blogId: string;
-  blogName: string;
 }
 
 export type IPostCreateModel = Omit<IPostType, "id">;
 export type IPostUpadteModel = IPostCreateModel;
-export type IViewPost = IPostType;
+export interface IPostView extends IPostType {
+  blogName: string;
+}

@@ -4,7 +4,7 @@ import { postsRepository } from "../posts/repository/posts.repository";
 
 export const testingRouter = Router();
 
-testingRouter.delete("/delete-all", (req, res) => {
+testingRouter.delete("/", (req, res) => {
   blogsRepository.removeAll();
   postsRepository.removeAll();
   res.status(204).send();

@@ -1,9 +1,10 @@
-import e, { NextFunction } from "express";
+import e, { NextFunction, Router } from "express";
 import type { Response } from "express";
 import { blogsRouter } from "./features/blogs/blogs.router";
 import { postsRouter } from "./features/posts/posts.router";
 import { testingRouter } from "./features/testing/testing.route";
 import { RequestWithQuery } from "./types/request.type";
+import { ROUTES } from "./consants/routes.conts";
 
 export const app = e();
 
@@ -20,6 +21,6 @@ export const app = e();
 
 app.use(e.json());
 
-app.use("/blogs", blogsRouter);
-app.use("/posts", postsRouter);
-app.use("/testing", testingRouter);
+app.use(ROUTES.blogs, blogsRouter);
+app.use(ROUTES.posts, postsRouter);
+app.use(ROUTES.testings, testingRouter);

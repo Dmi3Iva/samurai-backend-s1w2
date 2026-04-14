@@ -29,7 +29,7 @@ export const blogsRepository = {
     return searchResult;
   },
   createBlog(createBlogModelData: CreateBlogModel): BlogType {
-    const newBlog = { ...createBlogModelData, id: String(new Date()) };
+    const newBlog = { ...createBlogModelData, id: String(Number(new Date())) };
     blogs.push(newBlog);
     return newBlog;
   },

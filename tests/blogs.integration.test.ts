@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
+import { ROUTES } from "../src/consants/routes.conts";
 
 describe("Blogs Integration Tests", () => {
   beforeEach(async () => {
-    await request(app).delete("/testing/delete-all");
+    await request(app).delete(`${ROUTES.testings}`);
   });
 
   it("should handle full blog lifecycle", async () => {
