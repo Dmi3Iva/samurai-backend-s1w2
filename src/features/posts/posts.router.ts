@@ -62,7 +62,11 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
     return next();
   }
 
-  res.status(400).send(errors.array());
+  res.status(400).send(
+    errors.array({
+      onlyFirstError: true,
+    }),
+  );
 };
 
 postsRouter.get("/", (req: Request, res: Response<IPostView[]>) => {

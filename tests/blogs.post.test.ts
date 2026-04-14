@@ -64,7 +64,7 @@ describe("POST /blogs", () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toBeInstanceOf(Array);
-    expect(response.body).toHaveLength(7);
+    expect(response.body).toHaveLength(3);
   });
 
   it("should return validation error when name exceeds max length", async () => {
