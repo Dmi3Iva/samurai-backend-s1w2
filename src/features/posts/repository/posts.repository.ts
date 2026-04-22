@@ -1,5 +1,5 @@
 import { WithId } from "mongodb";
-import { postsDatabase } from "../../../repositories/db";
+import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
   IPostCreateModel,
   IPostType,
@@ -40,6 +40,14 @@ export const postsRepository = {
     id: string;
     updatedPost: IPostUpadteModel;
   }): Promise<boolean> {
+    const blogInPostToUpdate = await blogsDatabase.findOne({
+      id: updatedPost.blogId,
+    });
+
+    if (!blogInPostToUpdate) {
+      return false;
+    }
+
     const updateResult = await postsDatabase.updateOne(
       { id },
       { $set: updatedPost },

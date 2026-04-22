@@ -2,7 +2,7 @@
   "scripts": {
     "dev": "concurrently 'node --watch  dist/index.js' 'tsc --watch'",
     "build": "tsc",
-    "test": "vitest run --maxConcurrency 1 --no-file-parallelism"
+    "test": "vitest run --maxConcurrency 1 --no-file-parallelism --clearScreen"
   },
   "dependencies": {
     "@types/node": "^25.6.0",
