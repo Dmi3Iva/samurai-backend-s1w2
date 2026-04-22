@@ -63,8 +63,9 @@ const blogIdValidation = body("blogId")
   .isString()
   .withMessage("blogId should be a string");
 
-const mapToPostView = (p: IPostType): IPostView => {
-  const blogName = blogsRepository.findBlog(p.blogId)?.name || "";
+const mapToPostView = async (p: IPostType): Promise<IPostView> => {
+  const foundBlog = await blogsRepository.findBlog(p.blogId);
+  const blogName = foundBlog?.name || "";
   return {
     ...p,
     blogName,
@@ -88,9 +89,10 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
   });
 };
 
-postsRouter.get("/", (req: Request, res: Response<IPostView[]>) => {
-  const posts = postsRepository.getPosts();
-  res.send(posts.map(mapToPostView));
+postsRouter.get("/", async (req: Request, res: Response<IPostView[]>) => {
+  const posts = await postsRepository.getPosts();
+  const viewPosts = await Promise.all(posts.map(mapToPostView));
+  res.send(viewPosts);
 });
 
 postsRouter.post(
@@ -101,29 +103,36 @@ postsRouter.post(
   contentValidation,
   blogIdValidation,
   inputValidationMiddleware,
-  (req: RequestWithBody<IPostCreateModel>, res: Response) => {
+  async (req: RequestWithBody<IPostCreateModel>, res: Response) => {
     const data = matchedData<IPostCreateModel>(req);
-    const blog = blogsRepository.findBlog(data.blogId);
+    const blog = await blogsRepository.findBlog(data.blogId);
     if (!blog) {
-      return res.status(404).json(`There is no blog with id ${data.blogId}`);
+      return res.status(404).json(`Not found blog with id ${data.blogId}`);
     }
-    const newBlog = postsRepository.createPost(data);
+    const newBlog = await postsRepository.createPost(data);
 
-    res.status(201).json(mapToPostView(newBlog));
+    const viewBlog = await mapToPostView(newBlog);
+    res.status(201).json(viewBlog);
   },
 );
 
-postsRouter.get("/:id", param("id"), inputValidationMiddleware, (req, res) => {
-  const data = matchedData<PostsIdParam>(req);
-  const post = postsRepository.getPost(data.id);
+postsRouter.get(
+  "/:id",
+  param("id"),
+  inputValidationMiddleware,
+  async (req, res) => {
+    const data = matchedData<PostsIdParam>(req);
+    const post = await postsRepository.getPost(data.id);
 
-  if (!post) {
-    res.status(404).json({ message: "Post not found" });
-    return;
-  }
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
 
-  res.status(200).json(mapToPostView(post));
-});
+    const result = await mapToPostView(post);
+    res.status(200).json(result);
+  },
+);
 
 postsRouter.put(
   "/:id",
@@ -134,22 +143,17 @@ postsRouter.put(
   contentValidation,
   blogIdValidation,
   inputValidationMiddleware,
-  (req, res) => {
+  async (req, res) => {
     const data = matchedData<IPostUpadteModel & PostsIdParam>(req);
 
-    const blog = blogsRepository.findBlog(data.blogId);
-    if (!blog) {
-      return res.status(404).json(`There is no blog with id ${data.blogId}`);
-    }
-
-    const updatedBlog = postsRepository.updatePost({
+    const updatedPostResult = await postsRepository.updatePost({
       id: data.id,
       updatedPost: {
         ...data,
       },
     });
 
-    if (!updatedBlog) {
+    if (!updatedPostResult) {
       return res.status(404).json(`Not found blog with id  ${data.id}`);
     }
 
@@ -162,9 +166,9 @@ postsRouter.delete(
   authorizationMiddleware,
   param("id"),
   inputValidationMiddleware,
-  (req, res) => {
+  async (req, res) => {
     const data = matchedData<PostsIdParam>(req);
-    const isRemoved = postsRepository.deletePost(data.id);
+    const isRemoved = await postsRepository.deletePost(data.id);
 
     if (!isRemoved) {
       return res.status(404).json({ message: "Blog not found" });

@@ -70,7 +70,7 @@ describe("POST /posts", () => {
       404,
     );
 
-    expect(error).toContain("There is no blog with id");
+    expect(error).toContain("Not found blog with id");
   });
 
   it("should return validation errors for all missing fields", async () => {

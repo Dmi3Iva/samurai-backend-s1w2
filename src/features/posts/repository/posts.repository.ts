@@ -1,52 +1,60 @@
+import { WithId } from "mongodb";
+import { postsDatabase } from "../../../repositories/db";
 import {
   IPostCreateModel,
   IPostType,
   IPostUpadteModel,
 } from "../models/post.model";
 
-const posts: IPostType[] = [];
+const mapToPostType = (p: WithId<IPostType>): IPostType => ({
+  id: p.id,
+  title: p.title,
+  shortDescription: p.shortDescription,
+  content: p.content,
+  blogId: p.blogId,
+});
 
 export const postsRepository = {
-  getPost: (id: string): IPostType | undefined => {
-    return posts.find((p) => p.id === id);
+  async getPost(id: string): Promise<IPostType | null> {
+    const findResult = await postsDatabase.findOne({ id });
+    return findResult ? mapToPostType(findResult) : null;
   },
-  getPosts: () => {
-    return posts;
+
+  async getPosts() {
+    const findResult = await postsDatabase.find({}).toArray();
+    return findResult.map(mapToPostType);
   },
-  createPost: (postBody: IPostCreateModel): IPostType => {
+
+  async createPost(postBody: IPostCreateModel): Promise<IPostType> {
     const id = String(Number(new Date()));
     const newPost = { ...postBody, id };
-    posts.push(newPost);
-    return newPost;
+    await postsDatabase.insertOne(newPost);
+
+    return mapToPostType(newPost as WithId<IPostType>);
   },
-  updatePost: ({
+
+  async updatePost({
     id,
     updatedPost,
   }: {
     id: string;
     updatedPost: IPostUpadteModel;
-  }): boolean => {
-    const idToUpdate = posts.findIndex((p) => p.id === id);
-    if (idToUpdate === -1 || !posts[idToUpdate]) {
-      return false;
-    }
+  }): Promise<boolean> {
+    const updateResult = await postsDatabase.updateOne(
+      { id },
+      { $set: updatedPost },
+    );
 
-    posts[idToUpdate].blogId = updatedPost.blogId;
-    posts[idToUpdate].content = updatedPost.content;
-    posts[idToUpdate].shortDescription = updatedPost.shortDescription;
-    posts[idToUpdate].title = updatedPost.title;
-    return true;
+    return updateResult.matchedCount === 1;
   },
-  deletePost: (id: string): boolean => {
-    const idToUpdate = posts.findIndex((p) => p.id === id);
-    if (idToUpdate === -1) {
-      return false;
-    } else {
-      posts.splice(idToUpdate, 1);
-      return true;
-    }
+
+  async deletePost(id: string): Promise<boolean> {
+    const deleteResult = await postsDatabase.deleteOne({ id });
+
+    return deleteResult.deletedCount === 1;
   },
-  removeAll: () => {
-    posts.splice(0, posts.length);
+
+  async removeAll() {
+    return await postsDatabase.deleteMany({});
   },
 };

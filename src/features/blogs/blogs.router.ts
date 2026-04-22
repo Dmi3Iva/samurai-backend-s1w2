@@ -2,17 +2,15 @@ import { Router } from "express";
 import type { RequestHandler, Response } from "express";
 import type {
   CreateBlogModel,
+  IFindBlogsSearchTerm,
   UpdateBlogModel,
-  ViewBlog,
+  IViewBlog,
 } from "./models/blog.model";
 import type {
   RequestWithBody,
   RequestWithQuery,
 } from "../../types/request.type";
-import {
-  blogsRepository,
-  type IFindBlogsSearchTerm,
-} from "./repository/blogs.repository";
+import { blogsRepository } from "./repository/blogs.repository";
 import {
   body,
   matchedData,
@@ -86,8 +84,11 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
 
 blogsRouter.get(
   "/",
-  (req: RequestWithQuery<IFindBlogsSearchTerm>, res: Response<ViewBlog[]>) => {
-    const blogs = blogsRepository.findBlogs(req.query);
+  async (
+    req: RequestWithQuery<IFindBlogsSearchTerm>,
+    res: Response<IViewBlog[]>,
+  ) => {
+    const blogs = await blogsRepository.findBlogs(req.query);
     res.send(blogs);
   },
 );
@@ -99,25 +100,30 @@ blogsRouter.post(
   descriptionValidation,
   websiteUrlValidation,
   inputValidationMiddleware,
-  (req: RequestWithBody<CreateBlogModel>, res: Response) => {
+  async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
     const data = matchedData<CreateBlogModel>(req);
-    const newBlog = blogsRepository.createBlog(data);
+    const newBlog = await blogsRepository.createBlog(data);
 
     res.status(201).json(newBlog);
   },
 );
 
-blogsRouter.get("/:id", inputValidationMiddleware, param("id"), (req, res) => {
-  const data = matchedData<BlogIdParam>(req);
-  const blog = blogsRepository.findBlog(data.id);
+blogsRouter.get(
+  "/:id",
+  inputValidationMiddleware,
+  param("id"),
+  async (req, res) => {
+    const data = matchedData<BlogIdParam>(req);
+    const blog = await blogsRepository.findBlog(data.id);
 
-  if (!blog) {
-    res.status(404).json({ message: "Blog not found" });
-    return;
-  }
+    if (!blog) {
+      res.status(404).json({ message: "Blog not found" });
+      return;
+    }
 
-  res.status(200).json(blog);
-});
+    res.status(200).json(blog);
+  },
+);
 
 blogsRouter.put(
   "/:id",
@@ -127,10 +133,10 @@ blogsRouter.put(
   descriptionValidation,
   websiteUrlValidation,
   inputValidationMiddleware,
-  (req, res) => {
+  async (req, res) => {
     const data = matchedData<UpdateBlogModel & BlogIdParam>(req);
 
-    const isBlogUpdated = blogsRepository.updateBlog({
+    const isBlogUpdated = await blogsRepository.updateBlog({
       id: data.id,
       updateBlogModelData: {
         name: data.name,
@@ -152,9 +158,9 @@ blogsRouter.delete(
   authorizationMiddleware,
   param("id"),
   inputValidationMiddleware,
-  (req, res) => {
+  async (req, res) => {
     const data = matchedData<BlogIdParam>(req);
-    const isRemoved = blogsRepository.deleteBlog(data.id);
+    const isRemoved = await blogsRepository.deleteBlog(data.id);
 
     if (!isRemoved) {
       return res.status(404).json({ message: "Blog not found" });

@@ -1,66 +1,79 @@
-import type { CreateBlogModel, UpdateBlogModel } from "../models/blog.model";
-
-export interface BlogType {
-  id: string;
-  name: string;
-  description: string;
-  websiteUrl: string;
-}
+import { WithId } from "mongodb";
+import { blogsDatabase } from "../../../repositories/db";
+import type {
+  CreateBlogModel,
+  IFindBlogsSearchTerm,
+  UpdateBlogModel,
+  IViewBlog,
+  IBlogType,
+} from "../models/blog.model";
 
 export interface DBType {
-  blogs: BlogType[];
+  blogs: IBlogType[];
 }
 
-const blogs: BlogType[] = [];
-
-// TODO:: move to models
-export interface IFindBlogsSearchTerm {
-  name: string;
-  description: string;
-  websiteUrl: string;
-}
+const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
+  description: b.description,
+  name: b.name,
+  websiteUrl: b.websiteUrl,
+  id: b.id,
+});
 
 export const blogsRepository = {
-  findBlogs(findBlogsSearchTerm?: IFindBlogsSearchTerm): BlogType[] {
-    if (!findBlogsSearchTerm) return blogs;
+  async findBlog(id?: string): Promise<IBlogType | null> {
+    if (!id) return null;
 
-    let searchResult: BlogType[] = blogs;
+    const foundBlog = await blogsDatabase.findOne({ id });
+    return foundBlog ? mapToBlogType(foundBlog) : null;
+  },
 
-    return searchResult;
-  },
-  createBlog(createBlogModelData: CreateBlogModel): BlogType {
-    const newBlog = { ...createBlogModelData, id: String(Number(new Date())) };
-    blogs.push(newBlog);
-    return newBlog;
-  },
-  findBlog(id?: string) {
-    const foundBlog = blogs.find(({ id: blogId }) => id === blogId);
-    return foundBlog;
-  },
-  deleteBlog(id?: string): boolean {
-    const idToRemove = blogs.findIndex(({ id: blogId }) => id === blogId);
-    if (idToRemove === -1) return false;
+  async findBlogs(
+    findBlogsSearchTerm?: IFindBlogsSearchTerm,
+  ): Promise<IBlogType[]> {
+    if (!findBlogsSearchTerm) return [];
 
-    blogs.splice(idToRemove, 1);
-    return true;
+    let searchResult = await blogsDatabase.find({}).toArray();
+
+    return searchResult.map(mapToBlogType);
   },
-  updateBlog({
+
+  async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {
+    const newBlogData = {
+      ...createBlogModelData,
+      id: String(Number(new Date())),
+    };
+    await blogsDatabase.insertOne(newBlogData);
+
+    return mapToBlogType(newBlogData as WithId<IBlogType>);
+  },
+
+  async deleteBlog(id?: string): Promise<boolean> {
+    if (!id) return false;
+    const removingResult = await blogsDatabase.deleteOne({ id });
+    return removingResult.deletedCount === 1;
+  },
+
+  async updateBlog({
     id,
     updateBlogModelData,
   }: {
     id?: string;
     updateBlogModelData: UpdateBlogModel;
-  }): boolean {
-    const indexToUpdate = blogs.findIndex(({ id: blogId }) => id === blogId);
-    if (indexToUpdate === -1 || !blogs[indexToUpdate]) return false;
+  }): Promise<boolean> {
+    if (!id) return false;
 
-    blogs[indexToUpdate].description = updateBlogModelData.description;
-    blogs[indexToUpdate].name = updateBlogModelData.name;
-    blogs[indexToUpdate].websiteUrl = updateBlogModelData.websiteUrl;
+    const updateResult = await blogsDatabase.updateOne(
+      { id },
+      {
+        $set: {
+          ...updateBlogModelData,
+        },
+      },
+    );
 
-    return true;
+    return updateResult.matchedCount === 1;
   },
-  removeAll() {
-    blogs.splice(0, blogs.length);
+  async removeAll() {
+    return await blogsDatabase.deleteMany({});
   },
 };

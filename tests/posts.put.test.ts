@@ -89,7 +89,7 @@ describe("PUT /posts/:id", () => {
       404,
     );
 
-    expect(error).toContain("There is no blog with id");
+    expect(error).toContain("Not found blog with id");
   });
 
   it("should return 401 without authorization", async () => {

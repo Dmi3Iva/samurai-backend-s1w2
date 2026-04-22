@@ -2,17 +2,21 @@
   "scripts": {
     "dev": "concurrently 'node --watch  dist/index.js' 'tsc --watch'",
     "build": "tsc",
-    "test": "vitest run"
+    "test": "vitest run --maxConcurrency 1 --no-file-parallelism"
   },
   "dependencies": {
     "@types/node": "^25.6.0",
     "express": "^5.2.1",
-    "express-validator": "^7.3.2"
+    "express-validator": "^7.3.2",
+    "mongodb": "^7.2.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/mongodb": "^4.0.7",
     "@types/nodemon": "^3.1.1",
     "@types/supertest": "^7.2.0",
+    "concurrently": "^9.2.1",
+    "dotenv": "^17.4.2",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",
     "typescript": "^6.0.2",

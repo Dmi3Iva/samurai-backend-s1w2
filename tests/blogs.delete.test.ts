@@ -10,6 +10,7 @@ describe("DELETE /blogs/:id", () => {
   });
 
   it("should delete blog by id", async () => {
+    console.log("before", await blogsTestManager.getEntities());
     await blogsTestManager.createEntity({
       name: "Blog 1",
       description: "Desc 1",
@@ -21,6 +22,7 @@ describe("DELETE /blogs/:id", () => {
       description: "Desc 2",
       websiteUrl: "https://blog2.com",
     });
+    console.log("before", await blogsTestManager.getEntities());
 
     const blogsBeforeDelete = await blogsTestManager.getEntities();
     const firstBlogId = blogsBeforeDelete[0].id;

@@ -21,7 +21,6 @@ describe("Posts DELETE - verify blog is not deleted", () => {
 
     expect(blogResponse.status).toBe(201);
     const blogId = blogResponse.body.id;
-    console.log("Created blog id:", blogId);
 
     // 2. Create post
     const postResponse = await request(app)
@@ -39,7 +38,9 @@ describe("Posts DELETE - verify blog is not deleted", () => {
     console.log("Created post id:", postId);
 
     // 3. Verify blog exists before deleting post
-    const blogBeforeDelete = await request(app).get(`${ROUTES.blogs}/${blogId}`);
+    const blogBeforeDelete = await request(app).get(
+      `${ROUTES.blogs}/${blogId}`,
+    );
     expect(blogBeforeDelete.status).toBe(200);
     console.log("Blog exists before post delete:", blogBeforeDelete.status);
 
