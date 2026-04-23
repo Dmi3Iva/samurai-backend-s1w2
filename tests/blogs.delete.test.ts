@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
-import { ROUTES } from "../src/consants/routes.conts";
+import { IS_MEMBERSHIP_DEFAULT_VALUE, ROUTES } from "../src/consants/routes.conts";
 
 describe("DELETE /blogs/:id", () => {
   beforeEach(async () => {
@@ -36,6 +36,8 @@ describe("DELETE /blogs/:id", () => {
       name: "Blog 2",
       description: "Desc 2",
       websiteUrl: "https://blog2.com",
+      createdAt: expect.any(String),
+      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
   });
 

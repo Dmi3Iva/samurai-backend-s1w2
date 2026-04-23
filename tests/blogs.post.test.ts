@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
-import { ROUTES } from "../src/consants/routes.conts";
+import { IS_MEMBERSHIP_DEFAULT_VALUE, ROUTES } from "../src/consants/routes.conts";
 
 describe("POST /blogs", () => {
   beforeEach(async () => {
@@ -21,6 +21,8 @@ describe("POST /blogs", () => {
       name: "New Blog",
       description: "New Description",
       websiteUrl: "https://newblog.com",
+      createdAt: expect.any(String),
+      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
   });
 
@@ -53,6 +55,8 @@ describe("POST /blogs", () => {
       name: "Saved Blog",
       description: "Saved Description",
       websiteUrl: "https://saved.com",
+      createdAt: expect.any(String),
+      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
   });
 

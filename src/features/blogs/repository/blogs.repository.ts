@@ -7,6 +7,7 @@ import type {
   IViewBlog,
   IBlogType,
 } from "../models/blog.model";
+import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 
 export interface DBType {
   blogs: IBlogType[];
@@ -17,6 +18,8 @@ const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
   name: b.name,
   websiteUrl: b.websiteUrl,
   id: b.id,
+  isMembership: b.isMembership,
+  createdAt: b.createdAt,
 });
 
 export const blogsRepository = {
@@ -41,6 +44,8 @@ export const blogsRepository = {
     const newBlogData = {
       ...createBlogModelData,
       id: String(Number(new Date())),
+      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
+      createdAt: new Date(),
     };
     await blogsDatabase.insertOne(newBlogData);
 

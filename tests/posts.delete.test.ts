@@ -45,6 +45,7 @@ describe("DELETE /posts/:id", () => {
       content: "Content 2",
       blogId: blog.id,
       blogName: "Blog 1",
+      createdAt: expect.any(String),
     });
   });
 

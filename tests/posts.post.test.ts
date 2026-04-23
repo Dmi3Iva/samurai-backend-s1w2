@@ -31,6 +31,8 @@ describe("POST /posts", () => {
       content: "New Content",
       blogId: blog.id,
       blogName: "New Blog",
+
+      createdAt: expect.any(String),
     });
   });
 
@@ -191,6 +193,7 @@ describe("POST /posts", () => {
       content: "Saved Content",
       blogId: blog.id,
       blogName: "Saved Blog",
+      createdAt: expect.any(String),
     });
   });
 });

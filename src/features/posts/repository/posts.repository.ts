@@ -12,6 +12,7 @@ const mapToPostType = (p: WithId<IPostType>): IPostType => ({
   shortDescription: p.shortDescription,
   content: p.content,
   blogId: p.blogId,
+  createdAt: p.createdAt,
 });
 
 export const postsRepository = {
@@ -27,8 +28,10 @@ export const postsRepository = {
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType> {
     const id = String(Number(new Date()));
-    const newPost = { ...postBody, id };
-    await postsDatabase.insertOne(newPost);
+    const newPost = { ...postBody, id, createdAt: new Date() };
+    await postsDatabase.insertOne({
+      ...newPost,
+    });
 
     return mapToPostType(newPost as WithId<IPostType>);
   },

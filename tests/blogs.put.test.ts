@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { blogsTestManager } from "./blogsTestManager";
-import { ROUTES } from "../src/consants/routes.conts";
+import { IS_MEMBERSHIP_DEFAULT_VALUE, ROUTES } from "../src/consants/routes.conts";
 
 describe("PUT /blogs/:id", () => {
   beforeEach(async () => {
@@ -33,6 +33,8 @@ describe("PUT /blogs/:id", () => {
       name: "Updated Blog",
       description: "Updated Description",
       websiteUrl: "https://updated.com",
+      createdAt: expect.any(String),
+      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
   });
 

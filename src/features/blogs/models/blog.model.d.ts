@@ -3,6 +3,8 @@ export interface IViewBlog {
   name: string;
   description: string;
   websiteUrl: string;
+  isMembership: boolean;
+  createdAt: Date;
 }
 
 export interface IBlogType {
@@ -10,6 +12,8 @@ export interface IBlogType {
   name: string;
   description: string;
   websiteUrl: string;
+  isMembership: boolean;
+  createdAt: Date;
 }
 
 export interface CreateBlogModel {

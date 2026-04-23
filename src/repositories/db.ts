@@ -1,5 +1,5 @@
 import { MongoClient } from "mongodb";
-import { IBlogType } from "../features/blogs/repository/blogs.repository";
+import { IBlogType } from "../features/blogs/models/blog.model";
 import { IPostType } from "../features/posts/models/post.model";
 
 const mongoURI: string = process.env.MONGO_URI || "mongodb://0.0.0.0:27017";

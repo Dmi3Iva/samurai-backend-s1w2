@@ -33,6 +33,7 @@ describe("GET /posts/:id", () => {
       content: "Test Content",
       blogId: blog.id,
       blogName: "Test Blog",
+      createdAt: expect.any(String),
     });
   });
 

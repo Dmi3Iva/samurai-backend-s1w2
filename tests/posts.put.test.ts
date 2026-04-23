@@ -40,6 +40,7 @@ describe("PUT /posts/:id", () => {
       content: "Updated Content",
       blogId: blog.id,
       blogName: "Blog 1",
+      createdAt: expect.any(String),
     });
   });
 

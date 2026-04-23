@@ -47,6 +47,7 @@ describe("GET /posts", () => {
       content: "Content 1",
       blogId: blog.id,
       blogName: "Blog 1",
+      createdAt: expect.any(String),
     });
     expect(posts[1]).toEqual({
       id: expect.any(String),
@@ -55,6 +56,7 @@ describe("GET /posts", () => {
       content: "Content 2",
       blogId: blog.id,
       blogName: "Blog 1",
+      createdAt: expect.any(String),
     });
   });
 });
