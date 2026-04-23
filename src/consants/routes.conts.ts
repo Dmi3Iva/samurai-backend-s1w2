@@ -4,4 +4,4 @@ export const ROUTES = {
   testings: "/testing/all-data",
 };
 
-export const IS_MEMBERSHIP_DEFAULT_VALUE = true;
+export const IS_MEMBERSHIP_DEFAULT_VALUE = false;
