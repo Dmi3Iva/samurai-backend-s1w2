@@ -10,7 +10,7 @@ import type {
   RequestWithBody,
   RequestWithQuery,
 } from "../../types/request.type";
-import { blogsRepository } from "./repository/blogs.repository";
+import { blogsService } from "./services/blogs.service";
 import {
   body,
   matchedData,
@@ -88,7 +88,7 @@ blogsRouter.get(
     req: RequestWithQuery<IFindBlogsSearchTerm>,
     res: Response<IViewBlog[]>,
   ) => {
-    const blogs = await blogsRepository.findBlogs(req.query);
+    const blogs = await blogsService.findBlogs(req.query);
     res.send(blogs);
   },
 );
@@ -102,7 +102,7 @@ blogsRouter.post(
   inputValidationMiddleware,
   async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
     const data = matchedData<CreateBlogModel>(req);
-    const newBlog = await blogsRepository.createBlog(data);
+    const newBlog = await blogsService.createBlog(data);
 
     res.status(201).json(newBlog);
   },
@@ -114,7 +114,7 @@ blogsRouter.get(
   param("id"),
   async (req, res) => {
     const data = matchedData<BlogIdParam>(req);
-    const blog = await blogsRepository.findBlog(data.id);
+    const blog = await blogsService.findBlog(data.id);
 
     if (!blog) {
       res.status(404).json({ message: "Blog not found" });
@@ -136,7 +136,7 @@ blogsRouter.put(
   async (req, res) => {
     const data = matchedData<UpdateBlogModel & BlogIdParam>(req);
 
-    const isBlogUpdated = await blogsRepository.updateBlog({
+    const isBlogUpdated = await blogsService.updateBlog({
       id: data.id,
       updateBlogModelData: {
         name: data.name,
@@ -160,7 +160,7 @@ blogsRouter.delete(
   inputValidationMiddleware,
   async (req, res) => {
     const data = matchedData<BlogIdParam>(req);
-    const isRemoved = await blogsRepository.deleteBlog(data.id);
+    const isRemoved = await blogsService.deleteBlog(data.id);
 
     if (!isRemoved) {
       return res.status(404).json({ message: "Blog not found" });

@@ -1,3 +1,5 @@
+import { OptionalId } from "mongodb";
+
 export interface IViewBlog {
   id: string;
   name: string;
@@ -7,8 +9,7 @@ export interface IViewBlog {
   createdAt: Date;
 }
 
-export interface IBlogType {
-  id: string;
+export interface IBlogTypeWithoutId {
   name: string;
   description: string;
   websiteUrl: string;
@@ -16,10 +17,17 @@ export interface IBlogType {
   createdAt: Date;
 }
 
+export type IBlogType = OptionalId<IBlogTypeWithoutId>;
+
 export interface CreateBlogModel {
   name: string;
   description: string;
   websiteUrl: string;
+}
+
+export interface CreateBlogModelDB extends CreateBlogModel {
+  createdAt: Date;
+  isMembership: boolean;
 }
 
 export interface UpdateBlogModel {

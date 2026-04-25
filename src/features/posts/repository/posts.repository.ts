@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
   IPostCreateModel,
@@ -6,8 +6,9 @@ import {
   IPostUpadteModel,
 } from "../models/post.model";
 
-const mapToPostType = (p: WithId<IPostType>): IPostType => ({
-  id: p.id,
+// buis
+const mapToPostType = (p: IPostType): IPostType => ({
+  id: p._id?.toString() || "not-existing-id",
   title: p.title,
   shortDescription: p.shortDescription,
   content: p.content,
@@ -17,8 +18,13 @@ const mapToPostType = (p: WithId<IPostType>): IPostType => ({
 
 export const postsRepository = {
   async getPost(id: string): Promise<IPostType | null> {
-    const findResult = await postsDatabase.findOne({ id });
-    return findResult ? mapToPostType(findResult) : null;
+    try {
+      const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });
+      return findResult ? mapToPostType(findResult) : null;
+    } catch (e) {
+      console.log(`error while try to get post with id=${id}`);
+      return null;
+    }
   },
 
   async getPosts() {
@@ -27,42 +33,52 @@ export const postsRepository = {
   },
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType> {
-    const id = String(Number(new Date()));
-    const newPost = { ...postBody, id, createdAt: new Date() };
-    await postsDatabase.insertOne({
-      ...newPost,
-    });
+    try {
+      const newPost = { ...postBody, createdAt: new Date() };
+      const { insertedId } = await postsDatabase.insertOne({
+        ...newPost,
+      });
 
-    return mapToPostType(newPost as WithId<IPostType>);
+      newPost._id = insertedId;
+
+      return mapToPostType(newPost as WithId<IPostType>);
+    } catch (e) {
+      console.error("failed to create post", e);
+      return false;
+    }
   },
 
   async updatePost({
     id,
-    updatedPost,
+    data: updatedPost,
   }: {
     id: string;
-    updatedPost: IPostUpadteModel;
+    data: IPostUpadteModel;
   }): Promise<boolean> {
-    const blogInPostToUpdate = await blogsDatabase.findOne({
-      id: updatedPost.blogId,
-    });
+    try {
+      const updateResult = await postsDatabase.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updatedPost },
+      );
 
-    if (!blogInPostToUpdate) {
+      return updateResult.matchedCount === 1;
+    } catch (e) {
+      console.error(`failed to update posts with id=${id}`);
       return false;
     }
-
-    const updateResult = await postsDatabase.updateOne(
-      { id },
-      { $set: updatedPost },
-    );
-
-    return updateResult.matchedCount === 1;
   },
 
   async deletePost(id: string): Promise<boolean> {
-    const deleteResult = await postsDatabase.deleteOne({ id });
+    try {
+      const deleteResult = await postsDatabase.deleteOne({
+        _id: new ObjectId(id),
+      });
 
-    return deleteResult.deletedCount === 1;
+      return deleteResult.deletedCount === 1;
+    } catch (e) {
+      console.error(`failed to delete post with id=${id}`);
+      return false;
+    }
   },
 
   async removeAll() {

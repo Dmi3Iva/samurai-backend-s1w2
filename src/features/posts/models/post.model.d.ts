@@ -1,5 +1,4 @@
-export interface IPostType {
-  id: string;
+export interface IPostTypeWithoutId {
   title: string;
   shortDescription: string;
   content: string;
@@ -7,7 +6,9 @@ export interface IPostType {
   createdAt: Date;
 }
 
-export type IPostCreateModel = Omit<IPostType, "id", "createdAt">;
+export type IPostType = OptionalId<IPostTypeWithoutId>;
+
+export type IPostCreateModel = Omit<IPostType, "_id", "createdAt">;
 export type IPostUpadteModel = IPostCreateModel;
 export interface IPostView extends IPostType {
   blogName: string;

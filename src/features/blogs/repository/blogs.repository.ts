@@ -1,38 +1,36 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { blogsDatabase } from "../../../repositories/db";
 import type {
-  CreateBlogModel,
   IFindBlogsSearchTerm,
   UpdateBlogModel,
   IViewBlog,
   IBlogType,
+  CreateBlogModelDB,
 } from "../models/blog.model";
-import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
-
-export interface DBType {
-  blogs: IBlogType[];
-}
 
 const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
   description: b.description,
   name: b.name,
   websiteUrl: b.websiteUrl,
-  id: b.id,
+  id: b._id.toString(),
   isMembership: b.isMembership,
   createdAt: b.createdAt,
 });
 
 export const blogsRepository = {
-  async findBlog(id?: string): Promise<IBlogType | null> {
-    if (!id) return null;
-
-    const foundBlog = await blogsDatabase.findOne({ id });
-    return foundBlog ? mapToBlogType(foundBlog) : null;
+  async findBlog(id: string): Promise<IBlogType | null> {
+    try {
+      const foundBlog = await blogsDatabase.findOne({ _id: new ObjectId(id) });
+      return foundBlog ? mapToBlogType(foundBlog) : null;
+    } catch (e) {
+      console.log(`error while try to get BLOG with id=${id}`);
+      return null;
+    }
   },
 
   async findBlogs(
     findBlogsSearchTerm?: IFindBlogsSearchTerm,
-  ): Promise<IBlogType[]> {
+  ): Promise<IViewBlog[]> {
     if (!findBlogsSearchTerm) return [];
 
     let searchResult = await blogsDatabase.find({}).toArray();
@@ -40,43 +38,46 @@ export const blogsRepository = {
     return searchResult.map(mapToBlogType);
   },
 
-  async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {
-    const newBlogData = {
-      ...createBlogModelData,
-      id: String(Number(new Date())),
-      isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
-      createdAt: new Date(),
-    };
-    await blogsDatabase.insertOne(newBlogData);
+  async createBlog(createBlogModelData: CreateBlogModelDB): Promise<ObjectId> {
+    const { insertedId } = await blogsDatabase.insertOne(createBlogModelData);
 
-    return mapToBlogType(newBlogData as WithId<IBlogType>);
+    return insertedId;
   },
 
-  async deleteBlog(id?: string): Promise<boolean> {
-    if (!id) return false;
-    const removingResult = await blogsDatabase.deleteOne({ id });
-    return removingResult.deletedCount === 1;
+  async deleteBlog(id: string): Promise<boolean> {
+    try {
+      const removingResult = await blogsDatabase.deleteOne({
+        _id: new ObjectId(id),
+      });
+      return removingResult.deletedCount === 1;
+    } catch (e) {
+      console.error(`failed to delete blog with id=${id}`);
+      return false;
+    }
   },
 
   async updateBlog({
     id,
     updateBlogModelData,
   }: {
-    id?: string;
+    id: string;
     updateBlogModelData: UpdateBlogModel;
   }): Promise<boolean> {
-    if (!id) return false;
-
-    const updateResult = await blogsDatabase.updateOne(
-      { id },
-      {
-        $set: {
-          ...updateBlogModelData,
+    try {
+      const updateResult = await blogsDatabase.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            ...updateBlogModelData,
+          },
         },
-      },
-    );
+      );
 
-    return updateResult.matchedCount === 1;
+      return updateResult.matchedCount === 1;
+    } catch (e) {
+      console.error(`failed to update blog with id=${id}`);
+      return false;
+    }
   },
   async removeAll() {
     return await blogsDatabase.deleteMany({});
