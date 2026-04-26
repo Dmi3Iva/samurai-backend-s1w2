@@ -9,6 +9,7 @@ import type {
 } from "../models/blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 import { blogsRepository } from "../repository/blogs.repository";
+import { postsRepository } from "../../posts/repository/posts.repository";
 
 const mapToBlogType = (b: IBlogType): IViewBlog => ({
   description: b.description,
@@ -42,6 +43,7 @@ export const blogsService = {
   },
 
   async deleteBlog(id: string): Promise<boolean> {
+    postsRepository.removeAllByBlogs(id);
     return await blogsRepository.deleteBlog(id);
   },
 

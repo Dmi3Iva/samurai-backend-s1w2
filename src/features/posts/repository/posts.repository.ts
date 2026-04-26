@@ -81,6 +81,10 @@ export const postsRepository = {
     }
   },
 
+  async removeAllByBlogs(blogId: string) {
+    return await postsDatabase.deleteMany({ blogId });
+  },
+
   async removeAll() {
     return await postsDatabase.deleteMany({});
   },
