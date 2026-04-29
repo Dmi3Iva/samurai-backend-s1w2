@@ -1,10 +1,12 @@
 import { Router } from "express";
-import type { RequestHandler, Response } from "express";
+import type { NextFunction, RequestHandler, Response } from "express";
 import type {
   CreateBlogModel,
   IFindBlogsSearchTerm,
   UpdateBlogModel,
   IViewBlog,
+  BlogsRouterResponse,
+  IFindPostsByBlogSearchTerm,
 } from "./models/blog.model";
 import type {
   RequestWithBody,
@@ -86,7 +88,7 @@ blogsRouter.get(
   "/",
   async (
     req: RequestWithQuery<IFindBlogsSearchTerm>,
-    res: Response<IViewBlog[]>,
+    res: Response<BlogsRouterResponse>,
   ) => {
     const blogs = await blogsService.findBlogs(req.query);
     res.send(blogs);
@@ -122,6 +124,26 @@ blogsRouter.get(
     }
 
     res.status(200).json(blog);
+  },
+);
+
+blogsRouter.get(
+  "/:id/posts",
+  inputValidationMiddleware,
+  param("id"),
+  async (req: RequestWithQuery<Partial<IFindPostsByBlogSearchTerm>>, res) => {
+    const { id: blogId } = matchedData<BlogIdParam>(req);
+    const query = req.query;
+    const posts = await blogsService.findPostsByBlogId(blogId, query);
+
+    if (!posts) {
+      res
+        .status(404)
+        .json({ message: `Specified blog ${blogId} doesn't exist` });
+      return;
+    }
+
+    res.status(200).json(posts);
   },
 );
 

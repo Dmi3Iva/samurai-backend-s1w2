@@ -11,9 +11,15 @@ describe("GET /posts", () => {
   });
 
   it("should return empty array when no posts exist", async () => {
-    const posts = await postsTestManager.getEntities();
+    const response = await postsTestManager.getEntities();
 
-    expect(posts).toEqual([]);
+    expect(response).toEqual({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      pagesCount: 0,
+      totalCount: 0,
+    });
   });
 
   it("should return all posts", async () => {
@@ -37,23 +43,24 @@ describe("GET /posts", () => {
       blogId: blog.id,
     });
 
-    const posts = await postsTestManager.getEntities();
+    const response = await postsTestManager.getEntities();
 
-    expect(posts).toHaveLength(2);
-    expect(posts[0]).toEqual({
-      id: expect.any(String),
-      title: "Post 1",
-      shortDescription: "Short desc 1",
-      content: "Content 1",
-      blogId: blog.id,
-      blogName: "Blog 1",
-      createdAt: expect.any(String),
-    });
-    expect(posts[1]).toEqual({
+    expect(response.items).toHaveLength(2);
+    // Posts are sorted by createdAt desc, so Post 2 (created later) comes first
+    expect(response.items[0]).toEqual({
       id: expect.any(String),
       title: "Post 2",
       shortDescription: "Short desc 2",
       content: "Content 2",
+      blogId: blog.id,
+      blogName: "Blog 1",
+      createdAt: expect.any(String),
+    });
+    expect(response.items[1]).toEqual({
+      id: expect.any(String),
+      title: "Post 1",
+      shortDescription: "Short desc 1",
+      content: "Content 1",
       blogId: blog.id,
       blogName: "Blog 1",
       createdAt: expect.any(String),

@@ -10,9 +10,15 @@ describe("GET /blogs", () => {
   });
 
   it("should return empty array when no blogs exist", async () => {
-    const blogs = await blogsTestManager.getEntities();
+    const response = await blogsTestManager.getEntities();
 
-    expect(blogs).toEqual([]);
+    expect(response).toEqual({
+      items: [],
+      page: 1,
+      pageSize: 10,
+      pagesCount: 0,
+      totalCount: 0,
+    });
   });
 
   it("should return all blogs", async () => {
@@ -28,10 +34,10 @@ describe("GET /blogs", () => {
       websiteUrl: "https://blog2.com",
     });
 
-    const blogs = await blogsTestManager.getEntities();
+    const response = await blogsTestManager.getEntities();
 
-    expect(blogs).toHaveLength(2);
-    expect(blogs[0]).toEqual({
+    expect(response.items).toHaveLength(2);
+    expect(response.items[0]).toEqual({
       id: expect.any(String),
       name: "Blog 1",
       description: "Desc 1",
@@ -39,7 +45,7 @@ describe("GET /blogs", () => {
       createdAt: expect.any(String),
       isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
-    expect(blogs[1]).toEqual({
+    expect(response.items[1]).toEqual({
       id: expect.any(String),
       name: "Blog 2",
       description: "Desc 2",

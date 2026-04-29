@@ -32,17 +32,17 @@ describe("DELETE /posts/:id", () => {
     });
 
     const postsBeforeDelete = await postsTestManager.getEntities();
-    const firstPostId = postsBeforeDelete[0].id;
+    const firstPostId = postsBeforeDelete.items[0].id;
 
     await postsTestManager.deleteEntity(firstPostId);
 
     const postsAfterDelete = await postsTestManager.getEntities();
-    expect(postsAfterDelete).toHaveLength(1);
-    expect(postsAfterDelete[0]).toEqual({
+    expect(postsAfterDelete.items).toHaveLength(1);
+    expect(postsAfterDelete.items[0]).toEqual({
       id: expect.any(String),
-      title: "Post 2",
-      shortDescription: "Short desc 2",
-      content: "Content 2",
+      title: "Post 1",
+      shortDescription: "Short desc 1",
+      content: "Content 1",
       blogId: blog.id,
       blogName: "Blog 1",
       createdAt: expect.any(String),

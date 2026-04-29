@@ -1,6 +1,7 @@
 import { WithId } from "mongodb";
 import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
+  IFindPostsSearchTerm,
   IPostCreateModel,
   IPostType,
   IPostUpadteModel,
@@ -19,18 +20,21 @@ const mapToPostView = async (p: IPostType): Promise<IPostView> => {
 };
 
 export const postsService = {
-  async getPost(id: string): Promise<IPostType | null> {
+  async getPost(id: string): Promise<IPostView | null> {
     const rawPost = await postsRepository.getPost(id);
-    return rawPost ? mapToPostView(rawPost) : null;
+    if (!rawPost) return null;
+    return await mapToPostView(rawPost);
   },
 
-  async getPosts() {
-    const findResult = await postsRepository.getPosts();
-    const mappedResult = await Promise.all(findResult.map(mapToPostView));
-    return mappedResult;
+  async getPosts(findPostsSearchTerm: IFindPostsSearchTerm) {
+    const result = await postsRepository.getPosts(findPostsSearchTerm);
+    const itemsWithBlogNames = await Promise.all(
+      result.items.map(async (post) => await mapToPostView(post))
+    );
+    return { ...result, items: itemsWithBlogNames };
   },
 
-  async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
+  async createPost(postBody: IPostCreateModel): Promise<IPostView | null> {
     const foundBlog = await blogsRepository.findBlog(postBody.blogId);
     if (!foundBlog) return null;
 

@@ -31,7 +31,7 @@ describe("Posts Integration Tests", () => {
 
     // Get all
     const posts = await postsTestManager.getEntities();
-    expect(posts).toHaveLength(1);
+    expect(posts.items).toHaveLength(1);
 
     // Get by id
     const post = await postsTestManager.getEntity(postId);

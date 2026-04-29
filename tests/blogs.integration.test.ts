@@ -23,7 +23,7 @@ describe("Blogs Integration Tests", () => {
 
     // Get all
     const blogs = await blogsTestManager.getEntities();
-    expect(blogs).toHaveLength(1);
+    expect(blogs.items).toHaveLength(1);
 
     // Get by id
     const blog = await blogsTestManager.getEntity(blogId);

@@ -26,13 +26,13 @@ describe("DELETE /blogs/:id", () => {
     });
 
     const blogsBeforeDelete = await blogsTestManager.getEntities();
-    const firstBlogId = blogsBeforeDelete[0].id;
+    const firstBlogId = blogsBeforeDelete.items[0].id;
 
     await blogsTestManager.deleteEntity(firstBlogId);
 
     const blogsAfterDelete = await blogsTestManager.getEntities();
-    expect(blogsAfterDelete).toHaveLength(1);
-    expect(blogsAfterDelete[0]).toEqual({
+    expect(blogsAfterDelete.items).toHaveLength(1);
+    expect(blogsAfterDelete.items[0]).toEqual({
       id: expect.any(String),
       name: "Blog 2",
       description: "Desc 2",

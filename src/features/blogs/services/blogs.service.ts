@@ -6,6 +6,8 @@ import type {
   UpdateBlogModel,
   IViewBlog,
   IBlogType,
+  BlogsRouterResponse,
+  IFindPostsByBlogSearchTerm,
 } from "../models/blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 import { blogsRepository } from "../repository/blogs.repository";
@@ -26,9 +28,19 @@ export const blogsService = {
   },
 
   async findBlogs(
-    findBlogsSearchTerm?: IFindBlogsSearchTerm,
-  ): Promise<IViewBlog[]> {
+    findBlogsSearchTerm: IFindBlogsSearchTerm,
+  ): Promise<BlogsRouterResponse> {
     return await blogsRepository.findBlogs(findBlogsSearchTerm);
+  },
+
+  async findPostsByBlogId(
+    blogId: string,
+    searchTerm: IFindPostsByBlogSearchTerm,
+  ) {
+    const blog = blogsRepository.findBlog(blogId);
+
+    if (!blog) return null;
+    return await postsRepository.getPosts({ ...searchTerm, blogId });
   },
 
   async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {

@@ -47,10 +47,10 @@ describe("POST /blogs", () => {
       websiteUrl: "https://saved.com",
     });
 
-    const blogs = await blogsTestManager.getEntities();
+    const response = await blogsTestManager.getEntities();
 
-    expect(blogs).toHaveLength(1);
-    expect(blogs[0]).toEqual({
+    expect(response.items).toHaveLength(1);
+    expect(response.items[0]).toEqual({
       id: expect.any(String),
       name: "Saved Blog",
       description: "Saved Description",

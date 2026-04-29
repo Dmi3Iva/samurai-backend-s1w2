@@ -1,6 +1,8 @@
 import { ObjectId, WithId } from "mongodb";
 import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
+  GetPostsResponse,
+  IFindPostsSearchTerm,
   IPostCreateModel,
   IPostType,
   IPostUpadteModel,
@@ -27,9 +29,40 @@ export const postsRepository = {
     }
   },
 
-  async getPosts() {
-    const findResult = await postsDatabase.find({}).toArray();
-    return findResult.map(mapToPostType);
+  async getPosts(
+    findPostsSearchTerm: IFindPostsSearchTerm,
+  ): Promise<GetPostsResponse> {
+    const {
+      pageNumber = 1,
+      pageSize = 10,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+      blogId,
+    } = findPostsSearchTerm;
+    const skip = (pageNumber - 1) * pageSize;
+    const limit = pageSize;
+
+    const filter = blogId ? { blogId } : {};
+
+    const findResult = postsDatabase.find(filter, {
+      sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
+      skip,
+      limit,
+    });
+
+    const rawItems = await findResult.toArray();
+    const items = rawItems.map(mapToPostType);
+    const page = pageNumber;
+    const totalCount = await postsDatabase.countDocuments(filter);
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return {
+      items,
+      page,
+      pageSize,
+      pagesCount,
+      totalCount,
+    };
   },
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType> {

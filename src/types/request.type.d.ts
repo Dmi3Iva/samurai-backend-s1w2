@@ -12,6 +12,11 @@ export interface RequestWithQuery<Q> extends Request {
   query: Q;
 }
 
+export interface RequestWithQueryAndParams<Q, P> extends Request {
+  query: Q;
+  params: P;
+}
+
 export interface RequestWithHeaders<H> extends Request {
   headers: H;
 }

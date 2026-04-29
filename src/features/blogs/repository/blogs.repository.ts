@@ -6,6 +6,7 @@ import type {
   IViewBlog,
   IBlogType,
   CreateBlogModelDB,
+  BlogsRouterResponse,
 } from "../models/blog.model";
 
 const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
@@ -29,13 +30,55 @@ export const blogsRepository = {
   },
 
   async findBlogs(
-    findBlogsSearchTerm?: IFindBlogsSearchTerm,
-  ): Promise<IViewBlog[]> {
-    if (!findBlogsSearchTerm) return [];
+    findBlogsSearchTerm: IFindBlogsSearchTerm,
+  ): Promise<BlogsRouterResponse> {
+    const {
+      searchNameTerm = null,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+      pageNumber = 1,
+      pageSize = 10,
+    } = findBlogsSearchTerm;
 
-    let searchResult = await blogsDatabase.find({}).toArray();
+    const skip = (pageNumber - 1) * pageSize;
+    const limit = pageSize;
 
-    return searchResult.map(mapToBlogType);
+    let searchResult = blogsDatabase.find(
+      {
+        // searchNameTerm string (query)
+        // Search term for blog Name: Name should contains this term in any position
+        // Default value : null
+        ...(searchNameTerm
+          ? {
+              name: { $regex: searchNameTerm },
+            }
+          : {}),
+      },
+      // sortBy string (query)
+      // Default value : createdAt
+      // sortDirection string (query)
+      // Default value: desc
+      // Available values : asc, desc
+      // pageNumber integer($int32) (query)
+      // pageNumber is number of portions that should be returned
+      // Default value : 1
+      // PageSize integer($int32) (query)
+      // pageSize is portions size that should be returned
+      // Default value : 10
+      { [sortBy]: sortDirection === "asc" ? 1 : -1, skip, limit },
+    );
+
+    const items = (await searchResult.toArray()).map(mapToBlogType);
+    const totalCount = await blogsDatabase.countDocuments();
+    const pagesCount = Math.ceil(searchResult.bufferedCount() / pageSize);
+
+    return {
+      items,
+      pagesCount,
+      page: pageNumber,
+      pageSize,
+      totalCount,
+    };
   },
 
   async createBlog(createBlogModelData: CreateBlogModelDB): Promise<ObjectId> {

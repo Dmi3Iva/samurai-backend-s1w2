@@ -5,8 +5,13 @@ import type {
   IPostCreateModel,
   IPostView as IPostView,
   IPostType,
+  GetPostsResponse,
+  IFindPostsSearchTerm,
 } from "./models/post.model";
-import type { RequestWithBody } from "../../types/request.type";
+import type {
+  RequestWithBody,
+  RequestWithQuery,
+} from "../../types/request.type";
 import {
   body,
   matchedData,
@@ -15,7 +20,6 @@ import {
   type FieldValidationError,
 } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
-import { blogsRepository } from "../blogs/repository/blogs.repository";
 import { postsService } from "./services/posts.service";
 
 interface PostsIdParam {
@@ -80,10 +84,16 @@ const inputValidationMiddleware: RequestHandler = (req, res, next) => {
   });
 };
 
-postsRouter.get("/", async (req: Request, res: Response<IPostView[]>) => {
-  const posts = await postsService.getPosts();
-  res.send(posts);
-});
+postsRouter.get(
+  "/",
+  async (
+    req: RequestWithQuery<IFindPostsSearchTerm>,
+    res: Response<GetPostsResponse>,
+  ) => {
+    const posts = await postsService.getPosts(req.query);
+    res.send(posts);
+  },
+);
 
 postsRouter.post(
   "/",

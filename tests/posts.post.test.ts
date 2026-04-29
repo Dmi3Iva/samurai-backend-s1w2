@@ -183,10 +183,10 @@ describe("POST /posts", () => {
       blogId: blog.id,
     });
 
-    const posts = await postsTestManager.getEntities();
+    const response = await postsTestManager.getEntities();
 
-    expect(posts).toHaveLength(1);
-    expect(posts[0]).toEqual({
+    expect(response.items).toHaveLength(1);
+    expect(response.items[0]).toEqual({
       id: expect.any(String),
       title: "Saved Post",
       shortDescription: "Saved Short Desc",
