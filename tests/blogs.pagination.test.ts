@@ -130,6 +130,67 @@ describe("GET /blogs - Pagination and Sorting", () => {
     });
   });
 
+  describe("BUG: searchNameTerm with pagination", () => {
+    beforeEach(async () => {
+      // Create blogs with similar names for search testing
+      await blogsTestManager.createEntity({
+        name: "Tim",
+        description: "description",
+        websiteUrl: "https://someurl.com",
+      });
+
+      await blogsTestManager.createEntity({
+        name: "Tima",
+        description: "description",
+        websiteUrl: "https://someurl.com",
+      });
+
+      await blogsTestManager.createEntity({
+        name: "Timma",
+        description: "description",
+        websiteUrl: "https://someurl.com",
+      });
+
+      await blogsTestManager.createEntity({
+        name: "timm",
+        description: "description",
+        websiteUrl: "https://someurl.com",
+      });
+
+      // Create other blogs that shouldn't match
+      for (let i = 1; i <= 8; i++) {
+        await blogsTestManager.createEntity({
+          name: `Other Blog ${i}`,
+          description: "description",
+          websiteUrl: "https://someurl.com",
+        });
+      }
+    });
+
+    it("should filter by searchNameTerm and return correct totalCount", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.blogs}`)
+        .query({ searchNameTerm: "Tim", pageSize: 5, pageNumber: 1 });
+
+      // BUG: searchNameTerm doesn't filter correctly
+      // Expected: totalCount = 4 (only blogs with "Tim" in name)
+      // Actual: totalCount = 12 (all blogs)
+      expect(response.body.totalCount).toBe(4);
+      expect(response.body.items).toHaveLength(4);
+    });
+
+    it("should return correct pagesCount when filtering by searchNameTerm", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.blogs}`)
+        .query({ searchNameTerm: "Tim", pageSize: 5, pageNumber: 1 });
+
+      // BUG: pagesCount is calculated based on total count instead of filtered count
+      // Expected: pagesCount = 1 (4 items / 5 per page = 1)
+      // Actual: pagesCount = 3 (12 items / 5 per page = 2.4 -> 3)
+      expect(response.body.pagesCount).toBe(1);
+    });
+  });
+
   describe("BUG: incorrect sort order", () => {
     it("should return blogs in correct order (newest first by createdAt)", async () => {
       // Create 12 blogs

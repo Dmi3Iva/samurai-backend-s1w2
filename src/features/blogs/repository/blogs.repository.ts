@@ -43,17 +43,19 @@ export const blogsRepository = {
     const skip = (Number(pageNumber) - 1) * Number(pageSize);
     const limit = Number(pageSize);
 
+    const filter = {
+      // searchNameTerm string (query)
+      // Search term for blog Name: Name should contains this term in any position
+      // Default value : null
+      ...(searchNameTerm
+        ? {
+            name: { $regex: searchNameTerm, $options: "i" },
+          }
+        : {}),
+    };
+
     let searchResult = blogsDatabase.find(
-      {
-        // searchNameTerm string (query)
-        // Search term for blog Name: Name should contains this term in any position
-        // Default value : null
-        ...(searchNameTerm
-          ? {
-              name: { $regex: searchNameTerm },
-            }
-          : {}),
-      },
+      filter,
       // sortBy string (query)
       // Default value : createdAt
       // sortDirection string (query)
@@ -73,7 +75,7 @@ export const blogsRepository = {
     );
 
     const items = (await searchResult.toArray()).map(mapToBlogType);
-    const totalCount = await blogsDatabase.countDocuments();
+    const totalCount = await blogsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
