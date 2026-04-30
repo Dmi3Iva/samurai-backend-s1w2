@@ -21,10 +21,8 @@ import {
   type FieldValidationError,
 } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
-
-interface BlogIdParam {
-  id: string;
-}
+import { BlogIdParam, IdParam } from "../../types/common.type";
+import type { IPostCreateModel } from "../posts/models/post.model";
 
 export const blogsRouter = Router();
 
@@ -66,6 +64,39 @@ const websiteUrlValidation = body("websiteUrl")
   .withMessage(
     `websiterUrl should match regex ${websiteUrlValidationRegex.toString()}`,
   );
+
+const postTitleValidation = body("title")
+  .exists()
+  .withMessage("title is required field")
+  .isString()
+  .withMessage("title should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("title is empty")
+  .isLength({ max: 30 })
+  .withMessage("title length should be from 0 to 30");
+
+const postShortDescriptionValidation = body("shortDescription")
+  .exists()
+  .withMessage("shortDescription is required field")
+  .isString()
+  .withMessage("shortDescription should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("shortDescription is empty")
+  .isLength({ max: 100 })
+  .withMessage("shortDescription should be a string max length 100");
+
+const postContentValidation = body("content")
+  .exists()
+  .withMessage("content is required field")
+  .isString()
+  .withMessage("content should be a string")
+  .trim()
+  .notEmpty()
+  .withMessage("content is empty")
+  .isLength({ max: 100 })
+  .withMessage("content should be a string max length 100");
 
 const inputValidationMiddleware: RequestHandler = (req, res, next) => {
   const errors = validationResult(req);
@@ -115,7 +146,7 @@ blogsRouter.get(
   inputValidationMiddleware,
   param("id"),
   async (req, res) => {
-    const data = matchedData<BlogIdParam>(req);
+    const data = matchedData<IdParam>(req);
     const blog = await blogsService.findBlog(data.id);
 
     if (!blog) {
@@ -132,7 +163,7 @@ blogsRouter.get(
   inputValidationMiddleware,
   param("id"),
   async (req: RequestWithQuery<Partial<IFindPostsByBlogSearchTerm>>, res) => {
-    const { id: blogId } = matchedData<BlogIdParam>(req);
+    const { id: blogId } = matchedData<IdParam>(req);
     const query = req.query;
     const posts = await blogsService.findPostsByBlogId(blogId, query);
 
@@ -147,6 +178,26 @@ blogsRouter.get(
   },
 );
 
+blogsRouter.post(
+  "/:blogId/posts",
+  authorizationMiddleware,
+  param("blogId"),
+  postTitleValidation,
+  postShortDescriptionValidation,
+  postContentValidation,
+  inputValidationMiddleware,
+  async (req, res) => {
+    const data = matchedData<CreateBlogModel & BlogIdParam>(req);
+
+    const newPost = await blogsService.createPostForBlog(data);
+    if (!newPost) {
+      return res.status(404).json({ message: `Blog ${data.blogId} not found` });
+    }
+
+    res.status(201).json(newPost);
+  },
+);
+
 blogsRouter.put(
   "/:id",
   authorizationMiddleware,
@@ -156,7 +207,7 @@ blogsRouter.put(
   websiteUrlValidation,
   inputValidationMiddleware,
   async (req, res) => {
-    const data = matchedData<UpdateBlogModel & BlogIdParam>(req);
+    const data = matchedData<UpdateBlogModel & IdParam>(req);
 
     const isBlogUpdated = await blogsService.updateBlog({
       id: data.id,
@@ -181,7 +232,7 @@ blogsRouter.delete(
   param("id"),
   inputValidationMiddleware,
   async (req, res) => {
-    const data = matchedData<BlogIdParam>(req);
+    const data = matchedData<IdParam>(req);
     const isRemoved = await blogsService.deleteBlog(data.id);
 
     if (!isRemoved) {

@@ -12,6 +12,9 @@ import type {
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 import { blogsRepository } from "../repository/blogs.repository";
 import { postsRepository } from "../../posts/repository/posts.repository";
+import { BlogIdParam, IdParam } from "../../../types/common.type";
+import type { IPostCreateModel } from "../../posts/models/post.model";
+import type { IPostView } from "../../posts/models/post.model";
 
 const mapToBlogType = (b: IBlogType): IViewBlog => ({
   description: b.description,
@@ -52,6 +55,14 @@ export const blogsService = {
     const _id = await blogsRepository.createBlog(newBlogData);
 
     return mapToBlogType({ ...newBlogData, _id });
+  },
+
+  async createPost(data: CreateBlogModel & BlogIdParam) {
+    const blog = blogsRepository.findBlog(data.blogId);
+
+    if (!blog) return null;
+
+    return postsRepository.createPost(data);
   },
 
   async deleteBlog(id: string): Promise<boolean> {
