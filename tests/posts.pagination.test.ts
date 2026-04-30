@@ -58,36 +58,46 @@ describe("GET /posts - Pagination and Sorting", () => {
     });
   });
 
-  describe("Sorting", () => {
+  describe("Sorting by createdAt", () => {
     beforeEach(async () => {
       await postsTestManager.createEntity({
-        title: "Charlie Post",
-        shortDescription: "Desc C",
-        content: "Content C",
+        title: "First Post",
+        shortDescription: "Desc 1",
+        content: "Content 1",
         blogId,
       });
 
       await postsTestManager.createEntity({
-        title: "Alpha Post",
-        shortDescription: "Desc A",
-        content: "Content A",
+        title: "Second Post",
+        shortDescription: "Desc 2",
+        content: "Content 2",
         blogId,
       });
 
       await postsTestManager.createEntity({
-        title: "Bravo Post",
-        shortDescription: "Desc B",
-        content: "Content B",
+        title: "Third Post",
+        shortDescription: "Desc 3",
+        content: "Content 3",
         blogId,
       });
+    });
+
+    it("should sort by createdAt ascending (oldest first)", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.posts}`)
+        .query({ sortBy: "createdAt", sortDirection: "asc" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.items[0].title).toBe("First Post");
+      expect(response.body.items[2].title).toBe("Third Post");
     });
 
     it("should sort by createdAt descending (newest first) - default", async () => {
       const response = await request(app).get(`${ROUTES.posts}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.items[0].title).toBe("Bravo Post");
-      expect(response.body.items[2].title).toBe("Charlie Post");
+      expect(response.body.items[0].title).toBe("Third Post");
+      expect(response.body.items[2].title).toBe("First Post");
     });
   });
 

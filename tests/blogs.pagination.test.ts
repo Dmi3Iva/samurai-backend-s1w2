@@ -45,29 +45,38 @@ describe("GET /blogs - Pagination and Sorting", () => {
     });
   });
 
-  describe("Sorting", () => {
+  describe("Sorting by createdAt", () => {
     beforeEach(async () => {
-      // Create blogs with different names
       await blogsTestManager.createEntity({
-        name: "Charlie Blog",
-        description: "Description C",
-        websiteUrl: "https://charlie.com",
+        name: "First Blog",
+        description: "Description 1",
+        websiteUrl: "https://first.com",
       });
 
       await blogsTestManager.createEntity({
-        name: "Alpha Blog",
-        description: "Description A",
-        websiteUrl: "https://alpha.com",
+        name: "Second Blog",
+        description: "Description 2",
+        websiteUrl: "https://second.com",
       });
 
       await blogsTestManager.createEntity({
-        name: "Bravo Blog",
-        description: "Description B",
-        websiteUrl: "https://bravo.com",
+        name: "Third Blog",
+        description: "Description 3",
+        websiteUrl: "https://third.com",
       });
     });
 
-    it("should return blogs ordered by createdAt descending (newest first) - default", async () => {
+    it("should sort by createdAt ascending (oldest first)", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.blogs}`)
+        .query({ sortBy: "createdAt", sortDirection: "asc" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.items[0].name).toBe("First Blog");
+      expect(response.body.items[2].name).toBe("Third Blog");
+    });
+
+    it("should sort by createdAt descending (newest first) - default", async () => {
       const response = await request(app).get(`${ROUTES.blogs}`);
 
       expect(response.status).toBe(200);
@@ -75,32 +84,49 @@ describe("GET /blogs - Pagination and Sorting", () => {
     });
   });
 
-  describe("Search", () => {
+  describe("Search by name term", () => {
     beforeEach(async () => {
       await blogsTestManager.createEntity({
-        name: "Tech Blog",
-        description: "About technology",
-        websiteUrl: "https://tech.com",
+        name: "Ivan",
+        description: "About Ivan",
+        websiteUrl: "https://ivan.com",
       });
 
       await blogsTestManager.createEntity({
-        name: "Cooking Blog",
-        description: "About cooking",
-        websiteUrl: "https://cooking.com",
+        name: "DiVan",
+        description: "About DiVan",
+        websiteUrl: "https://divan.com",
       });
 
       await blogsTestManager.createEntity({
-        name: "Travel Blog",
-        description: "About travel",
-        websiteUrl: "https://travel.com",
+        name: "JanClod Vandam",
+        description: "About JanClod",
+        websiteUrl: "https://janclod.com",
+      });
+
+      await blogsTestManager.createEntity({
+        name: "Peter Blog",
+        description: "About Peter",
+        websiteUrl: "https://peter.com",
       });
     });
 
-    it("should return all blogs when no filters applied", async () => {
+    it("should search by name substring", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.blogs}`)
+        .query({ searchNameTerm: "Ivan" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.items.length).toBeGreaterThan(0);
+      const names = response.body.items.map((b: any) => b.name);
+      expect(names.some((n: string) => n.includes("Ivan"))).toBe(true);
+    });
+
+    it("should return all blogs when searchNameTerm is not provided", async () => {
       const response = await request(app).get(`${ROUTES.blogs}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.items).toHaveLength(3);
+      expect(response.body.items).toHaveLength(4);
     });
   });
 });

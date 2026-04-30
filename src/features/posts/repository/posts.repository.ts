@@ -7,22 +7,28 @@ import {
   IPostType,
   IPostUpadteModel,
 } from "../models/post.model";
+import { blogsRepository } from "../../blogs/repository/blogs.repository";
 
-// buis
-const mapToPostType = (p: IPostType): IPostType => ({
-  id: p._id?.toString() || "not-existing-id",
-  title: p.title,
-  shortDescription: p.shortDescription,
-  content: p.content,
-  blogId: p.blogId,
-  createdAt: p.createdAt,
-});
+// TODO:: move to separate file
+export const mapToPostType = async (p: IPostType): IPostType => {
+  const blog = await blogsRepository.findBlog(p.blogId);
+
+  return {
+    id: p._id?.toString() || "not-existing-id",
+    title: p.title,
+    shortDescription: p.shortDescription,
+    content: p.content,
+    blogId: p.blogId,
+    createdAt: p.createdAt,
+    blogName: blog ? blog.name : "no-name",
+  };
+};
 
 export const postsRepository = {
   async getPost(id: string): Promise<IPostType | null> {
     try {
       const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });
-      return findResult ? mapToPostType(findResult) : null;
+      return findResult ? await mapToPostType(findResult) : null;
     } catch (e) {
       console.log(`error while try to get post with id=${id}`);
       return null;
@@ -51,7 +57,7 @@ export const postsRepository = {
     });
 
     const rawItems = await findResult.toArray();
-    const items = rawItems.map(mapToPostType);
+    const items = await Promise.all(rawItems.map(mapToPostType));
     const page = pageNumber;
     const totalCount = await postsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / pageSize);
@@ -74,7 +80,7 @@ export const postsRepository = {
 
       newPost._id = insertedId;
 
-      return mapToPostType(newPost as WithId<IPostType>);
+      return await mapToPostType(newPost as WithId<IPostType>);
     } catch (e) {
       console.error("failed to create post", e);
       return false;

@@ -5,6 +5,98 @@ import { postsTestManager } from "./postsTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { ROUTES } from "../src/consants/routes.conts";
 
+describe("POST /blogs/:blogId/posts", () => {
+  let blogId: string;
+
+  beforeEach(async () => {
+    await request(app).delete(`${ROUTES.testings}`);
+
+    const blog = await blogsTestManager.createEntity({
+      name: "Test Blog",
+      description: "Test Description",
+      websiteUrl: "https://test.com",
+    });
+    blogId = blog.id;
+  });
+
+  it("should create post for specific blog", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.blogs}/${blogId}/posts`)
+      .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+      .send({
+        title: "New Post",
+        shortDescription: "New Short Desc",
+        content: "New Content",
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      id: expect.any(String),
+      title: "New Post",
+      shortDescription: "New Short Desc",
+      content: "New Content",
+      blogId,
+      blogName: "Test Blog",
+      createdAt: expect.any(String),
+    });
+  });
+
+  it("should return 404 when blog does not exist", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.blogs}/nonexistentid/posts`)
+      .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+      .send({
+        title: "New Post",
+        shortDescription: "Desc",
+        content: "Content",
+      });
+
+    expect(response.status).toBe(404);
+  });
+
+  it("should return 401 without authorization", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.blogs}/${blogId}/posts`)
+      .send({
+        title: "New Post",
+        shortDescription: "Desc",
+        content: "Content",
+      });
+
+    expect(response.status).toBe(401);
+  });
+
+  it("should validate post data", async () => {
+    const response = await request(app)
+      .post(`${ROUTES.blogs}/${blogId}/posts`)
+      .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+      .send({
+        title: "",
+        shortDescription: "",
+        content: "",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errorsMessages).toBeInstanceOf(Array);
+  });
+
+  it("should create post and make it available via GET /posts", async () => {
+    await request(app)
+      .post(`${ROUTES.blogs}/${blogId}/posts`)
+      .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+      .send({
+        title: "New Post",
+        shortDescription: "Desc",
+        content: "Content",
+      });
+
+    const posts = await postsTestManager.getEntities();
+
+    expect(posts.items).toHaveLength(1);
+    expect(posts.items[0].title).toBe("New Post");
+  });
+});
+
 describe("GET /blogs/:id/posts", () => {
   let blogId: string;
   let blog2Id: string;

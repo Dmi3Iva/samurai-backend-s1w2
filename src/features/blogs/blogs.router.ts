@@ -22,7 +22,6 @@ import {
 } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
-import type { IPostCreateModel } from "../posts/models/post.model";
 
 export const blogsRouter = Router();
 
@@ -189,7 +188,7 @@ blogsRouter.post(
   async (req, res) => {
     const data = matchedData<CreateBlogModel & BlogIdParam>(req);
 
-    const newPost = await blogsService.createPostForBlog(data);
+    const newPost = await blogsService.createPost(data);
     if (!newPost) {
       return res.status(404).json({ message: `Blog ${data.blogId} not found` });
     }
