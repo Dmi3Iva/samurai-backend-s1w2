@@ -43,7 +43,7 @@ export const blogsService = {
     blogId: string,
     searchTerm: IFindPostsByBlogSearchTerm,
   ) {
-    const blog = blogsRepository.findBlog(blogId);
+    const blog = await blogsRepository.findBlog(blogId);
 
     if (!blog) return null;
     return await postsRepository.getPosts({ ...searchTerm, blogId });
@@ -66,7 +66,7 @@ export const blogsService = {
     if (!blog) return null;
 
     const createdPost = await postsRepository.createPost(data);
-    return await mapToPostType(createdPost);
+    return createdPost;
   },
 
   async deleteBlog(id: string): Promise<boolean> {

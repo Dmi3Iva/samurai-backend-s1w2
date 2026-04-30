@@ -129,4 +129,25 @@ describe("GET /blogs - Pagination and Sorting", () => {
       expect(response.body.items).toHaveLength(4);
     });
   });
+
+  describe("BUG: pagesCount calculation", () => {
+    it("should return correct pagesCount", async () => {
+      // Create 12 blogs
+      for (let i = 1; i <= 12; i++) {
+        await blogsTestManager.createEntity({
+          name: `Blog ${i}`,
+          description: `Description ${i}`,
+          websiteUrl: `https://blog${i}.com`,
+        });
+      }
+
+      const response = await request(app)
+        .get(`${ROUTES.blogs}`)
+        .query({ pageSize: 10 });
+
+      // BUG: pagesCount is 0 instead of 2
+      expect(response.body.pagesCount).toBe(2);
+      expect(response.body.totalCount).toBe(12);
+    });
+  });
 });

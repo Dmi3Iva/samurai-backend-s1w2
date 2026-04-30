@@ -70,7 +70,7 @@ export const blogsRepository = {
 
     const items = (await searchResult.toArray()).map(mapToBlogType);
     const totalCount = await blogsDatabase.countDocuments();
-    const pagesCount = Math.ceil(searchResult.bufferedCount() / pageSize);
+    const pagesCount = Math.ceil(totalCount / pageSize);
 
     return {
       items,

@@ -80,6 +80,25 @@ describe("POST /blogs/:blogId/posts", () => {
     expect(response.body.errorsMessages).toBeInstanceOf(Array);
   });
 
+  it("should create post and make it available via GET /posts/:id", async () => {
+    const createResponse = await request(app)
+      .post(`${ROUTES.blogs}/${blogId}/posts`)
+      .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+      .send({
+        title: "New Post",
+        shortDescription: "Desc",
+        content: "Content",
+      });
+
+    const postId = createResponse.body.id;
+
+    // BUG: This returns 404 because the post id is "not-existing-id"
+    const getResponse = await request(app).get(`${ROUTES.posts}/${postId}`);
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body.title).toBe("New Post");
+  });
+
   it("should create post and make it available via GET /posts", async () => {
     await request(app)
       .post(`${ROUTES.blogs}/${blogId}/posts`)
@@ -156,6 +175,36 @@ describe("GET /blogs/:id/posts", () => {
     expect(response.status).toBe(200);
     expect(response.body.items).toHaveLength(0);
     expect(response.body.totalCount).toBe(0);
+  });
+
+  it("should support pagination for blog posts", async () => {
+    // Create 12 posts for the blog
+    for (let i = 1; i <= 12; i++) {
+      await postsTestManager.createEntity({
+        title: `Post ${i}`,
+        shortDescription: `Desc ${i}`,
+        content: `Content ${i}`,
+        blogId,
+      });
+    }
+
+    const response = await request(app)
+      .get(`${ROUTES.blogs}/${blogId}/posts`)
+      .query({ pageNumber: 1, pageSize: 10 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.items).toHaveLength(10);
+    expect(response.body.totalCount).toBe(12);
+    expect(response.body.pagesCount).toBe(2);
+  });
+
+  it("should return 404 when blog does not exist", async () => {
+    const response = await request(app).get(
+      `${ROUTES.blogs}/63189b06003380064c4193be/posts`,
+    );
+
+    // BUG: Returns 200 instead of 404
+    expect(response.status).toBe(404);
   });
 
   it("should support sorting for blog posts by createdAt", async () => {

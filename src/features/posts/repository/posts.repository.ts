@@ -45,8 +45,8 @@ export const postsRepository = {
       sortDirection = "desc",
       blogId,
     } = findPostsSearchTerm;
-    const skip = (pageNumber - 1) * pageSize;
-    const limit = pageSize;
+    const skip = (Number(pageNumber) - 1) * Number(pageSize);
+    const limit = Number(pageSize);
 
     const filter = blogId ? { blogId } : {};
 
@@ -58,14 +58,14 @@ export const postsRepository = {
 
     const rawItems = await findResult.toArray();
     const items = await Promise.all(rawItems.map(mapToPostType));
-    const page = pageNumber;
+    const page = Number(pageNumber);
     const totalCount = await postsDatabase.countDocuments(filter);
-    const pagesCount = Math.ceil(totalCount / pageSize);
+    const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
       items,
       page,
-      pageSize,
+      pageSize: Number(pageSize),
       pagesCount,
       totalCount,
     };

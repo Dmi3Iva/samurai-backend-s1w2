@@ -179,4 +179,29 @@ describe("GET /posts - Pagination and Sorting", () => {
       expect(response.body.totalCount).toBe(5);
     });
   });
+
+  describe("BUG: query params are strings, not numbers", () => {
+    beforeEach(async () => {
+      // Create 12 posts
+      for (let i = 1; i <= 12; i++) {
+        await postsTestManager.createEntity({
+          title: `Post ${i}`,
+          shortDescription: `Desc ${i}`,
+          content: `Content ${i}`,
+          blogId,
+        });
+      }
+    });
+
+    it("should return page and pageSize as numbers, not strings", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.posts}`)
+        .query({ pageSize: 3, pageNumber: 1 });
+
+      // BUG: page and pageSize are strings like "1" and "3" instead of numbers
+      expect(response.body.page).toBe(1);
+      expect(response.body.pageSize).toBe(3);
+      expect(response.body.items).toHaveLength(3);
+    });
+  });
 });
