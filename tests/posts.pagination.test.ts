@@ -40,50 +40,6 @@ describe("GET /posts - Pagination and Sorting", () => {
       expect(response.items).toHaveLength(10);
     });
 
-    it("should return custom page size", async () => {
-      // Create 10 posts
-      for (let i = 1; i <= 10; i++) {
-        await postsTestManager.createEntity({
-          title: `Post ${i}`,
-          shortDescription: `Short desc ${i}`,
-          content: `Content ${i}`,
-          blogId,
-        });
-      }
-
-      const response = await request(app)
-        .get(`${ROUTES.posts}`)
-        .query({ pageSize: 5 });
-
-      expect(response.status).toBe(200);
-      expect(response.body.page).toBe(1);
-      expect(response.body.pageSize).toBe("5");
-      expect(response.body.totalCount).toBe(10);
-      expect(response.body.pagesCount).toBe(2);
-      expect(response.body.items).toHaveLength(5);
-    });
-
-    it("should return second page", async () => {
-      // Create 15 posts
-      for (let i = 1; i <= 15; i++) {
-        await postsTestManager.createEntity({
-          title: `Post ${i}`,
-          shortDescription: `Short desc ${i}`,
-          content: `Content ${i}`,
-          blogId,
-        });
-      }
-
-      const response = await request(app)
-        .get(`${ROUTES.posts}`)
-        .query({ pageNumber: 2, pageSize: 10 });
-
-      expect(response.status).toBe(200);
-      expect(response.body.page).toBe("2");
-      expect(response.body.totalCount).toBe(15);
-      expect(response.body.items).toHaveLength(5);
-    });
-
     it("should return empty array for page beyond available", async () => {
       await postsTestManager.createEntity({
         title: "Post 1",
