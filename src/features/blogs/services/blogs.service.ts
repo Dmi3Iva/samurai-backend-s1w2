@@ -46,7 +46,10 @@ export const blogsService = {
     const blog = await blogsRepository.findBlog(blogId);
 
     if (!blog) return null;
-    return await postsRepository.getPosts({ ...searchTerm, blogId });
+    return await postsRepository.getPosts({
+      ...searchTerm,
+      blogId,
+    });
   },
 
   async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {

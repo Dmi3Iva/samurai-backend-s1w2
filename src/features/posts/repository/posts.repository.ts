@@ -11,8 +11,6 @@ import { blogsRepository } from "../../blogs/repository/blogs.repository";
 
 // TODO:: move to separate file
 export const mapToPostType = async (p: IPostType): IPostType => {
-  const blog = await blogsRepository.findBlog(p.blogId);
-
   return {
     id: p._id?.toString() || "not-existing-id",
     title: p.title,
@@ -20,7 +18,7 @@ export const mapToPostType = async (p: IPostType): IPostType => {
     content: p.content,
     blogId: p.blogId,
     createdAt: p.createdAt,
-    blogName: blog ? blog.name : "no-name",
+    blogName: p.blogName,
   };
 };
 
@@ -73,7 +71,13 @@ export const postsRepository = {
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType> {
     try {
-      const newPost = { ...postBody, createdAt: new Date() };
+      const blog = await blogsRepository.findBlog(postBody.blogId);
+
+      const newPost = {
+        ...postBody,
+        createdAt: new Date(),
+        blogName: blog?.name,
+      };
       const { insertedId } = await postsDatabase.insertOne({
         ...newPost,
       });

@@ -49,13 +49,13 @@ export interface IFindBlogsSearchTerm {
   searchNameTerm?: string | null;
   sortBy?: string;
   sortDirection?: ESortDirection;
-  pageNumber?: number;
-  pageSize?: number;
+  pageNumber?: string;
+  pageSize?: string;
 }
 
 export interface IFindPostsByBlogSearchTerm {
-  pageNumber?: number;
-  pageSize?: number;
+  pageNumber?: string;
+  pageSize?: string;
   sortBy?: string;
   sortDirection?: ESortDirection;
   blogId?: string;

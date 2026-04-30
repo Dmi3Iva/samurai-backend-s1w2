@@ -130,6 +130,27 @@ describe("GET /blogs - Pagination and Sorting", () => {
     });
   });
 
+  describe("BUG: incorrect sort order", () => {
+    it("should return blogs in correct order (newest first by createdAt)", async () => {
+      // Create 12 blogs
+      for (let i = 1; i <= 12; i++) {
+        await blogsTestManager.createEntity({
+          name: `Blog ${i}`,
+          description: `Description ${i}`,
+          websiteUrl: `https://blog${i}.com`,
+        });
+      }
+
+      const response = await request(app).get(`${ROUTES.blogs}`);
+
+      // BUG: Order is incorrect - oldest first instead of newest first
+      // Expected: Blog 12, Blog 11, Blog 10... (newest first)
+      // Actual: Blog 1, Blog 2, Blog 3... (oldest first)
+      expect(response.body.items[0].name).toBe("Blog 12");
+      expect(response.body.items[9].name).toBe("Blog 3");
+    });
+  });
+
   describe("BUG: pagesCount calculation", () => {
     it("should return correct pagesCount", async () => {
       // Create 12 blogs

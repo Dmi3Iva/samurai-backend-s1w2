@@ -40,8 +40,8 @@ export const blogsRepository = {
       pageSize = 10,
     } = findBlogsSearchTerm;
 
-    const skip = (pageNumber - 1) * pageSize;
-    const limit = pageSize;
+    const skip = (Number(pageNumber) - 1) * Number(pageSize);
+    const limit = Number(pageSize);
 
     let searchResult = blogsDatabase.find(
       {
@@ -65,18 +65,22 @@ export const blogsRepository = {
       // PageSize integer($int32) (query)
       // pageSize is portions size that should be returned
       // Default value : 10
-      { [sortBy]: sortDirection === "asc" ? 1 : -1, skip, limit },
+      {
+        sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
+        skip,
+        limit,
+      },
     );
 
     const items = (await searchResult.toArray()).map(mapToBlogType);
     const totalCount = await blogsDatabase.countDocuments();
-    const pagesCount = Math.ceil(totalCount / pageSize);
+    const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
       items,
       pagesCount,
-      page: pageNumber,
-      pageSize,
+      page: Number(pageNumber),
+      pageSize: Number(pageSize),
       totalCount,
     };
   },

@@ -27,11 +27,7 @@ export const postsService = {
   },
 
   async getPosts(findPostsSearchTerm: IFindPostsSearchTerm) {
-    const result = await postsRepository.getPosts(findPostsSearchTerm);
-    const itemsWithBlogNames = await Promise.all(
-      result.items.map(async (post) => await mapToPostView(post))
-    );
-    return { ...result, items: itemsWithBlogNames };
+    return await postsRepository.getPosts(findPostsSearchTerm);
   },
 
   async createPost(postBody: IPostCreateModel): Promise<IPostView | null> {

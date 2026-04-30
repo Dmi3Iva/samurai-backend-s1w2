@@ -180,6 +180,45 @@ describe("GET /posts - Pagination and Sorting", () => {
     });
   });
 
+  describe("BUG: sorting by blogName", () => {
+    let blogIds: string[] = [];
+
+    beforeEach(async () => {
+      // Create 12 blogs with names "new blog0" through "new blog11"
+      for (let i = 0; i <= 11; i++) {
+        const blog = await blogsTestManager.createEntity({
+          name: `new blog${i}`,
+          description: "description",
+          websiteUrl: "https://someurl.com",
+        });
+        blogIds.push(blog.id);
+
+        await postsTestManager.createEntity({
+          title: "post title",
+          shortDescription: "description",
+          content: "new post content",
+          blogId: blog.id,
+        });
+      }
+    });
+
+    it("should sort posts by blogName ascending", async () => {
+      const response = await request(app)
+        .get(`${ROUTES.posts}`)
+        .query({ sortBy: "blogName", sortDirection: "asc", pageSize: 9 });
+
+      // BUG: Sorting by blogName doesn't work correctly
+      // Expected alphabetical order: new blog0, new blog1, new blog10, new blog11, new blog2...
+      // But note: "new blog10" < "new blog2" in lexicographic order
+      // Actual: completely wrong order (new blog8, new blog4, new blog1...)
+      expect(response.body.items[0].blogName).toBe("new blog0");
+      expect(response.body.items[1].blogName).toBe("new blog1");
+      expect(response.body.items[2].blogName).toBe("new blog10");
+      expect(response.body.items[3].blogName).toBe("new blog11");
+      expect(response.body.items[4].blogName).toBe("new blog2");
+    });
+  });
+
   describe("BUG: query params are strings, not numbers", () => {
     beforeEach(async () => {
       // Create 12 posts

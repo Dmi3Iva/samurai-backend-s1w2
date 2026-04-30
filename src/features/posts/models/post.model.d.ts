@@ -5,6 +5,7 @@ export interface IPostTypeWithoutId {
   shortDescription: string;
   content: string;
   blogId: string;
+  blogName: string;
   createdAt: Date;
 }
 

@@ -34,9 +34,9 @@ describe("DELETE /blogs/:id", () => {
     expect(blogsAfterDelete.items).toHaveLength(1);
     expect(blogsAfterDelete.items[0]).toEqual({
       id: expect.any(String),
-      name: "Blog 2",
-      description: "Desc 2",
-      websiteUrl: "https://blog2.com",
+      name: "Blog 1",
+      description: "Desc 1",
+      websiteUrl: "https://blog1.com",
       createdAt: expect.any(String),
       isMembership: IS_MEMBERSHIP_DEFAULT_VALUE,
     });
