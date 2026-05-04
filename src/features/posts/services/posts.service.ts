@@ -36,6 +36,9 @@ export const postsService = {
 
     const newPost = { ...postBody, createdAt: new Date() };
     const createResult = await postsRepository.createPost(newPost);
+    if (!createResult) {
+      return null;
+    }
     const result = await mapToPostView(createResult);
 
     return result;

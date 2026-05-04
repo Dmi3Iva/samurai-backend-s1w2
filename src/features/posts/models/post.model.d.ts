@@ -1,6 +1,7 @@
 import { ESortDirection } from "../../../types/common.type";
+import { WithId } from "mongodb";
 
-export interface IPostTypeWithoutId {
+export interface IPostType {
   title: string;
   shortDescription: string;
   content: string;
@@ -9,7 +10,11 @@ export interface IPostTypeWithoutId {
   createdAt: Date;
 }
 
-export type IPostType = OptionalId<IPostTypeWithoutId>;
+export interface IViewPostType extends IPostType {
+  id: string;
+}
+
+export type IDBPostType = WithId<IPostType>;
 
 export type IPostCreateModel = Omit<IPostType, "_id", "createdAt">;
 export type IPostUpadteModel = IPostCreateModel;

@@ -22,6 +22,7 @@ import {
 } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
+import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 
 export const blogsRouter = Router();
 
@@ -96,23 +97,6 @@ const postContentValidation = body("content")
   .withMessage("content is empty")
   .isLength({ max: 100 })
   .withMessage("content should be a string max length 100");
-
-const inputValidationMiddleware: RequestHandler = (req, res, next) => {
-  const errors = validationResult(req);
-  if (errors.isEmpty()) {
-    return next();
-  }
-
-  const errorsMessages = errors
-    .array({
-      onlyFirstError: true,
-    })
-    .map((e) => ({ message: e.msg, field: (e as FieldValidationError).path }));
-
-  res.status(400).send({
-    errorsMessages,
-  });
-};
 
 blogsRouter.get(
   "/",

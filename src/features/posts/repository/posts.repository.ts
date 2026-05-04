@@ -2,15 +2,17 @@ import { ObjectId, WithId } from "mongodb";
 import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
   GetPostsResponse,
+  IDBPostType,
   IFindPostsSearchTerm,
   IPostCreateModel,
   IPostType,
   IPostUpadteModel,
+  IViewPostType,
 } from "../models/post.model";
 import { blogsRepository } from "../../blogs/repository/blogs.repository";
 
 // TODO:: move to separate file
-export const mapToPostType = async (p: IPostType): IPostType => {
+export const mapToPostType = (p: IDBPostType): IViewPostType => {
   return {
     id: p._id?.toString() || "not-existing-id",
     title: p.title,
@@ -69,7 +71,7 @@ export const postsRepository = {
     };
   },
 
-  async createPost(postBody: IPostCreateModel): Promise<IPostType> {
+  async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
     try {
       const blog = await blogsRepository.findBlog(postBody.blogId);
 
@@ -84,10 +86,10 @@ export const postsRepository = {
 
       newPost._id = insertedId;
 
-      return await mapToPostType(newPost as WithId<IPostType>);
+      return mapToPostType(newPost as WithId<IPostType>);
     } catch (e) {
       console.error("failed to create post", e);
-      return false;
+      return null;
     }
   },
 

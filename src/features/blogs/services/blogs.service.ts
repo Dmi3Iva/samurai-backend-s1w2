@@ -8,6 +8,7 @@ import type {
   IBlogType,
   BlogsRouterResponse,
   IFindPostsByBlogSearchTerm,
+  IDBBLogType,
 } from "../models/blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 import { blogsRepository } from "../repository/blogs.repository";
@@ -19,7 +20,7 @@ import { BlogIdParam, IdParam } from "../../../types/common.type";
 import type { IPostCreateModel } from "../../posts/models/post.model";
 import type { IPostView } from "../../posts/models/post.model";
 
-const mapToBlogType = (b: IBlogType): IViewBlog => ({
+const mapToBlogType = (b: IDBBLogType): IViewBlog => ({
   description: b.description,
   name: b.name,
   websiteUrl: b.websiteUrl,

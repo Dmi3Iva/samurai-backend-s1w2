@@ -1,13 +1,9 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 const ADMIN_LOGIN = "admin";
 const ADMIN_PASS = "qwerty";
 
-export const authorizationMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const authorizationMiddleware: RequestHandler = (req, res, next) => {
   const authorizationHeader = req.headers["authorization"];
   const [authTitle, authToken] = authorizationHeader?.split(" ") || [];
   if (authTitle !== "Basic") {

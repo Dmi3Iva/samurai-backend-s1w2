@@ -1,4 +1,4 @@
-import { OptionalId } from "mongodb";
+import { ObjectId, OptionalId, WithId } from "mongodb";
 import { ESortDirection } from "../../../types/common.type";
 
 export interface IViewBlog {
@@ -18,7 +18,7 @@ export interface BlogsRouterResponse {
   items: IViewBlog[];
 }
 
-export interface IBlogTypeWithoutId {
+export interface IBlogType {
   name: string;
   description: string;
   websiteUrl: string;
@@ -26,7 +26,7 @@ export interface IBlogTypeWithoutId {
   createdAt: Date;
 }
 
-export type IBlogType = OptionalId<IBlogTypeWithoutId>;
+export type IDBBLogType = WithId<IBlogType>;
 
 export interface CreateBlogModel {
   name: string;
