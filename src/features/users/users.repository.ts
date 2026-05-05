@@ -1,6 +1,20 @@
 import { ObjectId } from "mongodb";
-import { usersDatabase } from "../../repositories/db";
-import { ICreatedDBUserParam, IUsersGetQueries } from "./models/users.model";
+import { db, usersDatabase } from "../../repositories/db";
+import {
+  ICreatedDBUserParam,
+  IDBUserType,
+  IUsersGetQueries,
+  IUserView,
+} from "./models/users.model";
+
+const mapDBUserToView = (dbUser: IDBUserType): IUserView => {
+  return {
+    id: dbUser._id.toString(),
+    createdAt: dbUser.createdAt,
+    email: dbUser.email,
+    login: dbUser.login,
+  };
+};
 
 export const usersRepository = {
   async findUserByLogin(login: string) {
@@ -8,43 +22,60 @@ export const usersRepository = {
 
     return result;
   },
+
   async findUserByEmail(email: string) {
     const result = await usersDatabase.findOne({ email });
 
     return result;
   },
+
   async createUser(dbUserData: ICreatedDBUserParam): Promise<string> {
     const { insertedId } = await usersDatabase.insertOne(dbUserData);
 
     return insertedId.toString();
   },
+
   async removeUserById(id: string) {
     const _id = new ObjectId(id);
     const { deletedCount } = await usersDatabase.deleteOne({ _id });
 
     return deletedCount === 1;
   },
-  // TODO:: continue
-  async getUsersWithQuery({
-    searchEmailTerm,
-    searchLoginTerm,
-    sortBy,
-    sortDirection,
-    pageNumber,
-    pageSize,
-  }: IUsersGetQueries) {
-    const skip =
-      pageSize && pageNumber
-        ? (Number(pageSize) - 1) * Number(pageNumber)
-        : undefined;
+
+  async getUsersWithQuery(queries: IUsersGetQueries) {
+    const {
+      searchEmailTerm = null,
+      searchLoginTerm = null,
+      sortBy = "createdAt",
+      sortDirection = "desc",
+      pageNumber = 1,
+      pageSize = 10,
+    } = queries;
+    const skip = (Number(pageNumber) - 1) * Number(pageSize);
     const limit = Number(pageSize);
 
-    const result = await usersDatabase
-      .find({
-        ...(searchLoginTerm ? { login: searchLoginTerm } : {}),
-        ...(searchEmailTerm ? { email: searchEmailTerm } : {}),
-      })
-      .skip(skip)
-      .limit(limit);
+    const filter = {
+      ...(searchLoginTerm ? { login: searchLoginTerm } : {}),
+      ...(searchEmailTerm ? { email: searchEmailTerm } : {}),
+    };
+
+    const cursor = usersDatabase.find(filter, {
+      sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
+      skip,
+      limit,
+    });
+
+    const totalCount = await usersDatabase.countDocuments(filter);
+    const pagesCount = Math.ceil(totalCount / Number(pageSize));
+    const page = Number(pageNumber);
+    const items = (await cursor.toArray()).map(mapDBUserToView);
+
+    return {
+      pagesCount,
+      page,
+      pageSize: Number(pageSize),
+      totalCount,
+      items,
+    };
   },
 };

@@ -7,11 +7,13 @@
   },
   "dependencies": {
     "@types/node": "^25.6.0",
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "express-validator": "^7.3.2",
     "mongodb": "^7.2.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/mongodb": "^4.0.7",
     "@types/nodemon": "^3.1.1",

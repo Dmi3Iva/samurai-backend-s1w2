@@ -4,6 +4,7 @@ import {
   IUserView,
 } from "./models/users.model";
 import { usersRepository } from "./users.repository";
+import { encryptPassword } from "./utils/encrpypt-password";
 
 const mapUserDBToView = () => {};
 
@@ -18,10 +19,13 @@ export const usersService = {
   },
   async createUser(data: IUsersPostBody): Promise<IUserView> {
     const createdAt = new Date();
+    let password: string;
+    password = await encryptPassword(data.password);
+
     const createDBUserParam: ICreatedDBUserParam = {
       login: data.login,
       email: data.email,
-      password: data.password,
+      password,
       createdAt,
     };
 

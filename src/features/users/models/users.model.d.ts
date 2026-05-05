@@ -10,6 +10,8 @@ export interface IUserView extends IUserType {
   id: string;
 }
 
+export type IDBUserType = WithId<IUserType>;
+
 export interface ICreatedDBUserParam extends IUsersPostBody {
   createdAt: Date;
 }
