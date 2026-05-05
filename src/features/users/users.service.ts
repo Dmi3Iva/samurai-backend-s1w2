@@ -4,6 +4,7 @@ import {
   IUserView,
 } from "./models/users.model";
 import { usersRepository } from "./users.repository";
+import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
 
 const mapUserDBToView = () => {};
@@ -11,11 +12,11 @@ const mapUserDBToView = () => {};
 export const usersService = {
   async isUniqueLogin(login: string): Promise<boolean> {
     const user = await usersRepository.findUserByLogin(login);
-    return Boolean(user);
+    return user === null;
   },
   async isUniqueEmail(email: string): Promise<boolean> {
     const user = await usersRepository.findUserByEmail(email);
-    return Boolean(user);
+    return user === null;
   },
   async createUser(data: IUsersPostBody): Promise<IUserView> {
     const createdAt = new Date();
@@ -44,5 +45,18 @@ export const usersService = {
     const result = await usersRepository.removeUserById(id);
 
     return result;
+  },
+  async isLoginOrEmailAndPasswordCorrected(
+    loginOrEmail: string,
+    password: string,
+  ): Promise<boolean> {
+    const user = await usersRepository.findUserByLogin(loginOrEmail);
+    if (user) return await comparePasswords(password, user?.password);
+
+    const userbByEmail = await usersRepository.findUserByEmail(loginOrEmail);
+    if (userbByEmail)
+      return await comparePasswords(password, userbByEmail?.password);
+
+    return false;
   },
 };

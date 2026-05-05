@@ -12,10 +12,7 @@ import type {
 } from "../models/blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
 import { blogsRepository } from "../repository/blogs.repository";
-import {
-  mapToPostType,
-  postsRepository,
-} from "../../posts/repository/posts.repository";
+import { postsRepository } from "../../posts/repository/posts.repository";
 import { BlogIdParam, IdParam } from "../../../types/common.type";
 import type { IPostCreateModel } from "../../posts/models/post.model";
 import type { IPostView } from "../../posts/models/post.model";

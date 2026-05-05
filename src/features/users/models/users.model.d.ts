@@ -4,9 +4,10 @@ export interface IUserType {
   login: string;
   email: string;
   createdAt: Date;
+  password: string;
 }
 
-export interface IUserView extends IUserType {
+export interface IUserView extends Omit<IUserType, "password"> {
   id: string;
 }
 

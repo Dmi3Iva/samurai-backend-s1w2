@@ -1,10 +1,9 @@
 import { Router } from "express";
-import type { NextFunction, RequestHandler, Response } from "express";
+import type { Response } from "express";
 import type {
   CreateBlogModel,
   IFindBlogsSearchTerm,
   UpdateBlogModel,
-  IViewBlog,
   BlogsRouterResponse,
   IFindPostsByBlogSearchTerm,
 } from "./models/blog.model";
@@ -13,13 +12,7 @@ import type {
   RequestWithQuery,
 } from "../../types/request.type";
 import { blogsService } from "./services/blogs.service";
-import {
-  body,
-  matchedData,
-  param,
-  validationResult,
-  type FieldValidationError,
-} from "express-validator";
+import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";

@@ -11,8 +11,7 @@ import {
 } from "../models/post.model";
 import { blogsRepository } from "../../blogs/repository/blogs.repository";
 
-// TODO:: move to separate file
-export const mapToPostType = (p: IDBPostType): IViewPostType => {
+const mapToPostType = (p: IDBPostType): IViewPostType => {
   return {
     id: p._id?.toString() || "not-existing-id",
     title: p.title,
