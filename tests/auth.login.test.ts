@@ -140,19 +140,4 @@ describe("POST /auth/login", () => {
       expect(response.body.errorsMessages).toHaveLength(2);
     });
   });
-
-  describe("Authorization required", () => {
-    it("should return 401 without authorization header", async () => {
-      await usersTestManager.createEntity({
-        login: "testuser",
-        password: "password123",
-        email: "test@example.com",
-      });
-
-      await authTestManager.loginWithoutAuth({
-        loginOrEmail: "testuser",
-        password: "password123",
-      });
-    });
-  });
 });

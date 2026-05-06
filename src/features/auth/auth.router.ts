@@ -21,7 +21,6 @@ const passwordValidator = body("password").exists().isString();
 
 authRouter.post(
   "/login",
-  authorizationMiddleware,
   loginOrEmailValidator,
   passwordValidator,
   inputValidationMiddleware,

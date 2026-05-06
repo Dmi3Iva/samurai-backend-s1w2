@@ -60,11 +60,17 @@ export const usersRepository = {
     const limit = Number(pageSize);
 
     const filter = {
-      ...(searchLoginTerm
-        ? { login: { $regex: searchLoginTerm, $options: "i" } }
-        : {}),
-      ...(searchEmailTerm
-        ? { email: { $regex: searchEmailTerm, $options: "i" } }
+      ...(searchEmailTerm || searchLoginTerm
+        ? {
+            $or: [
+              ...(searchLoginTerm
+                ? [{ login: { $regex: searchLoginTerm, $options: "i" } }]
+                : []),
+              ...(searchEmailTerm
+                ? [{ email: { $regex: searchEmailTerm, $options: "i" } }]
+                : []),
+            ],
+          }
         : {}),
     };
 

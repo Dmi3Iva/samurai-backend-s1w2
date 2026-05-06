@@ -18,14 +18,6 @@ class AuthTestManager {
     expect(response.status).toBe(expectedStatus);
     return response.body;
   }
-
-  async loginWithoutAuth(data: LoginBody, expectedStatus = 401) {
-    const response = await request(app)
-      .post(`${ROUTES.auth}/login`)
-      .send(data);
-    expect(response.status).toBe(expectedStatus);
-    return response.body;
-  }
 }
 
 export const authTestManager = new AuthTestManager();
