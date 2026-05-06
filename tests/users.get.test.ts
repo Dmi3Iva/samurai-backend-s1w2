@@ -217,8 +217,9 @@ describe("GET /users - Search", () => {
         searchLoginTerm: "ivan",
       });
 
-      expect(response.items).toHaveLength(1);
-      expect(response.items[0].login).toBe("ivan");
+      expect(response.items).toHaveLength(2);
+      expect(response.items[0].login).toBe("divan");
+      expect(response.items[1].login).toBe("ivan");
     });
 
     it("should return all users when searchLoginTerm is not provided", async () => {

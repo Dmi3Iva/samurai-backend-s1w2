@@ -36,10 +36,15 @@ export const usersRepository = {
   },
 
   async removeUserById(id: string) {
-    const _id = new ObjectId(id);
-    const { deletedCount } = await usersDatabase.deleteOne({ _id });
+    try {
+      const _id = new ObjectId(id);
+      const { deletedCount } = await usersDatabase.deleteOne({ _id });
 
-    return deletedCount === 1;
+      return deletedCount === 1;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   },
 
   async getUsersWithQuery(queries: IUsersGetQueries) {
@@ -55,8 +60,12 @@ export const usersRepository = {
     const limit = Number(pageSize);
 
     const filter = {
-      ...(searchLoginTerm ? { login: searchLoginTerm } : {}),
-      ...(searchEmailTerm ? { email: searchEmailTerm } : {}),
+      ...(searchLoginTerm
+        ? { login: { $regex: searchLoginTerm, $options: "i" } }
+        : {}),
+      ...(searchEmailTerm
+        ? { email: { $regex: searchEmailTerm, $options: "i" } }
+        : {}),
     };
 
     const cursor = usersDatabase.find(filter, {
@@ -77,5 +86,8 @@ export const usersRepository = {
       totalCount,
       items,
     };
+  },
+  async removeAll() {
+    return await usersDatabase.deleteMany({});
   },
 };

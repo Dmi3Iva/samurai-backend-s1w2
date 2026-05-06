@@ -3,6 +3,7 @@ import request from "supertest";
 import { app } from "../src/app";
 import { usersTestManager } from "./usersTestManager";
 import { ROUTES } from "../src/consants/routes.conts";
+import { ADMIN_AUTH_HEADER } from "./test.const";
 
 describe("DELETE /users/:id", () => {
   beforeEach(async () => {
@@ -63,9 +64,9 @@ describe("DELETE /users/:id", () => {
 
     const response = await request(app)
       .delete(`${ROUTES.users}/${invalidId}`)
-      .set("Authorization", "Basic YWRtaW46cXdlcnR5");
+      .set(ADMIN_AUTH_HEADER);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
   });
 
   describe("Delete multiple users", () => {

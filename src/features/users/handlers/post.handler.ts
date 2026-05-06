@@ -23,7 +23,7 @@ export const registerPostHandler = (r: Router) => {
     }
 
     const errorResponse: ErrorResponseBody = {
-      errorMessages: [
+      errorsMessages: [
         {
           field: "login",
           message: "Login is not unique, please write another one",
@@ -40,7 +40,7 @@ export const registerPostHandler = (r: Router) => {
     }
 
     const errorResponse: ErrorResponseBody = {
-      errorMessages: [
+      errorsMessages: [
         {
           field: "email",
           message: "email is not unique, please write another one",
@@ -83,7 +83,7 @@ export const registerPostHandler = (r: Router) => {
       const user = await usersService.createUser(data);
       if (!user) {
         const errorResponse: ErrorResponseBody = {
-          errorMessages: [
+          errorsMessages: [
             {
               field: "",
               message: "something went wrong when created a user, try again",

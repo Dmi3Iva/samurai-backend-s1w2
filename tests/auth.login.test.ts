@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { usersTestManager } from "./usersTestManager";
+import { authTestManager } from "./authTestManager";
 import { ROUTES } from "../src/consants/routes.conts";
+import { ADMIN_AUTH_HEADER } from "./test.const";
 
 describe("POST /auth/login", () => {
   beforeEach(async () => {
@@ -16,12 +18,10 @@ describe("POST /auth/login", () => {
       email: "test@example.com",
     });
 
-    const response = await request(app).post(`${ROUTES.auth}/login`).send({
+    await authTestManager.login({
       loginOrEmail: "testuser",
       password: "password123",
     });
-
-    expect(response.status).toBe(200);
   });
 
   it("should login with email instead of login", async () => {
@@ -31,12 +31,10 @@ describe("POST /auth/login", () => {
       email: "test@example.com",
     });
 
-    const response = await request(app).post(`${ROUTES.auth}/login`).send({
+    await authTestManager.login({
       loginOrEmail: "test@example.com",
       password: "password123",
     });
-
-    expect(response.status).toBe(200);
   });
 
   it("should return 401 with invalid password", async () => {
@@ -46,40 +44,46 @@ describe("POST /auth/login", () => {
       email: "test@example.com",
     });
 
-    const response = await request(app).post(`${ROUTES.auth}/login`).send({
-      loginOrEmail: "testuser",
-      password: "wrongpassword",
-    });
-
-    expect(response.status).toBe(401);
+    await authTestManager.login(
+      {
+        loginOrEmail: "testuser",
+        password: "wrongpassword",
+      },
+      401,
+    );
   });
 
   it("should return 401 with non-existent login", async () => {
-    const response = await request(app).post(`${ROUTES.auth}/login`).send({
-      loginOrEmail: "nonexistent",
-      password: "password123",
-    });
-
-    expect(response.status).toBe(401);
+    await authTestManager.login(
+      {
+        loginOrEmail: "nonexistent",
+        password: "password123",
+      },
+      401,
+    );
   });
 
   it("should return 401 with non-existent email", async () => {
-    const response = await request(app).post(`${ROUTES.auth}/login`).send({
-      loginOrEmail: "nonexistent@example.com",
-      password: "password123",
-    });
-
-    expect(response.status).toBe(401);
+    await authTestManager.login(
+      {
+        loginOrEmail: "nonexistent@example.com",
+        password: "password123",
+      },
+      401,
+    );
   });
 
   describe("Input validation", () => {
     it("should return 400 when loginOrEmail is missing", async () => {
-      const response = await request(app).post(`${ROUTES.auth}/login`).send({
-        password: "password123",
-      });
+      const response = await request(app)
+        .post(`${ROUTES.auth}/login`)
+        .set(ADMIN_AUTH_HEADER)
+        .send({
+          password: "password123",
+        });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "loginOrEmail",
@@ -89,12 +93,15 @@ describe("POST /auth/login", () => {
     });
 
     it("should return 400 when password is missing", async () => {
-      const response = await request(app).post(`${ROUTES.auth}/login`).send({
-        loginOrEmail: "testuser",
-      });
+      const response = await request(app)
+        .post(`${ROUTES.auth}/login`)
+        .set(ADMIN_AUTH_HEADER)
+        .send({
+          loginOrEmail: "testuser",
+        });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "password",
@@ -104,48 +111,48 @@ describe("POST /auth/login", () => {
     });
 
     it("should return 400 when loginOrEmail is not a string", async () => {
-      const response = await request(app).post(`${ROUTES.auth}/login`).send({
-        loginOrEmail: 123,
-        password: "password123",
-      });
-
-      expect(response.status).toBe(400);
+      await authTestManager.login(
+        {
+          loginOrEmail: 123 as any,
+          password: "password123",
+        },
+        400,
+      );
     });
 
     it("should return 400 when password is not a string", async () => {
-      const response = await request(app).post(`${ROUTES.auth}/login`).send({
-        loginOrEmail: "testuser",
-        password: 123,
-      });
-
-      expect(response.status).toBe(400);
+      await authTestManager.login(
+        {
+          loginOrEmail: "testuser",
+          password: 123 as any,
+        },
+        400,
+      );
     });
 
     it("should return 400 when both fields are missing", async () => {
-      const response = await request(app).post(`${ROUTES.auth}/login`).send({});
+      const response = await request(app)
+        .post(`${ROUTES.auth}/login`)
+        .set(ADMIN_AUTH_HEADER)
+        .send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toHaveLength(2);
+      expect(response.body.errorsMessages).toHaveLength(2);
     });
   });
 
-  describe("Authorization not required", () => {
-    it("should allow login without authorization header", async () => {
+  describe("Authorization required", () => {
+    it("should return 401 without authorization header", async () => {
       await usersTestManager.createEntity({
         login: "testuser",
         password: "password123",
         email: "test@example.com",
       });
 
-      const response = await request(app)
-        .post(`${ROUTES.auth}/login`)
-        .send({
-          loginOrEmail: "testuser",
-          password: "password123",
-        });
-
-      // Should not return 401 Unauthorized
-      expect(response.status).not.toBe(401);
+      await authTestManager.loginWithoutAuth({
+        loginOrEmail: "testuser",
+        password: "password123",
+      });
     });
   });
 });

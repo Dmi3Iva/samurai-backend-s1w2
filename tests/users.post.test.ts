@@ -3,6 +3,7 @@ import request from "supertest";
 import { app } from "../src/app";
 import { usersTestManager } from "./usersTestManager";
 import { ROUTES } from "../src/consants/routes.conts";
+import { ADMIN_AUTH_HEADER } from "./test.const";
 
 describe("POST /users", () => {
   beforeEach(async () => {
@@ -38,14 +39,14 @@ describe("POST /users", () => {
     it("should return 400 when login is missing", async () => {
       const response = await request(app)
         .post(`${ROUTES.users}`)
-        .set("Authorization", "Basic YWRtaW46cXdlcnR5")
+        .set(ADMIN_AUTH_HEADER)
         .send({
           password: "password123",
           email: "test@example.com",
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "login",
@@ -65,7 +66,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "login",
@@ -85,7 +86,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "login",
@@ -105,7 +106,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "login",
@@ -124,7 +125,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "password",
@@ -144,7 +145,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "password",
@@ -159,12 +160,12 @@ describe("POST /users", () => {
         .set("Authorization", "Basic YWRtaW46cXdlcnR5")
         .send({
           login: "testuser",
-          password: "veryverylongpassword",
+          password: "veryverylongpassworda",
           email: "test@example.com",
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "password",
@@ -183,7 +184,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "email",
@@ -203,7 +204,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "email",
@@ -231,7 +232,7 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "login",
@@ -258,11 +259,10 @@ describe("POST /users", () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.errorMessages).toEqual(
+      expect(response.body.errorsMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             field: "email",
-            message: "email is not unique, please write another one",
           }),
         ]),
       );

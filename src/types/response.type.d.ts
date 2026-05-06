@@ -1,5 +1,5 @@
 export interface ErrorResponseBody {
-  errorMessages: {
+  errorsMessages: {
     message: string;
     field: string;
   }[];
