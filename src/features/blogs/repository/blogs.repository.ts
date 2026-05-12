@@ -54,7 +54,7 @@ export const blogsRepository = {
         : {}),
     };
 
-    let searchResult = blogsDatabase.find(
+    const searchResult = blogsDatabase.find(
       filter,
       // sortBy string (query)
       // Default value : createdAt

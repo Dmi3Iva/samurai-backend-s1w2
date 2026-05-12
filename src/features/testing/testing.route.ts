@@ -9,5 +9,6 @@ testingRouter.delete("/", async (req, res) => {
   await blogsRepository.removeAll();
   await postsRepository.removeAll();
   await usersRepository.removeAll();
+  await commentsRepository.removeAll();
   res.status(204).send();
 });

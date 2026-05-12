@@ -3,6 +3,7 @@ import type { NextFunction, Request, RequestHandler, Response } from "express";
 const ADMIN_LOGIN = "admin";
 const ADMIN_PASS = "qwerty";
 
+// TODO:: add accessToken
 export const authorizationMiddleware: RequestHandler = (req, res, next) => {
   const authorizationHeader = req.headers["authorization"];
   const [authTitle, authToken] = authorizationHeader?.split(" ") || [];

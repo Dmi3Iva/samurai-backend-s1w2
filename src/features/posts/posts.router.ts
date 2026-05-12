@@ -1,10 +1,8 @@
 import { Router } from "express";
-import type { RequestHandler, Response, Request } from "express";
+import type { Response } from "express";
 import type {
   IPostUpadteModel,
   IPostCreateModel,
-  IPostView as IPostView,
-  IPostType,
   GetPostsResponse,
   IFindPostsSearchTerm,
 } from "./models/post.model";
@@ -12,13 +10,7 @@ import type {
   RequestWithBody,
   RequestWithQuery,
 } from "../../types/request.type";
-import {
-  body,
-  matchedData,
-  param,
-  validationResult,
-  type FieldValidationError,
-} from "express-validator";
+import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { postsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
@@ -157,3 +149,8 @@ postsRouter.delete(
     return res.status(204).send();
   },
 );
+
+// TODO::
+// COMMENTS
+// POST /posts/{postId}/comments
+// GET /posts/{postId}/comments
