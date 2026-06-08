@@ -7,7 +7,7 @@ import {
   IPostUpadteModel,
   IPostView,
 } from "../models/post.model";
-import { blogsRepository } from "../../blogs/repository/blogs.repository";
+import { blogsRepository } from "../../blogs/blogs.repository";
 import { postsRepository } from "../repository/posts.repository";
 
 const mapToPostView = async (p: IPostType): Promise<IPostView> => {

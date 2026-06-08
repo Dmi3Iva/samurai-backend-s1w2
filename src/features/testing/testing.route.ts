@@ -1,7 +1,8 @@
 import { Router } from "express";
-import { blogsRepository } from "../blogs/repository/blogs.repository";
+import { blogsRepository } from "../blogs/blogs.repository";
 import { postsRepository } from "../posts/repository/posts.repository";
 import { usersRepository } from "../users/users.repository";
+import { commentsRepository } from "../comments/comments.repository";
 
 export const testingRouter = Router();
 

@@ -1,5 +1,4 @@
 import { ObjectId, WithId } from "mongodb";
-import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
   GetPostsResponse,
   IDBPostType,
@@ -8,8 +7,10 @@ import {
   IPostType,
   IPostUpadteModel,
   IViewPostType,
-} from "../models/post.model";
-import { blogsRepository } from "../../blogs/blogs.repository";
+  // } from "../ /models/post.model";
+} from "../posts/models/post.model";
+import { blogsRepository } from "../blogs/blogs.repository";
+import { postsDatabase } from "../../repositories/db";
 
 const mapToPostType = (p: IDBPostType): IViewPostType => {
   return {
@@ -23,7 +24,7 @@ const mapToPostType = (p: IDBPostType): IViewPostType => {
   };
 };
 
-export const postsRepository = {
+export const commentsRepository = {
   async getPost(id: string): Promise<IPostType | null> {
     try {
       const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });

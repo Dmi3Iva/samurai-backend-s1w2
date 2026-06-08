@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { blogsDatabase } from "../../../repositories/db";
+import { blogsDatabase } from "../../repositories/db";
 import type {
   IFindBlogsSearchTerm,
   UpdateBlogModel,
@@ -7,7 +7,7 @@ import type {
   IBlogType,
   CreateBlogModelDB,
   BlogsRouterResponse,
-} from "../models/blog.model";
+} from "./models/blog.model";
 
 const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
   description: b.description,

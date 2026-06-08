@@ -11,11 +11,9 @@ import type {
   IDBBLogType,
 } from "../models/blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
-import { blogsRepository } from "../repository/blogs.repository";
+import { blogsRepository } from "../blogs.repository";
 import { postsRepository } from "../../posts/repository/posts.repository";
-import { BlogIdParam, IdParam } from "../../../types/common.type";
-import type { IPostCreateModel } from "../../posts/models/post.model";
-import type { IPostView } from "../../posts/models/post.model";
+import { BlogIdParam } from "../../../types/common.type";
 
 const mapToBlogType = (b: IDBBLogType): IViewBlog => ({
   description: b.description,

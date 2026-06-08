@@ -7,16 +7,14 @@ import { usersRepository } from "./users.repository";
 import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
 
-const mapUserDBToView = () => {};
-
 export const usersService = {
   async isUniqueLogin(login: string): Promise<boolean> {
-    const user = await usersRepository.findUserByLogin(login);
-    return user === null;
+    const result = await usersRepository.findUserByLogin(login);
+    return result === null;
   },
   async isUniqueEmail(email: string): Promise<boolean> {
-    const user = await usersRepository.findUserByEmail(email);
-    return user === null;
+    const result = await usersRepository.findUserByEmail(email);
+    return result === null;
   },
   async createUser(data: IUsersPostBody): Promise<IUserView> {
     const createdAt = new Date();
@@ -49,14 +47,23 @@ export const usersService = {
   async isLoginOrEmailAndPasswordCorrected(
     loginOrEmail: string,
     password: string,
-  ): Promise<boolean> {
-    const user = await usersRepository.findUserByLogin(loginOrEmail);
-    if (user) return await comparePasswords(password, user?.password);
+  ) {
+    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail);
+    if (resultByLogin)
+      return (await comparePasswords(password, resultByLogin?.password))
+        ? resultByLogin.user
+        : null;
 
-    const userbByEmail = await usersRepository.findUserByEmail(loginOrEmail);
-    if (userbByEmail)
-      return await comparePasswords(password, userbByEmail?.password);
+    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail);
+    if (resultByEmail)
+      return (await comparePasswords(password, resultByEmail?.password))
+        ? resultByEmail.user
+        : null;
 
-    return false;
+    return null;
+  },
+  async getUserById(id: string): Promise<IUserView | null> {
+    const user = await usersRepository.findUserById(id);
+    return user;
   },
 };

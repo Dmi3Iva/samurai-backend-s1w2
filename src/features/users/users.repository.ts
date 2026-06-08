@@ -17,16 +17,37 @@ const mapDBUserToView = (dbUser: IDBUserType): IUserView => {
 };
 
 export const usersRepository = {
-  async findUserByLogin(login: string) {
+  async findUserByLogin(
+    login: string,
+  ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ login });
 
-    return result;
+    return result
+      ? {
+          user: mapDBUserToView(result),
+          password: result.password,
+        }
+      : null;
   },
 
-  async findUserByEmail(email: string) {
+  async findUserByEmail(
+    email: string,
+  ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ email });
 
-    return result;
+    return result
+      ? {
+          user: mapDBUserToView(result),
+          password: result.password,
+        }
+      : null;
+  },
+
+  async findUserById(userId: string): Promise<IUserView | null> {
+    const _id = new ObjectId(userId);
+    const result = await usersDatabase.findOne({ _id });
+
+    return result ? mapDBUserToView(result) : null;
   },
 
   async createUser(dbUserData: ICreatedDBUserParam): Promise<string> {

@@ -1,4 +1,5 @@
 import type { Request } from "express";
+import { IUserView } from "../features/users/models/users.model";
 
 export interface RequestWithBody<T> extends Request {
   body: T;
@@ -20,3 +21,5 @@ export interface RequestWithQueryAndParams<Q, P> extends Request {
 export interface RequestWithHeaders<H> extends Request {
   headers: H;
 }
+
+export interface UserInJWTToken extends IUserView {}
