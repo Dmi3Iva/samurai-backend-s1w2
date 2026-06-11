@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { body, matchedData, param } from "express-validator";
 import { IdParam } from "../../types/common.type";
-import { commentsDatabase } from "../../repositories/db";
 import { commentsService, ERemoveUserState } from "./comments.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
@@ -32,18 +31,18 @@ commentsRouter.delete(
     const { id } = matchedData<IdParam>(req);
     const userId = req.userId;
 
-    if (!userId) return res.status(401);
+    if (!userId) return res.status(401).send();
 
     const result = await commentsService.removeById(id, userId);
     if (result === ERemoveUserState.NOT_ALLOWED) {
-      return res.status(403);
+      return res.status(403).send();
     }
 
     if (result === ERemoveUserState.FAILED) {
-      return res.status(404);
+      return res.status(404).send();
     }
 
-    return res.status(204);
+    return res.status(204).send();
   },
 );
 
@@ -67,10 +66,14 @@ commentsRouter.put(
       userId,
     });
 
-    if (!result) {
-      return res.status(403);
+    if (result === ERemoveUserState.NOT_ALLOWED) {
+      return res.status(403).send();
     }
 
-    return res.status(204);
+    if (result === ERemoveUserState.FAILED) {
+      return res.status(404).send();
+    }
+
+    return res.status(204).send();
   },
 );

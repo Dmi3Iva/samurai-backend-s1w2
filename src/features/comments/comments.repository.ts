@@ -1,9 +1,5 @@
 import { ObjectId } from "mongodb";
-import {
-  IPostUpadteModel,
-  // } from "../ /models/post.model";
-} from "../posts/models/post.model";
-import { commentsDatabase, postsDatabase } from "../../repositories/db";
+import { commentsDatabase } from "../../repositories/db";
 import {
   GetCommentsResponse,
   ICommentCreateModel,
@@ -74,7 +70,7 @@ export const commentsRepository = {
     const rawItems = await findResult.toArray();
     const items = await Promise.all(rawItems.map(mapDbCommentToView));
     const page = Number(pageNumber);
-    const totalCount = await postsDatabase.countDocuments(filter);
+    const totalCount = await commentsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
@@ -99,46 +95,10 @@ export const commentsRepository = {
     }
   },
 
-  async updatePost({
-    id,
-    data: updatedPost,
-  }: {
-    id: string;
-    data: IPostUpadteModel;
-  }): Promise<boolean> {
-    try {
-      const updateResult = await postsDatabase.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updatedPost },
-      );
-
-      return updateResult.matchedCount === 1;
-    } catch (e) {
-      console.error(`failed to update posts with id=${id}`);
-      return false;
-    }
-  },
-
-  async deletePost(id: string): Promise<boolean> {
-    try {
-      const deleteResult = await postsDatabase.deleteOne({
-        _id: new ObjectId(id),
-      });
-
-      return deleteResult.deletedCount === 1;
-    } catch (e) {
-      console.error(`failed to delete post with id=${id}`);
-      return false;
-    }
-  },
-
-  async removeAllByBlogs(blogId: string) {
-    return await postsDatabase.deleteMany({ blogId });
-  },
-
   async removeAll() {
-    return await postsDatabase.deleteMany({});
+    return await commentsDatabase.deleteMany({});
   },
+
   async updateComment({
     commentId,
     updatedCommentData,
@@ -149,7 +109,7 @@ export const commentsRepository = {
     try {
       const result = await commentsDatabase.updateOne(
         { _id: new ObjectId(commentId) },
-        updatedCommentData,
+        { $set: { content: updatedCommentData.content } },
       );
 
       return result.modifiedCount === 1;

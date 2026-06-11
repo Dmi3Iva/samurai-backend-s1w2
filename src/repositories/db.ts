@@ -14,7 +14,7 @@ export const db = client.db("bloggersPlatform");
 export const blogsDatabase = db.collection<IBlogType>("blogs");
 export const postsDatabase = db.collection<IPostType>("posts");
 export const usersDatabase = db.collection<IUserType>("users");
-export const commentsDatabase = db.collection<ICommentType>("users");
+export const commentsDatabase = db.collection<ICommentType>("comments");
 
 export const runDB = async () => {
   try {

@@ -170,10 +170,10 @@ postsRouter.post(
     const post = await postsService.getPost(postId);
 
     if (!userId) {
-      return res.status(401);
+      return res.status(401).send();
     }
     if (!post) {
-      return res.status(404);
+      return res.status(404).send();
     }
 
     const createdComment = await commentsService.createComment({
@@ -193,7 +193,7 @@ postsRouter.get(
   async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
     const { postId } = matchedData<{ postId: string }>(req);
     const comments = await commentsService.getComments(postId, req.query);
-    if (!comments) return res.status(404);
+    if (!comments) return res.status(404).send();
 
     return res.status(200).send(comments);
   },

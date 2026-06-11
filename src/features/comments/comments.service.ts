@@ -50,7 +50,7 @@ export const commentsService = {
     postId: string;
     content: string;
     userId: string;
-  }) {
+  }): Promise<ICommentView | null> {
     const user = await usersService.getUserById(userId);
 
     const commentModel: ICommentCreateModel = {
@@ -63,8 +63,17 @@ export const commentsService = {
       postId,
     };
     const idResult = await commentsRepository.createComment(commentModel);
+    if (!idResult) return null;
 
-    const result = { ...commentModel, id: idResult };
+    const result: ICommentView = {
+      id: idResult,
+      commentatorInfo: {
+        userLogin: commentModel.commentatorInfo.userLogin,
+        userId: commentModel.commentatorInfo.userId,
+      },
+      createdAt: commentModel.createdAt,
+      content: content,
+    };
 
     return result;
   },
@@ -99,10 +108,15 @@ export const commentsService = {
     commentId: string;
     content: string;
     userId: string;
-  }): Promise<boolean> {
+  }): Promise<ERemoveUserState> {
     const comment = await this.getCommentById(commentId);
-    if (!comment || comment.commentatorInfo.userId !== userId) {
-      return false;
+
+    if (!comment) {
+      return ERemoveUserState.FAILED;
+    }
+
+    if (comment.commentatorInfo.userId !== userId) {
+      return ERemoveUserState.NOT_ALLOWED;
     }
 
     const updatedCommentData = {
@@ -114,6 +128,6 @@ export const commentsService = {
       updatedCommentData,
     });
 
-    return result;
+    return result ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
   },
 };

@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import { app } from "../src/app";
+import { appConfig } from "../src/common/appConfig";
 import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
-import { ROUTES } from "../src/consants/routes.conts";
-import { ADMIN_AUTH_HEADER } from "./test.const";
+import { ROUTES, ADMIN_AUTH_HEADER } from "./test.const";
 
 describe("POST /auth/login", () => {
   beforeEach(async () => {
@@ -18,10 +19,34 @@ describe("POST /auth/login", () => {
       email: "test@example.com",
     });
 
-    await authTestManager.login({
+    const loginResponse = await authTestManager.login({
       loginOrEmail: "testuser",
       password: "password123",
     });
+
+    expect(loginResponse).toEqual({
+      accessToken: expect.any(String),
+    });
+    expect(loginResponse.accessToken.split(".")).toHaveLength(3);
+  });
+
+  it("should return accessToken with userId matching logged in user", async () => {
+    const user = await usersTestManager.createEntity({
+      login: "jwtuser",
+      password: "password123",
+      email: "jwtuser@example.com",
+    });
+
+    const { accessToken } = await authTestManager.login({
+      loginOrEmail: "jwtuser",
+      password: "password123",
+    });
+
+    const decoded = jwt.verify(accessToken, appConfig.JWT_SECRET) as {
+      userId: string;
+    };
+
+    expect(decoded.userId).toBe(user.id);
   });
 
   it("should login with email instead of login", async () => {
@@ -31,9 +56,13 @@ describe("POST /auth/login", () => {
       email: "test@example.com",
     });
 
-    await authTestManager.login({
+    const loginResponse = await authTestManager.login({
       loginOrEmail: "test@example.com",
       password: "password123",
+    });
+
+    expect(loginResponse).toEqual({
+      accessToken: expect.any(String),
     });
   });
 

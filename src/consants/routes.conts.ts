@@ -3,6 +3,7 @@ export const ROUTES = {
   blogs: "/blogs",
   posts: "/posts",
   users: "/users",
+  comments: "/comments",
   testings: "/testing/all-data",
 };
 

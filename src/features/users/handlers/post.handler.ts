@@ -51,8 +51,6 @@ export const registerPostHandler = (r: Router) => {
     res.status(400).send(errorResponse);
   };
 
-  console.log("usersRouter");
-
   r.post(
     "/",
     authorizationMiddleware,
