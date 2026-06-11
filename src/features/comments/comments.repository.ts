@@ -1,63 +1,78 @@
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 import {
-  GetPostsResponse,
-  IDBPostType,
-  IFindPostsSearchTerm,
-  IPostCreateModel,
-  IPostType,
   IPostUpadteModel,
-  IViewPostType,
   // } from "../ /models/post.model";
 } from "../posts/models/post.model";
-import { blogsRepository } from "../blogs/blogs.repository";
-import { postsDatabase } from "../../repositories/db";
+import { commentsDatabase, postsDatabase } from "../../repositories/db";
+import {
+  GetCommentsResponse,
+  ICommentCreateModel,
+  ICommentView,
+  IDBCommentType,
+  IFindCommentsSearchTerm,
+} from "./comments.models";
 
-const mapToPostType = (p: IDBPostType): IViewPostType => {
+const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
+  const commentatorInfo: ICommentView["commentatorInfo"] = {
+    userId: dbComment.commentatorInfo.userId,
+    userLogin: dbComment.commentatorInfo.userLogin,
+  };
+
   return {
-    id: p._id?.toString() || "not-existing-id",
-    title: p.title,
-    shortDescription: p.shortDescription,
-    content: p.content,
-    blogId: p.blogId,
-    createdAt: p.createdAt,
-    blogName: p.blogName,
+    content: dbComment.content,
+    createdAt: dbComment.createdAt,
+    commentatorInfo,
+    id: dbComment._id.toString(),
   };
 };
 
 export const commentsRepository = {
-  async getPost(id: string): Promise<IPostType | null> {
+  async getCommentById(id: string): Promise<IDBCommentType | null> {
     try {
-      const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });
-      return findResult ? await mapToPostType(findResult) : null;
+      const findResult = await commentsDatabase.findOne({
+        _id: new ObjectId(id),
+      });
+      return findResult ?? null;
     } catch (e) {
-      console.log(`error while try to get post with id=${id}`);
+      console.error(`error while try to get comment with id = ${id}`);
       return null;
     }
   },
+  async removeById(id: string): Promise<boolean> {
+    try {
+      const removeResult = await commentsDatabase.deleteOne({
+        _id: new ObjectId(id),
+      });
+      const isRemoved = removeResult.deletedCount === 1;
+      return isRemoved;
+    } catch (e) {
+      console.error(`can't delet comment with id ${id}`);
+      return false;
+    }
+  },
 
-  async getPosts(
-    findPostsSearchTerm: IFindPostsSearchTerm,
-  ): Promise<GetPostsResponse> {
+  async getComments(
+    findPostsSearchTerm: IFindCommentsSearchTerm,
+    postId: string,
+  ): Promise<GetCommentsResponse> {
     const {
       pageNumber = 1,
       pageSize = 10,
       sortBy = "createdAt",
       sortDirection = "desc",
-      blogId,
     } = findPostsSearchTerm;
+    const filter = { postId };
     const skip = (Number(pageNumber) - 1) * Number(pageSize);
     const limit = Number(pageSize);
 
-    const filter = blogId ? { blogId } : {};
-
-    const findResult = postsDatabase.find(filter, {
+    const findResult = commentsDatabase.find(filter, {
       sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
       skip,
       limit,
     });
 
     const rawItems = await findResult.toArray();
-    const items = await Promise.all(rawItems.map(mapToPostType));
+    const items = await Promise.all(rawItems.map(mapDbCommentToView));
     const page = Number(pageNumber);
     const totalCount = await postsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
@@ -71,22 +86,13 @@ export const commentsRepository = {
     };
   },
 
-  async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
+  async createComment(
+    commentModel: ICommentCreateModel,
+  ): Promise<string | null> {
     try {
-      const blog = await blogsRepository.findBlog(postBody.blogId);
+      const { insertedId } = await commentsDatabase.insertOne(commentModel);
 
-      const newPost = {
-        ...postBody,
-        createdAt: new Date(),
-        blogName: blog?.name,
-      };
-      const { insertedId } = await postsDatabase.insertOne({
-        ...newPost,
-      });
-
-      newPost._id = insertedId;
-
-      return mapToPostType(newPost as WithId<IPostType>);
+      return insertedId.toString();
     } catch (e) {
       console.error("failed to create post", e);
       return null;
@@ -132,5 +138,24 @@ export const commentsRepository = {
 
   async removeAll() {
     return await postsDatabase.deleteMany({});
+  },
+  async updateComment({
+    commentId,
+    updatedCommentData,
+  }: {
+    commentId: string;
+    updatedCommentData: { content: string };
+  }) {
+    try {
+      const result = await commentsDatabase.updateOne(
+        { _id: new ObjectId(commentId) },
+        updatedCommentData,
+      );
+
+      return result.modifiedCount === 1;
+    } catch (e) {
+      console.error("failed to update comment", commentId);
+      return false;
+    }
   },
 };

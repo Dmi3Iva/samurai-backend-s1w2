@@ -7,7 +7,6 @@ const ADMIN_PASS = "qwerty";
 
 const AUTHORIZED_AUTH_TITLES = ["Basic", "Bearer"];
 
-// TODO:: add accessToken
 export const authorizationMiddleware: RequestHandler = async (
   req,
   res,

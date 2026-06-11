@@ -1,5 +1,3 @@
-import { WithId } from "mongodb";
-import { blogsDatabase, postsDatabase } from "../../../repositories/db";
 import {
   IFindPostsSearchTerm,
   IPostCreateModel,

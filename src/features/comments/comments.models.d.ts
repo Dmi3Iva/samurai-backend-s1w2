@@ -7,11 +7,18 @@ export interface ICommentType {
     userLogin: string;
   };
   createdAt: Date;
+  postId: string;
 }
 
-export type IDBCommentType = WithId<ICommentType>;
+export interface ICommentCreateBody {
+  content: string;
+}
 
-export interface IViewCommentType extends ICommentType {
+export type ICommentCreateModel = Omit<ICommentType, "id">;
+
+export type IDBCommentType = WithId<Omit<ICommentType, "id">>;
+
+export interface ICommentView extends Omit<ICommentType, "postId"> {
   id: string;
 }
 
@@ -21,6 +28,18 @@ export type IPostCreateModel = Omit<
   "commentatorInfo"
 >;
 
-// export interface IDBCommentType extends ICommentType {
-//   _id: string;
-// }
+export interface IFindCommentsSearchTerm {
+  searchNameTerm?: string | null;
+  sortBy?: string;
+  sortDirection?: ESortDirection;
+  pageNumber?: string;
+  pageSize?: string;
+}
+
+export interface GetCommentsResponse {
+  pagesCount: number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: ICommentView[];
+}

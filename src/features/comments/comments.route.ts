@@ -1,8 +1,76 @@
 import { Router } from "express";
+import { body, matchedData, param } from "express-validator";
+import { IdParam } from "../../types/common.type";
+import { commentsDatabase } from "../../repositories/db";
+import { commentsService, ERemoveUserState } from "./comments.service";
+import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
+import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 
 export const commentsRouter = Router();
 
-// TODO::
-// PUT /hometask_06/api/comments/{commentId}
-// DELETE /hometask_06/api/comments/{commentId}
-// GET /hometask_06/api/comments/{id}
+commentsRouter.get(
+  "/:id",
+  param("id").notEmpty().isString(),
+  inputValidationMiddleware,
+  async (req, res) => {
+    const { id } = matchedData<IdParam>(req);
+    const comment = await commentsService.getCommentById(id);
+    if (!comment) {
+      return res.status(404).send("comment not found");
+    }
+
+    return res.status(200).send(comment);
+  },
+);
+
+commentsRouter.delete(
+  "/:id",
+  authorizationTokenMiddleware,
+  param("id").notEmpty().isString(),
+  inputValidationMiddleware,
+  async (req, res) => {
+    const { id } = matchedData<IdParam>(req);
+    const userId = req.userId;
+
+    if (!userId) return res.status(401);
+
+    const result = await commentsService.removeById(id, userId);
+    if (result === ERemoveUserState.NOT_ALLOWED) {
+      return res.status(403);
+    }
+
+    if (result === ERemoveUserState.FAILED) {
+      return res.status(404);
+    }
+
+    return res.status(204);
+  },
+);
+
+commentsRouter.put(
+  "/:id",
+  authorizationTokenMiddleware,
+  param("id").notEmpty().isString(),
+  body("content").notEmpty().isString().isLength({ max: 300, min: 20 }),
+  inputValidationMiddleware,
+  async (req, res) => {
+    const { id: commentId, content } = matchedData<
+      IdParam & { content: string }
+    >(req);
+    const userId = req.userId;
+
+    if (!userId) return res.status(401);
+
+    const result = await commentsService.updateComment({
+      commentId,
+      content,
+      userId,
+    });
+
+    if (!result) {
+      return res.status(403);
+    }
+
+    return res.status(204);
+  },
+);

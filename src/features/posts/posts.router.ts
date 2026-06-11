@@ -14,6 +14,10 @@ import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { postsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
+import { IFindCommentsSearchTerm } from "../comments/comments.models";
+import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
+import { postsRepository } from "./repository/posts.repository";
+import { commentsService } from "../comments/comments.service";
 
 interface PostsIdParam {
   id: string;
@@ -150,7 +154,47 @@ postsRouter.delete(
   },
 );
 
-// TODO::
-// COMMENTS
 // POST /posts/{postId}/comments
+postsRouter.post(
+  "/:postId/comments",
+  authorizationTokenMiddleware,
+  param("postId").notEmpty().isString(),
+  body("content").notEmpty().isString().isLength({ min: 20, max: 300 }),
+  inputValidationMiddleware,
+  async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
+    const { postId, content } = matchedData<{
+      postId: string;
+      content: string;
+    }>(req);
+    const userId = req.userId;
+    const post = await postsService.getPost(postId);
+
+    if (!userId) {
+      return res.status(401);
+    }
+    if (!post) {
+      return res.status(404);
+    }
+
+    const createdComment = await commentsService.createComment({
+      postId,
+      content,
+      userId,
+    });
+
+    return res.status(201).send(createdComment);
+  },
+);
+
 // GET /posts/{postId}/comments
+postsRouter.get(
+  "/:postId/comments",
+  param("postId").notEmpty().isString(),
+  async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
+    const { postId } = matchedData<{ postId: string }>(req);
+    const comments = await commentsService.getComments(postId, req.query);
+    if (!comments) return res.status(404);
+
+    return res.status(200).send(comments);
+  },
+);
