@@ -14,6 +14,13 @@ export const ROUTES = {
 export const VALID_COMMENT_CONTENT =
   "This is a valid comment with enough characters";
 
+/** Credentials pattern used by the remote homework checker (login-V2-describe) */
+export const HOMEWORK_USER = {
+  login: "lg-964870",
+  password: "qwerty1",
+  email: "lg964870@example.com",
+} as const;
+
 export const bearerAuthHeader = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`,
 });
