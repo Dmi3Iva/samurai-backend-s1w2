@@ -1,10 +1,17 @@
 import { OptionalId, WithId, WithoutId } from "mongodb";
 
+export interface IEmailConfirmation {
+  confirmationCode: string;
+  expirationDate: Date;
+  isConfirmed: boolean;
+}
+
 export interface IUserType {
   login: string;
   email: string;
   createdAt: Date;
   password: string;
+  emailConfirmation?: IEmailConfirmation;
 }
 
 export interface IUserView extends Omit<IUserType, "password"> {
@@ -33,6 +40,14 @@ export interface IUsersPostBody {
   // example: example@example.dev
   // must be unique
   email: string;
+}
+
+export interface ICreateRegistrationPostBody extends IUsersPostBody {
+  emailConfirmation: IEmailConfirmation;
+}
+
+export interface ICreateRegistrationDataBaseBody extends ICreateRegistrationPostBody {
+  createdAt: Date;
 }
 
 export interface IUsersGetQueries {

@@ -1,10 +1,14 @@
-import { Router, Request } from "express";
+import { Router, Request, Response } from "express";
 import { body, matchedData } from "express-validator";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { usersService } from "../users/users.service";
 import { RequestWithBody } from "../../types/request.type";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
+import * as nodemailer from "nodemailer";
+import { appConfig } from "../../common/appConfig";
+import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
+import { authService } from "./auth.service";
 
 export const authRouter = Router();
 
@@ -14,17 +18,31 @@ interface LoginBodyParams {
 }
 
 interface AuthMeParams {
-  email: string;
   login: string;
+  email: string;
   userId: string;
 }
 
 const loginOrEmailValidator = body("loginOrEmail").exists().isString();
+// TODO::
+// login*	string
+// maxLength: 10
+// minLength: 3
+// pattern: ^[a-zA-Z0-9_-]*$
+// must be unique
+const loginValidator = body("login").exists().isString();
+// TODO::
+// email*	string
+// pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
+// example: example@example.dev
+// must be unique
+const emailValidator = body("email").exists().isString();
+// TODO::
+// password*	string
+// maxLength: 20
+// minLength: 6
 const passwordValidator = body("password").exists().isString();
-
-const isString = (value: unknown) => {
-  return value && typeof value === "string";
-};
+const codeValidator = body("code").exists().isString();
 
 authRouter.post(
   "/login",
@@ -72,3 +90,94 @@ authRouter.get(
     });
   },
 );
+
+// TODO:: validate
+
+/**
+ * Регистрирует пользователя в системе и отправляет ему confirmation code на email
+ */
+authRouter.post(
+  "/registration",
+  loginValidator,
+  emailValidator,
+  passwordValidator,
+  inputValidationMiddleware,
+  async (req: RequestWithBody<IRegistrationBody>, res) => {
+    const registrationBody = matchedData<IRegistrationBody>(req);
+
+    const result = await authService.registerUser(registrationBody);
+
+    if (!result) {
+      res.status(404).send();
+    }
+
+    res.status(204).send();
+  },
+);
+
+authRouter.post(
+  "/registration-confirmation",
+  codeValidator,
+  inputValidationMiddleware,
+  async (req, res) => {
+    debugger;
+    const { code } = matchedData<{ code: string }>(req);
+
+    const result = await authService.confirmRegistration(code);
+    if (!result)
+      res.status(400).send({
+        errorsMessages: [
+          {
+            message:
+              "confirmation code is incorrect, expired or already been applied",
+            field: "code",
+          },
+        ],
+      });
+
+    return res.status(204).send();
+  },
+);
+
+authRouter.post(
+  "/registration-email-resending",
+  emailValidator,
+  inputValidationMiddleware,
+  async (req, res) => {
+    const { email } = matchedData<{ email: string }>(req);
+    const result = await authService.registrationEmailResending(email);
+
+    if (!result) {
+      return res.status(400).send();
+    }
+
+    return res.status(204).send();
+  },
+);
+
+// authRouter.post("/send", async (req: Request, res: Response) => {
+//   const transporter = nodemailer.createTransport({
+//     host: "smtp.resend.com",
+//     secure: true,
+//     port: 465,
+//     auth: {
+//       user: "resend",
+//       pass: appConfig.SEND_MAIL_API_KEY,
+//     },
+//   });
+
+//   const info = await transporter.sendMail({
+//     from: "onboarding@resend.dev",
+//     to: "dmi3iva@gmail.com",
+//     subject: "Hello Test",
+//     html: "<strong>It works!</strong>",
+//   });
+
+//   console.log("Message sent: %s", info.messageId);
+
+//   res.send({
+//     email: req.body.email,
+//     message: req.body.message,
+//     subject: req.body.subject,
+//   });
+// });

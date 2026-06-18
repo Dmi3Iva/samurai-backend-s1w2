@@ -1,9 +1,12 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { db, usersDatabase } from "../../repositories/db";
 import {
   ICreatedDBUserParam,
+  ICreateRegistrationDataBaseBody,
+  ICreateRegistrationPostBody,
   IDBUserType,
   IUsersGetQueries,
+  IUserType,
   IUserView,
 } from "./models/users.model";
 
@@ -54,6 +57,18 @@ export const usersRepository = {
     const { insertedId } = await usersDatabase.insertOne(dbUserData);
 
     return insertedId.toString();
+  },
+
+  async createRegistrationUser(
+    dbUserData: ICreateRegistrationDataBaseBody,
+  ): Promise<string | null> {
+    try {
+      const { insertedId } = await usersDatabase.insertOne(dbUserData);
+
+      return insertedId.toString();
+    } catch (e) {
+      return null;
+    }
   },
 
   async removeUserById(id: string) {
@@ -116,5 +131,28 @@ export const usersRepository = {
   },
   async removeAll() {
     return await usersDatabase.deleteMany({});
+  },
+
+  async findUserByConfirmationCode(
+    confirmationCode: string,
+  ): Promise<WithId<IUserType> | null> {
+    const result = await usersDatabase.findOne({
+      "emailConfirmation.confirmationCode": confirmationCode,
+    });
+
+    return result ?? null;
+  },
+
+  async confirmRegistrationByUserId(userId: string): Promise<boolean> {
+    const result = await usersDatabase.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          "emailConfirmation.isConfirmed": true,
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
   },
 };

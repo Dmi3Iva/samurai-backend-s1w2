@@ -21,6 +21,13 @@ export const HOMEWORK_USER = {
   email: "lg964870@example.com",
 } as const;
 
+/** User for h07 self-registration flow tests */
+export const REGISTRATION_USER = {
+  login: "reg-user",
+  password: "qwerty12",
+  email: "reg-user@example.com",
+} as const;
+
 export const bearerAuthHeader = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`,
 });
