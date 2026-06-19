@@ -5,9 +5,12 @@ import { usersService } from "../users/users.service";
 import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
+import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 
 export const authService = {
-  async registerUser(registerBody: IRegistrationBody): Promise<boolean> {
+  async registerUser(
+    registerBody: IRegistrationBody,
+  ): Promise<EAuthRegistrationSTATUS> {
     const confirmationCode = crypto.randomUUID();
     const expirationDate = add(new Date(), { minutes: 15, seconds: 0 });
     const createdAt = new Date();
@@ -17,8 +20,8 @@ export const authService = {
 
     const isLoginUnique = await usersService.isUniqueLogin(login);
     const isEmailUnique = await usersService.isUniqueEmail(email);
-    if (!isLoginUnique) return false;
-    if (!isEmailUnique) return false;
+    if (!isLoginUnique) return EAuthRegistrationSTATUS.LOGIN_ERROR;
+    if (!isEmailUnique) return EAuthRegistrationSTATUS.EMAIL_ERROR;
 
     const registrationDataBaseBody: ICreateRegistrationDataBaseBody = {
       login,
@@ -37,7 +40,7 @@ export const authService = {
     );
 
     if (!id) {
-      return false;
+      return EAuthRegistrationSTATUS.COMMON_ERROR;
     }
 
     const result = await emailService.sendRegistrationConfirmationEmail({
@@ -45,7 +48,9 @@ export const authService = {
       confirmationCode,
     });
 
-    return result;
+    return result
+      ? EAuthRegistrationSTATUS.OK
+      : EAuthRegistrationSTATUS.SEND_EMAIL_ERROR;
   },
 
   async confirmRegistration(code: string) {

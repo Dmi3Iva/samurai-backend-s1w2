@@ -7,6 +7,7 @@ import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
 import { authService } from "./auth.service";
+import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 
 export const authRouter = Router();
 
@@ -116,12 +117,15 @@ authRouter.post(
 
     const result = await authService.registerUser(registrationBody);
 
-    if (!result) {
+    if (result !== EAuthRegistrationSTATUS.OK) {
       return res.status(400).send({
         errorsMessages: [
           {
             message: "something went wrong during registration",
-            field: "login",
+            field:
+              result === EAuthRegistrationSTATUS.EMAIL_ERROR
+                ? "email"
+                : "login",
           },
         ],
       });
