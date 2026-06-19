@@ -16,7 +16,7 @@ export const authService = {
     const { login, email } = registerBody;
 
     const isLoginUnique = await usersService.isUniqueLogin(login);
-    const isEmailUnique = await usersService.isUniqueEmail(login);
+    const isEmailUnique = await usersService.isUniqueEmail(email);
     if (!isLoginUnique) return false;
     if (!isEmailUnique) return false;
 
@@ -69,10 +69,19 @@ export const authService = {
   },
 
   async registrationEmailResending(email: string): Promise<boolean> {
-    const user = await usersRepository.findUserByEmail(email);
+    const user = await usersRepository.findUserByEmail(email, {
+      fullMapping: true,
+    });
     if (!user) return false;
     if (user.user.emailConfirmation?.isConfirmed) return false;
     const confirmationCode = crypto.randomUUID();
+
+    const updatedConfirmationCode =
+      await usersRepository.updateConfirmRegistrationByUserId(
+        user.user.id,
+        confirmationCode,
+      );
+    if (!updatedConfirmationCode) return false;
 
     const result = await emailService.sendRegistrationConfirmationEmail({
       toEmail: user.user.email,

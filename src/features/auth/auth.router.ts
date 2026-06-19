@@ -1,12 +1,10 @@
-import { Router, Request, Response } from "express";
+import { Router, Request } from "express";
 import { body, matchedData } from "express-validator";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { usersService } from "../users/users.service";
 import { RequestWithBody } from "../../types/request.type";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
-import * as nodemailer from "nodemailer";
-import { appConfig } from "../../common/appConfig";
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
 import { authService } from "./auth.service";
 
@@ -24,7 +22,6 @@ interface AuthMeParams {
 }
 
 const loginOrEmailValidator = body("loginOrEmail").exists().isString();
-const loginValidator = body("login").exists().isString();
 // login*	string
 // maxLength: 10
 // minLength: 3
@@ -36,7 +33,6 @@ const loginRegistartionValidator = body("login")
   .isString()
   .isLength({ min: 3, max: 10 })
   .matches(loginPattern);
-const emailValidator = body("email").exists().isString();
 // email*	string
 // pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
 // example: example@example.dev
@@ -51,6 +47,10 @@ const emailRegistrationValidator = body("email")
 // maxLength: 20
 // minLength: 6
 const passwordValidator = body("password").exists().isString();
+const passwordRegistrationValidator = body("password")
+  .exists()
+  .isString()
+  .isLength({ min: 6, max: 20 });
 const codeValidator = body("code").exists().isString();
 
 authRouter.post(
@@ -109,7 +109,7 @@ authRouter.post(
   "/registration",
   loginRegistartionValidator,
   emailRegistrationValidator,
-  passwordValidator,
+  passwordRegistrationValidator,
   inputValidationMiddleware,
   async (req: RequestWithBody<IRegistrationBody>, res) => {
     const registrationBody = matchedData<IRegistrationBody>(req);
@@ -117,10 +117,17 @@ authRouter.post(
     const result = await authService.registerUser(registrationBody);
 
     if (!result) {
-      res.status(404).send();
+      return res.status(400).send({
+        errorsMessages: [
+          {
+            message: "something went wrong during registration",
+            field: "login",
+          },
+        ],
+      });
     }
 
-    res.status(204).send();
+    return res.status(204).send();
   },
 );
 
@@ -129,12 +136,11 @@ authRouter.post(
   codeValidator,
   inputValidationMiddleware,
   async (req, res) => {
-    debugger;
     const { code } = matchedData<{ code: string }>(req);
 
     const result = await authService.confirmRegistration(code);
     if (!result)
-      res.status(400).send({
+      return res.status(400).send({
         errorsMessages: [
           {
             message:
@@ -150,14 +156,21 @@ authRouter.post(
 
 authRouter.post(
   "/registration-email-resending",
-  emailValidator,
+  emailRegistrationValidator,
   inputValidationMiddleware,
   async (req, res) => {
     const { email } = matchedData<{ email: string }>(req);
     const result = await authService.registrationEmailResending(email);
 
     if (!result) {
-      return res.status(400).send();
+      return res.status(400).send({
+        errorsMessages: [
+          {
+            message: "smth wrong with email",
+            field: "email",
+          },
+        ],
+      });
     }
 
     return res.status(204).send();

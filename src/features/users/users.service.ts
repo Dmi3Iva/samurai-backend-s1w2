@@ -48,7 +48,9 @@ export const usersService = {
     loginOrEmail: string,
     password: string,
   ) {
-    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail);
+    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail, {
+      fullMapping: true,
+    });
     if (resultByLogin) {
       const isPasswordCorrect = await comparePasswords(
         password,
@@ -62,7 +64,9 @@ export const usersService = {
         : null;
     }
 
-    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail);
+    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail, {
+      fullMapping: true,
+    });
     if (resultByEmail) {
       const isPasswordCorrect = await comparePasswords(
         password,
