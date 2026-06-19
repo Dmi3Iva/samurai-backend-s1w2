@@ -24,19 +24,28 @@ interface AuthMeParams {
 }
 
 const loginOrEmailValidator = body("loginOrEmail").exists().isString();
-// TODO::
+const loginValidator = body("login").exists().isString();
 // login*	string
 // maxLength: 10
 // minLength: 3
 // pattern: ^[a-zA-Z0-9_-]*$
 // must be unique
-const loginValidator = body("login").exists().isString();
-// TODO::
+const loginPattern = /^[a-zA-Z0-9_-]*$/;
+const loginRegistartionValidator = body("login")
+  .exists()
+  .isString()
+  .isLength({ min: 3, max: 10 })
+  .matches(loginPattern);
+const emailValidator = body("email").exists().isString();
 // email*	string
 // pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
 // example: example@example.dev
 // must be unique
-const emailValidator = body("email").exists().isString();
+const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const emailRegistrationValidator = body("email")
+  .exists()
+  .isString()
+  .matches(emailPattern);
 // TODO::
 // password*	string
 // maxLength: 20
@@ -98,8 +107,8 @@ authRouter.get(
  */
 authRouter.post(
   "/registration",
-  loginValidator,
-  emailValidator,
+  loginRegistartionValidator,
+  emailRegistrationValidator,
   passwordValidator,
   inputValidationMiddleware,
   async (req: RequestWithBody<IRegistrationBody>, res) => {

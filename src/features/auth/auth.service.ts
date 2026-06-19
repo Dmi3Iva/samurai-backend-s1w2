@@ -1,9 +1,7 @@
 import { emailService } from "../../auth/adapters/email.service";
-import {
-  ICreateRegistrationDataBaseBody,
-  ICreateRegistrationPostBody,
-} from "../users/models/users.model";
+import { ICreateRegistrationDataBaseBody } from "../users/models/users.model";
 import { usersRepository } from "../users/users.repository";
+import { usersService } from "../users/users.service";
 import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
@@ -16,6 +14,11 @@ export const authService = {
     const password = await encryptPassword(registerBody.password);
 
     const { login, email } = registerBody;
+
+    const isLoginUnique = await usersService.isUniqueLogin(login);
+    const isEmailUnique = await usersService.isUniqueEmail(login);
+    if (!isLoginUnique) return false;
+    if (!isEmailUnique) return false;
 
     const registrationDataBaseBody: ICreateRegistrationDataBaseBody = {
       login,

@@ -38,7 +38,7 @@ export const emailService = {
         subject: REGISTRATION_CONFIRMATION_EMAIL_SUBJECT,
         html: createRegistrationConfirmationEmailHtml(confirmationCode),
       });
-      console.log("Message sent: %s", info.messageId);
+      console.log("Message sent:", info.messageId);
       return true;
     } catch (e) {
       console.error("error while tried to send email", e);
