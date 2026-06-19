@@ -1,7 +1,6 @@
 import { matchedData, query } from "express-validator";
 import { authorizationMiddleware } from "../../../middleware/authorization.middleware";
 import { RequestWithQuery } from "../../../types/request.type";
-import { usersRouter } from "../users.router";
 import { usersRepository } from "../users.repository";
 import { IUsersGetQueries } from "../models/users.model";
 import { Router } from "express";

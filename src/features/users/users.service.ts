@@ -48,17 +48,37 @@ export const usersService = {
     loginOrEmail: string,
     password: string,
   ) {
-    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail);
-    if (resultByLogin)
-      return (await comparePasswords(password, resultByLogin?.password))
+    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail, {
+      fullMapping: true,
+    });
+    if (resultByLogin) {
+      const isPasswordCorrect = await comparePasswords(
+        password,
+        resultByLogin?.password,
+      );
+      const isUserHasAndConfirmedRegistration =
+        resultByLogin.user?.emailConfirmation?.isConfirmed !== false;
+
+      return isPasswordCorrect && isUserHasAndConfirmedRegistration
         ? resultByLogin.user
         : null;
+    }
 
-    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail);
-    if (resultByEmail)
-      return (await comparePasswords(password, resultByEmail?.password))
+    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail, {
+      fullMapping: true,
+    });
+    if (resultByEmail) {
+      const isPasswordCorrect = await comparePasswords(
+        password,
+        resultByEmail?.password,
+      );
+      const isUserHasAndConfirmedRegistration =
+        resultByEmail.user?.emailConfirmation?.isConfirmed !== false;
+
+      return isPasswordCorrect && isUserHasAndConfirmedRegistration
         ? resultByEmail.user
         : null;
+    }
 
     return null;
   },
