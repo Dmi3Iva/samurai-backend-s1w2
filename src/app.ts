@@ -6,10 +6,12 @@ import { ROUTES } from "./consants/routes.conts";
 import { authRouter } from "./features/auth/auth.router";
 import { usersRouter } from "./features/users/users.router";
 import { commentsRouter } from "./features/comments/comments.route";
+import cookieParser from "cookie-parser";
 
 export const app = e();
 
 app.use(e.json());
+app.use(cookieParser());
 
 app.use(ROUTES.auth, authRouter);
 app.use(ROUTES.blogs, blogsRouter);

@@ -8,6 +8,10 @@ import { authorizationTokenMiddleware } from "../../middleware/authorizationToke
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
 import { authService } from "./auth.service";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
+import { REFRESH_COOKIE_NAME } from "../../consants/cookies.const";
+import { appConfig } from "../../common/appConfig";
+import { refreshTokenBlackListService } from "../refreshTokenBlacklist/refteshTokenBlackList.service";
+import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
 
 export const authRouter = Router();
 
@@ -70,12 +74,71 @@ authRouter.post(
       return res.status(401).send();
     }
 
-    const accessToken = jwtService.createToken(user.id);
+    const [accessToken, refreshToken] = jwtService.createTokensPair(user.id);
+    const refreshTokenExpTime = Number(appConfig.RT_TIME);
 
+    res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: refreshTokenExpTime,
+    });
     return res.status(200).send({ accessToken });
   },
 );
 
+authRouter.post(
+  "/logout",
+  authorizationRefreshTokenMiddleware,
+  async (req, res) => {
+    const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
+    const userId = req.userId as string;
+    const logoutSuccess = await refreshTokenBlackListService.addToken(
+      userId,
+      refreshToken,
+    );
+
+    if (logoutSuccess) {
+      res.clearCookie(REFRESH_COOKIE_NAME, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
+      return res.status(204).send();
+    }
+
+    return res.status(401).send();
+  },
+);
+
+authRouter.post(
+  "/refresh-token",
+  authorizationRefreshTokenMiddleware,
+  async (req, res) => {
+    // клиент отправляет на бек refreshToken в cookie,
+    const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
+    const userId = req.userId as string;
+    // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
+    const result = await refreshTokenBlackListService.updateTokens(
+      userId,
+      refreshToken,
+    );
+
+    if (!result) {
+      return res.status(401).send();
+    }
+
+    const refreshTokenExpTime = Number(appConfig.RT_TIME);
+    const [newAccessToken, newRefreshToken] = result;
+    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: refreshTokenExpTime,
+    });
+
+    return res.status(200).send({ accessToken: newAccessToken });
+  },
+);
+
+// возвращаем короткую инфу о текущем пользователе на основе accessToken.
 authRouter.get(
   "/me",
   authorizationTokenMiddleware,
@@ -100,8 +163,6 @@ authRouter.get(
     });
   },
 );
-
-// TODO:: validate
 
 /**
  * Регистрирует пользователя в системе и отправляет ему confirmation code на email
