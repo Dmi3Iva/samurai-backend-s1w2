@@ -14,6 +14,11 @@ export const authorizationRefreshTokenMiddleware: RequestHandler = async (
   }
 
   const result = jwtService.verifyRefreshToken(refreshToken);
+  const expirationDate = new Date(Number(result?.exp ?? 0) * 1000);
+
+  if (new Date() >= expirationDate) {
+    return res.status(401).send("refresh_token expired");
+  }
 
   if (!result) return res.status(401).send();
 

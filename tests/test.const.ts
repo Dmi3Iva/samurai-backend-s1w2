@@ -3,8 +3,6 @@ import { ROUTES as APP_ROUTES } from "../src/consants/routes.conts";
 process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-jwt-secret-for-vitest";
 process.env.JWT_REFRESH_SECRET =
   process.env.JWT_REFRESH_SECRET ?? "test-jwt-refresh-secret-for-vitest";
-process.env.AC_TIME = process.env.AC_TIME ?? "10";
-process.env.RT_TIME = process.env.RT_TIME ?? "20";
 
 export const ADMIN_AUTH_HEADER = {
   Authorization: "Basic YWRtaW46cXdlcnR5",

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const authorizationTokenMiddleware = async (
   req: Request,
@@ -17,14 +17,20 @@ export const authorizationTokenMiddleware = async (
     return res.status(401).send("Empty Basic token");
   }
 
-  const decoded = await new Promise<{ userId: string } | null>((resolve) =>
+  const decoded = await new Promise<JwtPayload | null>((resolve) =>
     jwt.verify(authToken, process.env.JWT_SECRET!, (err, decoded) => {
       if (err) {
         resolve(null);
       }
-      resolve(decoded as { userId: string });
+      resolve(decoded as JwtPayload);
     }),
   );
+
+  const exp = new Date(Number(decoded?.exp ?? 0) * 1000);
+
+  if (new Date() >= exp) {
+    return res.status(401).send("jwt is correct but expired");
+  }
 
   if (!decoded) {
     return res.status(401).send("incorrect jwt token");

@@ -89,6 +89,7 @@ authRouter.post(
 authRouter.post(
   "/logout",
   authorizationRefreshTokenMiddleware,
+  inputValidationMiddleware,
   async (req, res) => {
     const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
     const userId = req.userId as string;
@@ -112,6 +113,7 @@ authRouter.post(
 authRouter.post(
   "/refresh-token",
   authorizationRefreshTokenMiddleware,
+  inputValidationMiddleware,
   async (req, res) => {
     // клиент отправляет на бек refreshToken в cookie,
     const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
@@ -142,6 +144,7 @@ authRouter.post(
 authRouter.get(
   "/me",
   authorizationTokenMiddleware,
+  inputValidationMiddleware,
   async (req: Request, res) => {
     const userId = req.userId;
 

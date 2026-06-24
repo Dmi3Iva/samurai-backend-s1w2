@@ -1,5 +1,6 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { appConfig } from "../../common/appConfig";
+import { milliseconds } from "date-fns/fp";
 
 export enum ETokenType {
   Access,
@@ -29,7 +30,8 @@ export const jwtService = {
     }
 
     const jwtToken = jwt.sign({ userId }, secret, {
-      expiresIn: Number(time) || 300,
+      expiresIn: Number(time) / 1000 || 300,
+      jwtid: crypto.randomUUID(),
     });
 
     return jwtToken;
@@ -45,10 +47,10 @@ export const jwtService = {
         type === ETokenType.Access
           ? appConfig.JWT_SECRET
           : appConfig.JWT_REFRESH_SECRET;
-      return jwt.verify(token, secret);
+      return jwt.verify(token, secret) as JwtPayload;
     } catch (e) {
       console.error("token verify error");
-      return false;
+      return null;
     }
   },
   verifyAccessToken(token: string) {
