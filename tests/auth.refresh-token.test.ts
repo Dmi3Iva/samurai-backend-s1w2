@@ -154,6 +154,58 @@ describe("h08 refresh token — expected swagger behavior", () => {
     expect(secondRefreshResponse.status).toBe(401);
   });
 
+  it("POST /auth/logout: should return 401 when refresh token became invalid after refresh-token", async () => {
+    await usersTestManager.createEntity(TEST_USER);
+
+    const loginResponse = await request(app).post(`${ROUTES.auth}/login`).send({
+      loginOrEmail: TEST_USER.login,
+      password: TEST_USER.password,
+    });
+
+    const oldRefreshToken = getRefreshTokenFromSetCookie(
+      loginResponse.headers["set-cookie"],
+    );
+    expect(oldRefreshToken).toBeTruthy();
+
+    const refreshResponse = await request(app)
+      .post(`${ROUTES.auth}/refresh-token`)
+      .set(refreshTokenCookieHeader(oldRefreshToken!));
+
+    expect(refreshResponse.status).toBe(200);
+
+    const logoutResponse = await request(app)
+      .post(`${ROUTES.auth}/logout`)
+      .set(refreshTokenCookieHeader(oldRefreshToken!));
+
+    expect(logoutResponse.status).toBe(401);
+  });
+
+  it("POST /auth/logout: should return 401 when logging out with the same refresh token twice", async () => {
+    await usersTestManager.createEntity(TEST_USER);
+
+    const loginResponse = await request(app).post(`${ROUTES.auth}/login`).send({
+      loginOrEmail: TEST_USER.login,
+      password: TEST_USER.password,
+    });
+
+    const refreshToken = getRefreshTokenFromSetCookie(
+      loginResponse.headers["set-cookie"],
+    );
+    expect(refreshToken).toBeTruthy();
+
+    const firstLogoutResponse = await request(app)
+      .post(`${ROUTES.auth}/logout`)
+      .set(refreshTokenCookieHeader(refreshToken!));
+
+    expect(firstLogoutResponse.status).toBe(204);
+
+    const secondLogoutResponse = await request(app)
+      .post(`${ROUTES.auth}/logout`)
+      .set(refreshTokenCookieHeader(refreshToken!));
+
+    expect(secondLogoutResponse.status).toBe(401);
+  });
+
   it("POST /auth/refresh-token: should return 401 after logout", async () => {
     await usersTestManager.createEntity(TEST_USER);
 
