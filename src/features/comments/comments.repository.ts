@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { commentsDatabase } from "../../repositories/db";
+import { commentsDatabase } from "../../repositories/database";
 import {
   GetCommentsResponse,
   ICommentCreateModel,

@@ -1,6 +1,10 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { appConfig } from "../../common/appConfig";
 import { milliseconds } from "date-fns/fp";
+import {
+  IAuthType,
+  ITokenPayload,
+} from "../../features/auth/models/auth.model";
 
 export enum ETokenType {
   Access,
@@ -9,13 +13,13 @@ export enum ETokenType {
 
 export const jwtService = {
   // create token
-  createAccessToken(userId: string) {
-    return this._createToken(userId, ETokenType.Access);
+  createAccessToken(tokenPayload: ITokenPayload) {
+    return this._createToken(tokenPayload, ETokenType.Access);
   },
-  createRefreshToken(userId: string) {
-    return this._createToken(userId, ETokenType.Refresh);
+  createRefreshToken(tokenPayload: ITokenPayload) {
+    return this._createToken(tokenPayload, ETokenType.Refresh);
   },
-  _createToken(userId: string, type: ETokenType) {
+  _createToken(tokenPayload: ITokenPayload, type: ETokenType) {
     const {
       JWT_SECRET: jwtSecret,
       JWT_REFRESH_SECRET: jwtRefreshSecret,
@@ -29,15 +33,18 @@ export const jwtService = {
       throw new Error("no JWT secret specified");
     }
 
-    const jwtToken = jwt.sign({ userId }, secret, {
+    const jwtToken = jwt.sign(tokenPayload, secret, {
       expiresIn: Number(time) / 1000 || 300,
       jwtid: crypto.randomUUID(),
     });
 
     return jwtToken;
   },
-  createTokensPair(userId: string): [string, string] {
-    return [this.createAccessToken(userId), this.createRefreshToken(userId)];
+  createTokensPair(tokenPayload: ITokenPayload): [string, string] {
+    return [
+      this.createAccessToken(tokenPayload),
+      this.createRefreshToken(tokenPayload),
+    ];
   },
 
   // verify token

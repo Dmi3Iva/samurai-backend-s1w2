@@ -6,6 +6,13 @@ import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
+import { authRepository } from "./repository/auth.repository";
+import { IAuthType } from "./models/auth.model";
+import { appConfig } from "../../common/appConfig";
+import { jwtService } from "../../auth/adapters/jwt.service";
+import { authRouter } from "./auth.router";
+import { authDatabase } from "../../repositories/database";
+import { ERemoveSingleUserSessionState } from "./models/auth.constants";
 
 export const authService = {
   async registerUser(
@@ -94,5 +101,106 @@ export const authService = {
     });
 
     return result;
+  },
+
+  /**
+   * Регистрирует сессию пользователя и отдаёт токены access and refresh
+   * @param userId
+   * @returns array, where first element - AccessToken, second element - RefreshToken
+   */
+  async registerSession({
+    userId,
+    deviceName,
+    ip,
+  }: {
+    userId: string;
+    deviceName: string;
+    ip: string;
+  }): Promise<[string, string] | null> {
+    const iat = new Date();
+    const refreshTokenExpTime = Number(appConfig.RT_TIME) / 1000;
+    const exp = add(iat, { seconds: refreshTokenExpTime });
+    const deviceId = crypto.randomUUID();
+    const createSessionPayload: IAuthType = {
+      userId,
+      deviceName,
+      deviceId,
+      iat,
+      ip,
+      exp,
+    };
+    const res = await authRepository.createSession(createSessionPayload);
+    if (res) {
+      return jwtService.createTokensPair({
+        userId,
+        deviceId,
+        issuedAt: iat.toISOString(),
+      });
+    } else {
+      return null;
+    }
+  },
+
+  async removeSession(payload: {
+    userId: string;
+    deviceId: string;
+    iat: Date;
+  }) {
+    return authRepository.removeSession(payload);
+  },
+
+  async updateSession(
+    payload: {
+      userId: string;
+      deviceId: string;
+      iat: Date;
+      ip: string;
+      deviceName: string;
+    },
+    refreshToken: string,
+  ): Promise<[string, string] | null> {
+    const isRefreshTokenValid = jwtService.verifyRefreshToken(refreshToken);
+    if (!isRefreshTokenValid) return null;
+
+    const { userId, iat, deviceId } = payload;
+    const session = await authRepository.getSession({
+      userId,
+      iat,
+      deviceId,
+    });
+
+    if (!session) return null;
+
+    const newIat = new Date();
+    await authRepository.updateSession(payload, newIat);
+
+    return jwtService.createTokensPair({
+      userId: payload.userId,
+      deviceId: payload.deviceId,
+      issuedAt: newIat.toISOString(),
+    });
+  },
+
+  async getUserSessions(userId: string) {
+    return await authRepository.getSessions(userId);
+  },
+
+  async removeUserSessions(userId: string, deviceId: string): Promise<boolean> {
+    return await authRepository.removeUserSessions(userId, deviceId);
+  },
+
+  async removeSingleUserSession(
+    userId: string,
+    deviceId: string,
+  ): Promise<ERemoveSingleUserSessionState> {
+    const session = await authRepository.getSession({ deviceId });
+    if (session === null) {
+      return ERemoveSingleUserSessionState.NOT_FOUND;
+    }
+    if (session?.userId !== userId) {
+      return ERemoveSingleUserSessionState.FORBIDDEN;
+    }
+    await authRepository.removeSingleUserSession(userId, deviceId);
+    return ERemoveSingleUserSessionState.SUCCESS;
   },
 };

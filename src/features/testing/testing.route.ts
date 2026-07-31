@@ -3,7 +3,8 @@ import { blogsRepository } from "../blogs/blogs.repository";
 import { postsRepository } from "../posts/repository/posts.repository";
 import { usersRepository } from "../users/users.repository";
 import { commentsRepository } from "../comments/comments.repository";
-import { refreshTokenBlackListRepository } from "../refreshTokenBlacklist/refreshTokenBlackList.repository";
+import { authRepository } from "../auth/repository/auth.repository";
+import { rateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
 
 export const testingRouter = Router();
 
@@ -12,7 +13,8 @@ testingRouter.delete("/", async (req, res) => {
   await postsRepository.removeAll();
   await usersRepository.removeAll();
   await commentsRepository.removeAll();
-  await refreshTokenBlackListRepository.removeAll();
+  await authRepository.removeAll();
+  await rateLimitUpdateRepository.removeAll();
 
   res.status(204).send();
 });

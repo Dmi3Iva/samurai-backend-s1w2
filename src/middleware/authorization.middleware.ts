@@ -34,13 +34,21 @@ export const authorizationMiddleware: RequestHandler = async (
   if (authTitle === "Bearer") {
     const decodedString = await new Promise<{
       userId: string;
+      deviceId: string;
+      issuedAt: string;
     } | null>((res) =>
       jwt.verify(authToken, process.env.JWT_SECRET!, function (err, decoded) {
         if (err) {
           res(null);
         }
 
-        res(decoded as { userId: string });
+        res(
+          decoded as unknown as {
+            userId: string;
+            deviceId: string;
+            issuedAt: string;
+          },
+        );
       }),
     );
 
@@ -49,6 +57,8 @@ export const authorizationMiddleware: RequestHandler = async (
     }
 
     req.userId = decodedString.userId;
+    req.deviceId = decodedString.deviceId;
+    req.iat = new Date(decodedString.issuedAt);
   }
 
   next();

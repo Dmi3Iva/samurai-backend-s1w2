@@ -1,5 +1,5 @@
 import { app } from "./app";
-import { runDB } from "./repositories/db";
+import { runDB } from "./repositories/database";
 
 const port = 3000;
 const startApp = async () => {

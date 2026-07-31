@@ -1,7 +1,6 @@
 import { RequestHandler } from "express";
 import { REFRESH_COOKIE_NAME } from "../consants/cookies.const";
 import { jwtService } from "../auth/adapters/jwt.service";
-import { refreshTokenBlackListService } from "../features/refreshTokenBlacklist/refteshTokenBlackList.service";
 
 export const authorizationRefreshTokenMiddleware: RequestHandler = async (
   req,
@@ -23,14 +22,17 @@ export const authorizationRefreshTokenMiddleware: RequestHandler = async (
 
   if (!result) return res.status(401).send();
 
-  req.userId = (result as { userId: string }).userId;
+  if ("userId" in result) {
+    req.userId = result.userId;
+  }
 
-  const isBlackListed = await refreshTokenBlackListService.isBlackListToken(
-    result.userId,
-    refreshToken,
-  );
+  if ("deviceId" in result) {
+    req.deviceId = result.deviceId;
+  }
 
-  if (isBlackListed) return res.status(401).send("токен в чёрном списке");
+  if ("issuedAt" in result && typeof result.issuedAt === "string") {
+    req.iat = new Date(result.issuedAt);
+  }
 
   return next();
 };

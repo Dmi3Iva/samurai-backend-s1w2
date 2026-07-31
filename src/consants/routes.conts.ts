@@ -4,6 +4,7 @@ export const ROUTES = {
   posts: "/posts",
   users: "/users",
   comments: "/comments",
+  securityDevices: "/security/devices",
   testings: "/testing/all-data",
 };
 

@@ -5,7 +5,7 @@ import { authTestManager } from "./authTestManager";
 import { registrationTestManager } from "./registrationTestManager";
 import { getConfirmationCodeByEmail } from "./registrationTestHelpers";
 import { homeworkState } from "./homeworkState";
-import { ROUTES, REGISTRATION_USER } from "./test.const";
+import { ROUTES, REGISTRATION_USER, deliveredTestEmail } from "./test.const";
 
 describe("Homework 7 — Registration flow (remote checker parity)", () => {
   beforeEach(async () => {
@@ -40,17 +40,17 @@ describe("Homework 7 — Registration flow (remote checker parity)", () => {
   });
 
   it("should complete flow with email resending: register → resend → confirm → login", async () => {
+    const resendUserEmail = deliveredTestEmail("resend-u");
+
     await registrationTestManager.register({
       login: "resend-u",
       password: REGISTRATION_USER.password,
-      email: "resend-u@example.com",
+      email: resendUserEmail,
     });
 
-    await registrationTestManager.resendRegistrationEmail(
-      "resend-u@example.com",
-    );
+    await registrationTestManager.resendRegistrationEmail(resendUserEmail);
 
-    const code = await getConfirmationCodeByEmail("resend-u@example.com");
+    const code = await getConfirmationCodeByEmail(resendUserEmail);
     await registrationTestManager.confirmRegistration(code);
 
     const loginResponse = await authTestManager.loginHomeworkChecker({

@@ -1,0 +1,2199 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "h09 API - V1",
+    "description": "“Security devices” entity was added. \n\nUser can view his all active sessions. User can logout from all sessions (except Current session) and a specific session.\n\nAuthorization: limit on the number of attempts.",
+    "version": "h09"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Try login user to the system",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.LoginInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.LoginInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.LoginInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Returns JWT accessToken (expired after 10 seconds) in body and JWT refreshToken in cookie (http-only, secure) (expired after 20 seconds).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "If the password or login is wrong"
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/refresh-token": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Generate new pair of access and refresh tokens (in cookie client must send correct refreshToken that will be revoked after refreshing)\r\nDevice LastActiveDate should be overrode by issued Date of new refresh token",
+        "responses": {
+          "200": {
+            "description": "Returns JWT accessToken (expired after 10 seconds) in body and JWT refreshToken in cookie (http-only, secure) (expired after 20 seconds).",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.LoginSuccessViewModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "refreshToken": [
+              "Policy:",
+              "Roles:",
+              "AuthenticationSchemes:refreshToken"
+            ]
+          }
+        ]
+      }
+    },
+    "/auth/registration-confirmation": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Confirm registration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationConfirmationCodeModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationConfirmationCodeModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationConfirmationCodeModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Email was verified. Account was activated"
+          },
+          "400": {
+            "description": "If the confirmation code is incorrect, expired or already been applied",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/registration": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Registration in the system. Email with confirmation code will be send to passed email address",
+        "requestBody": {
+          "description": "Data for registration",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Input data is accepted. Email with confirmation code will be send to passed email address"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values (in particular if the user with the given email or login already exists)",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/registration-email-resending": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Resend confirmation registration Email if user exists",
+        "requestBody": {
+          "description": "Data for constructing new user",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationEmailResending"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationEmailResending"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h07.RegistrationEmailResending"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Input data is accepted.Email with confirmation code will be send to passed email address.Confirmation code should be inside link as query param, for example: https://some-front.com/confirm-registration?code=youtcodehere"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "In cookie client must send correct refreshToken that will be revoked",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "refreshToken": [
+              "Policy:",
+              "Roles:",
+              "AuthenticationSchemes:refreshToken"
+            ]
+          }
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get information about current user",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.MeViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.MeViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.MeViewModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "bearer": ["Policy:", "Roles:", "AuthenticationSchemes:"]
+          }
+        ]
+      }
+    },
+    "/blogs": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Returns blogs with paging",
+        "parameters": [
+          {
+            "name": "searchNameTerm",
+            "in": "query",
+            "description": "Search term for blog Name: Name should contains this term in any position",
+            "schema": {
+              "type": "string",
+              "default": null
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "Default value: desc",
+            "schema": {
+              "$ref": "#/components/schemas/h04.SortDirections"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "pageNumber is number of portions that should be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize is portions size that should be returned",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.BlogViewModel>"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.BlogViewModel>"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.BlogViewModel>"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Blogs"],
+        "summary": "Create new blog",
+        "requestBody": {
+          "description": "Data for constructing new Blog entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created blog",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/blogs/{blogId}/posts": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Returns all posts for specified blog",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "pageNumber is number of portions that should be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize is portions size that should be returned",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "Default value: desc",
+            "schema": {
+              "$ref": "#/components/schemas/h04.SortDirections"
+            }
+          },
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "If specificied blog is not exists"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Blogs"],
+        "summary": "Create new post for specific blog",
+        "parameters": [
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data for constructing new post entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogPostInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogPostInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogPostInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created post",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "If specified blog doesn't exists"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/blogs/{id}": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Returns blog by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Existing blog id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.BlogViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Blogs"],
+        "summary": "Update existing Blog by id with InputModel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data for updating",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.BlogInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Blogs"],
+        "summary": "Delete blog specified by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Blog id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/comments/{commentId}": {
+      "put": {
+        "tags": ["Comments"],
+        "summary": "Update existing comment by id with InputModel",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data for updating",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "If try edit the comment that is not your own"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "bearer": ["Policy:", "Roles:", "AuthenticationSchemes:"]
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Delete comment specified by id",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "description": "Comment id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "If try delete the comment that is not your own"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "bearer": ["Policy:", "Roles:", "AuthenticationSchemes:"]
+          }
+        ]
+      }
+    },
+    "/comments/{id}": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Return comment by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of existing comment",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/posts/{postId}/comments": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Returns comments for specified post",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "pageNumber is number of portions that should be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize is portions size that should be returned",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "Default value: desc",
+            "schema": {
+              "$ref": "#/components/schemas/h04.SortDirections"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h06.db.CommentViewModel>"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h06.db.CommentViewModel>"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h06.db.CommentViewModel>"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "If post for passed postId doesn't exist"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create new comment",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data for constructing new post entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h06.db.CommentInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created post",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h06.db.CommentViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "If post with specified postId doesn't exists"
+          }
+        },
+        "security": [
+          {
+            "bearer": ["Policy:", "Roles:", "AuthenticationSchemes:"]
+          }
+        ]
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Returns all posts",
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "pageNumber is number of portions that should be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize is portions size that should be returned",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "Default value: desc",
+            "schema": {
+              "$ref": "#/components/schemas/h04.SortDirections"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h03.PostViewModel>"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create new post",
+        "requestBody": {
+          "description": "Data for constructing new post entity",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created post",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Return post by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of existing post",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h03.PostViewModel"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Update existing post by id with InputModel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Data for updating",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h02.db.PostInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete post specified by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Post id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/security/devices": {
+      "get": {
+        "tags": ["SecurityDevices"],
+        "summary": "Returns all devices with active sessions for current user",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/h09.DeviceViewModel"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/h09.DeviceViewModel"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/h09.DeviceViewModel"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "refreshToken": [
+              "Policy:",
+              "Roles:",
+              "AuthenticationSchemes:refreshToken"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["SecurityDevices"],
+        "summary": "Terminate all other (exclude current) device's sessions",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "refreshToken": [
+              "Policy:",
+              "Roles:",
+              "AuthenticationSchemes:refreshToken"
+            ]
+          }
+        ]
+      }
+    },
+    "/security/devices/{deviceId}": {
+      "delete": {
+        "tags": ["SecurityDevices"],
+        "summary": "Terminate specified device session",
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "path",
+            "description": "Id of session that will be terminated",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "If try to delete the deviceId of other user"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        },
+        "security": [
+          {
+            "refreshToken": [
+              "Policy:",
+              "Roles:",
+              "AuthenticationSchemes:refreshToken"
+            ]
+          }
+        ]
+      }
+    },
+    "/testing/all-data": {
+      "delete": {
+        "tags": ["Testing"],
+        "summary": "Clear database: delete all data from all tables/collections",
+        "responses": {
+          "204": {
+            "description": "All data is deleted"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Returns all users",
+        "parameters": [
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortDirection",
+            "in": "query",
+            "description": "Default value: desc",
+            "schema": {
+              "$ref": "#/components/schemas/h04.SortDirections"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "description": "pageNumber is number of portions that should be returned",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize is portions size that should be returned",
+            "schema": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "searchLoginTerm",
+            "in": "query",
+            "description": "Search term for user Login: Login should contains this term in any position",
+            "schema": {
+              "type": "string",
+              "default": null
+            }
+          },
+          {
+            "name": "searchEmailTerm",
+            "in": "query",
+            "description": "Search term for user Email: Email should contains this term in any position",
+            "schema": {
+              "type": "string",
+              "default": null
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h05.db.UserViewModel>"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h05.db.UserViewModel>"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Paginator<h05.db.UserViewModel>"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Add new user to the system",
+        "requestBody": {
+          "description": "Data for constructing new user",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h05.db.UserInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created user",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/h05.db.UserViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h05.db.UserViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/h05.db.UserViewModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the inputModel has incorrect values. \r\n            <br /><br /><i>Note: If the error should be in the BLL, for example, \"the email address is not unique\", \r\n            do not try to mix this error with input validation errors in the middleware, \r\n            just return one element in the errors array</i>",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    },
+    "/users/{id}": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user specified by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "User id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "If specified user is not exists"
+          }
+        },
+        "security": [
+          {
+            "basic": ["Policy:", "Roles:", "AuthenticationSchemes:basic"]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "APIErrorResult": {
+        "type": "object",
+        "properties": {
+          "errorsMessages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FieldError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Message with error explanation for certain field",
+            "nullable": true
+          },
+          "field": {
+            "type": "string",
+            "description": "What field/property of input model has error",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Paginator<h03.BlogViewModel>": {
+        "required": ["items"],
+        "type": "object",
+        "properties": {
+          "pagesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/h03.BlogViewModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Paginator<h03.PostViewModel>": {
+        "required": ["items"],
+        "type": "object",
+        "properties": {
+          "pagesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/h03.PostViewModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Paginator<h05.db.UserViewModel>": {
+        "required": ["items"],
+        "type": "object",
+        "properties": {
+          "pagesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/h05.db.UserViewModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "Paginator<h06.db.CommentViewModel>": {
+        "required": ["items"],
+        "type": "object",
+        "properties": {
+          "pagesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/h06.db.CommentViewModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "h02.db.BlogInputModel": {
+        "required": ["description", "name", "websiteUrl"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 15,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 500,
+            "type": "string"
+          },
+          "websiteUrl": {
+            "maxLength": 100,
+            "pattern": "^https://([a-zA-Z0-9_-]+\\.)+[a-zA-Z0-9_-]+(\\/[a-zA-Z0-9_-]+)*\\/?$",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h02.db.BlogPostInputModel": {
+        "required": ["content", "shortDescription", "title"],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "shortDescription": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h02.db.PostInputModel": {
+        "required": ["blogId", "content", "shortDescription", "title"],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "shortDescription": {
+            "maxLength": 100,
+            "type": "string"
+          },
+          "content": {
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "blogId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h03.BlogViewModel": {
+        "required": ["description", "id", "name", "websiteUrl"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "websiteUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isMembership": {
+            "type": "boolean",
+            "description": "True if user has not expired membership subscription to blog"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h03.PostViewModel": {
+        "required": [
+          "blogId",
+          "blogName",
+          "content",
+          "id",
+          "shortDescription",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "shortDescription": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "blogId": {
+            "type": "string"
+          },
+          "blogName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h04.SortDirections": {
+        "enum": ["asc", "desc"],
+        "type": "string"
+      },
+      "h05.db.LoginInputModel": {
+        "required": ["loginOrEmail", "password"],
+        "type": "object",
+        "properties": {
+          "loginOrEmail": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h05.db.UserInputModel": {
+        "required": ["email", "login", "password"],
+        "type": "object",
+        "properties": {
+          "login": {
+            "maxLength": 10,
+            "minLength": 3,
+            "pattern": "^[a-zA-Z0-9_-]*$",
+            "type": "string",
+            "description": "must be unique"
+          },
+          "password": {
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string"
+          },
+          "email": {
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+            "type": "string",
+            "description": "must be unique",
+            "example": "example@example.dev"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h05.db.UserViewModel": {
+        "required": ["createdAt", "email", "id", "login"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h06.db.CommentInputModel": {
+        "required": ["content"],
+        "type": "object",
+        "properties": {
+          "content": {
+            "maxLength": 300,
+            "minLength": 20,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h06.db.CommentViewModel": {
+        "required": ["commentatorInfo", "content", "createdAt", "id"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "commentatorInfo": {
+            "$ref": "#/components/schemas/h06.db.CommentatorInfo"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h06.db.CommentatorInfo": {
+        "required": ["userId", "userLogin"],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "userLogin": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h06.db.LoginSuccessViewModel": {
+        "required": ["accessToken"],
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "JWT access token"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h06.db.MeViewModel": {
+        "required": ["email", "login", "userId"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "login": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h07.RegistrationConfirmationCodeModel": {
+        "required": ["code"],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Code that be sent via Email inside link"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h07.RegistrationEmailResending": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+            "type": "string",
+            "description": "Email of already registered but not confirmed user",
+            "example": "example@example.com"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h09.DeviceViewModel": {
+        "required": ["deviceId", "ip", "lastActiveDate", "title"],
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "IP address of device during signing in"
+          },
+          "title": {
+            "type": "string",
+            "description": "Device name: for example Chrome 105 (received by parsing http header \"user-agent\")"
+          },
+          "lastActiveDate": {
+            "type": "string",
+            "description": "Date of the last generating of refresh/access tokens"
+          },
+          "deviceId": {
+            "type": "string",
+            "description": "Id of connected device session"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "description": "Enter JWT Bearer token **_only_**",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "basic": {
+        "type": "http",
+        "scheme": "basic"
+      },
+      "refreshToken": {
+        "type": "apiKey",
+        "description": "JWT refreshToken inside cookie. Must be correct, and must not expire",
+        "name": "refreshToken",
+        "in": "cookie"
+      }
+    }
+  }
+}
