@@ -23,11 +23,19 @@ export const HOMEWORK_USER = {
   email: "lg964870@example.com",
 } as const;
 
+/**
+ * Resend rejects fake domains like example.com with "550 Invalid `to` field",
+ * so every email that is really sent must use a resend.dev test address.
+ * Labels after `+` keep addresses unique per scenario.
+ */
+export const deliveredTestEmail = (label: string) =>
+  `delivered+${label}@resend.dev`;
+
 /** User for h07 self-registration flow tests */
 export const REGISTRATION_USER = {
   login: "reg-user",
   password: "qwerty12",
-  email: "reg-user@example.com",
+  email: deliveredTestEmail("reg-user"),
 } as const;
 
 export const bearerAuthHeader = (accessToken: string) => ({

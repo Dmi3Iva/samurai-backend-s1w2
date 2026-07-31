@@ -5,6 +5,7 @@ import "dotenv/config";
 import { IUserType } from "../features/users/models/users.model";
 import { ICommentType } from "../features/comments/comments.models";
 import { IAuthType } from "../features/auth/models/auth.model";
+import { IRateLimitType } from "../features/rate-limit/models/model";
 
 const mongoURI: string = process.env.MONGO_URI || "mongodb://0.0.0.0:27017";
 
@@ -17,6 +18,7 @@ export const postsDatabase = db.collection<IPostType>("posts");
 export const usersDatabase = db.collection<IUserType>("users");
 export const commentsDatabase = db.collection<ICommentType>("comments");
 export const authDatabase = db.collection<IAuthType>("auth");
+export const rateLimitDatabase = db.collection<IRateLimitType>("rate_limit");
 
 export const runDB = async () => {
   try {

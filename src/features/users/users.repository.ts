@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { db, usersDatabase } from "../../repositories/db";
+import { db, usersDatabase } from "../../repositories/database";
 import {
   ICreatedDBUserParam,
   ICreateRegistrationDataBaseBody,

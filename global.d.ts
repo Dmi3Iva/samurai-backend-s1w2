@@ -4,7 +4,7 @@ declare global {
       userId: string | null;
       deviceId: string | null;
       deviceName?: string;
-      iat: string | null;
+      iat: Date | null;
       ip?: string;
     }
   }

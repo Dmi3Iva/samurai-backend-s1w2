@@ -11,7 +11,8 @@ import { IAuthType } from "./models/auth.model";
 import { appConfig } from "../../common/appConfig";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { authRouter } from "./auth.router";
-import { authDatabase } from "../../repositories/db";
+import { authDatabase } from "../../repositories/database";
+import { ERemoveSingleUserSessionState } from "./models/auth.constants";
 
 export const authService = {
   async registerUser(
@@ -133,7 +134,7 @@ export const authService = {
       return jwtService.createTokensPair({
         userId,
         deviceId,
-        iat,
+        issuedAt: iat.toISOString(),
       });
     } else {
       return null;
@@ -143,21 +144,16 @@ export const authService = {
   async removeSession(payload: {
     userId: string;
     deviceId: string;
-    iat: string;
+    iat: Date;
   }) {
-    const databasePayload = {
-      userId: payload.userId,
-      deviceId: payload.deviceId,
-      iat: new Date(payload.iat),
-    };
-    return authRepository.removeSession(databasePayload);
+    return authRepository.removeSession(payload);
   },
 
   async updateSession(
     payload: {
       userId: string;
       deviceId: string;
-      iat: string;
+      iat: Date;
       ip: string;
       deviceName: string;
     },
@@ -165,22 +161,46 @@ export const authService = {
   ): Promise<[string, string] | null> {
     const isRefreshTokenValid = jwtService.verifyRefreshToken(refreshToken);
     if (!isRefreshTokenValid) return null;
-    const dataBasePayload = { ...payload, iat: new Date(payload.iat) };
-    const session = await authRepository.getSession(dataBasePayload);
+
+    const { userId, iat, deviceId } = payload;
+    const session = await authRepository.getSession({
+      userId,
+      iat,
+      deviceId,
+    });
 
     if (!session) return null;
 
     const newIat = new Date();
-    await authRepository.updateSession(dataBasePayload, newIat);
+    await authRepository.updateSession(payload, newIat);
 
     return jwtService.createTokensPair({
-      userId: dataBasePayload.userId,
-      deviceId: dataBasePayload.deviceId,
-      iat: newIat,
+      userId: payload.userId,
+      deviceId: payload.deviceId,
+      issuedAt: newIat.toISOString(),
     });
   },
 
   async getUserSessions(userId: string) {
     return await authRepository.getSessions(userId);
+  },
+
+  async removeUserSessions(userId: string, deviceId: string): Promise<boolean> {
+    return await authRepository.removeUserSessions(userId, deviceId);
+  },
+
+  async removeSingleUserSession(
+    userId: string,
+    deviceId: string,
+  ): Promise<ERemoveSingleUserSessionState> {
+    const session = await authRepository.getSession({ deviceId });
+    if (session === null) {
+      return ERemoveSingleUserSessionState.NOT_FOUND;
+    }
+    if (session?.userId !== userId) {
+      return ERemoveSingleUserSessionState.FORBIDDEN;
+    }
+    await authRepository.removeSingleUserSession(userId, deviceId);
+    return ERemoveSingleUserSessionState.SUCCESS;
   },
 };

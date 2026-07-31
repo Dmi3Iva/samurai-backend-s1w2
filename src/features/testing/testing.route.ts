@@ -4,6 +4,7 @@ import { postsRepository } from "../posts/repository/posts.repository";
 import { usersRepository } from "../users/users.repository";
 import { commentsRepository } from "../comments/comments.repository";
 import { authRepository } from "../auth/repository/auth.repository";
+import { rateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
 
 export const testingRouter = Router();
 
@@ -13,6 +14,7 @@ testingRouter.delete("/", async (req, res) => {
   await usersRepository.removeAll();
   await commentsRepository.removeAll();
   await authRepository.removeAll();
+  await rateLimitUpdateRepository.removeAll();
 
   res.status(204).send();
 });

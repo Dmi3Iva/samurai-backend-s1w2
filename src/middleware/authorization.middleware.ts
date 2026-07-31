@@ -35,7 +35,7 @@ export const authorizationMiddleware: RequestHandler = async (
     const decodedString = await new Promise<{
       userId: string;
       deviceId: string;
-      iat: string;
+      issuedAt: string;
     } | null>((res) =>
       jwt.verify(authToken, process.env.JWT_SECRET!, function (err, decoded) {
         if (err) {
@@ -46,7 +46,7 @@ export const authorizationMiddleware: RequestHandler = async (
           decoded as unknown as {
             userId: string;
             deviceId: string;
-            iat: string;
+            issuedAt: string;
           },
         );
       }),
@@ -58,7 +58,7 @@ export const authorizationMiddleware: RequestHandler = async (
 
     req.userId = decodedString.userId;
     req.deviceId = decodedString.deviceId;
-    req.iat = decodedString.iat;
+    req.iat = new Date(decodedString.issuedAt);
   }
 
   next();

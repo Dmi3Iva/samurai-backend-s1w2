@@ -11,8 +11,8 @@ import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 import { REFRESH_COOKIE_NAME } from "../../consants/cookies.const";
 import { appConfig } from "../../common/appConfig";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
-import { Decipheriv } from "crypto";
 import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
+import { rateLimitMiddleware } from "../../middleware/rate-limit.middleware";
 
 export const authRouter = Router();
 
@@ -28,6 +28,7 @@ interface AuthMeParams {
 }
 
 export const loginOrEmailValidator = body("loginOrEmail").exists().isString();
+
 // login*	string
 // maxLength: 10
 // minLength: 3
@@ -39,6 +40,7 @@ const loginRegistartionValidator = body("login")
   .isString()
   .isLength({ min: 3, max: 10 })
   .matches(loginPattern);
+
 // email*	string
 // pattern: ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$
 // example: example@example.dev
@@ -48,7 +50,7 @@ const emailRegistrationValidator = body("email")
   .exists()
   .isString()
   .matches(emailPattern);
-// TODO::
+
 // password*	string
 // maxLength: 20
 // minLength: 6
@@ -61,6 +63,7 @@ const codeValidator = body("code").exists().isString();
 
 authRouter.post(
   "/login",
+  rateLimitMiddleware,
   loginOrEmailValidator,
   passwordValidator,
   inputValidationMiddleware,
@@ -112,7 +115,11 @@ authRouter.post(
   async (req, res) => {
     const userId = req.userId as string;
     const deviceId = req.deviceId as string;
-    const iat = req.iat as string;
+    const iat = req.iat;
+
+    if (!userId || !deviceId || !iat) {
+      return res.status(400).send("not enought data to logout");
+    }
 
     const logoutSuccess = await authService.removeSession({
       userId,
@@ -136,16 +143,17 @@ authRouter.post(
   "/refresh-token",
   authorizationRefreshTokenMiddleware,
   inputValidationMiddleware,
+  deviceNameMiddleware,
   async (req, res) => {
     // клиент отправляет на бек refreshToken в cookie,
     const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
-    const userId = req.userId as string;
-    const deviceId = req.deviceId as string;
-    const iat = req.iat as string;
+    const userId = req.userId;
+    const deviceId = req.deviceId;
+    const iat = req.iat;
     const ip = req.ip;
     const deviceName = req.deviceName;
 
-    if (!deviceName || !ip) {
+    if (!deviceName || !ip || !userId || !iat || !deviceId) {
       return res.status(400).send("not enough data to set session");
     }
     // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
@@ -208,6 +216,7 @@ authRouter.get(
  */
 authRouter.post(
   "/registration",
+  rateLimitMiddleware,
   loginRegistartionValidator,
   emailRegistrationValidator,
   passwordRegistrationValidator,
@@ -237,6 +246,7 @@ authRouter.post(
 
 authRouter.post(
   "/registration-confirmation",
+  rateLimitMiddleware,
   codeValidator,
   inputValidationMiddleware,
   async (req, res) => {
@@ -260,6 +270,7 @@ authRouter.post(
 
 authRouter.post(
   "/registration-email-resending",
+  rateLimitMiddleware,
   emailRegistrationValidator,
   inputValidationMiddleware,
   async (req, res) => {

@@ -1,4 +1,4 @@
-import { usersDatabase } from "../src/repositories/db";
+import { usersDatabase } from "../src/repositories/database";
 
 interface EmailConfirmationData {
   confirmationCode: string;

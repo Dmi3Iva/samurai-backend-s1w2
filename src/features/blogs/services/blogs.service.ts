@@ -1,5 +1,5 @@
 import { WithId } from "mongodb";
-import { blogsDatabase } from "../../../repositories/db";
+import { blogsDatabase } from "../../../repositories/database";
 import type {
   CreateBlogModel,
   IFindBlogsSearchTerm,

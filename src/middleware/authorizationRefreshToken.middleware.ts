@@ -22,7 +22,17 @@ export const authorizationRefreshTokenMiddleware: RequestHandler = async (
 
   if (!result) return res.status(401).send();
 
-  req.userId = (result as { userId: string }).userId;
+  if ("userId" in result) {
+    req.userId = result.userId;
+  }
+
+  if ("deviceId" in result) {
+    req.deviceId = result.deviceId;
+  }
+
+  if ("issuedAt" in result && typeof result.issuedAt === "string") {
+    req.iat = new Date(result.issuedAt);
+  }
 
   return next();
 };

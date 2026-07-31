@@ -13,6 +13,7 @@ export const app = e();
 
 app.use(e.json());
 app.use(cookieParser());
+app.set("trust proxy", true);
 
 app.use(ROUTES.auth, authRouter);
 app.use(ROUTES.blogs, blogsRouter);

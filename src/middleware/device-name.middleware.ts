@@ -6,8 +6,14 @@ export const deviceNameMiddleware: RequestHandler = (req, res, next) => {
 
   if (typeof userAgentRaw === "string") {
     const userAgent = UAParser(userAgentRaw);
-    const deviceName = Object.values(userAgent.device).join(",");
-    req.deviceName = deviceName;
+    const deviceName = [
+      ...Object.values(userAgent.device),
+      ...Object.values(userAgent.browser),
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(" ");
+
+    req.deviceName = deviceName || userAgentRaw || "unknown device";
   }
 
   return next();

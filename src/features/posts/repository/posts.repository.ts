@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { blogsDatabase, postsDatabase } from "../../../repositories/db";
+import { blogsDatabase, postsDatabase } from "../../../repositories/database";
 import {
   GetPostsResponse,
   IDBPostType,

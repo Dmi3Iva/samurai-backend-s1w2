@@ -1,12 +1,12 @@
 import { WithId } from "mongodb";
-import { authDatabase } from "../../../repositories/db";
+import { authDatabase } from "../../../repositories/database";
 import { IAuthType, ISecurityDevice } from "../models/auth.model";
 
 const mapToAuthType = (type: WithId<IAuthType>): ISecurityDevice => {
   return {
     ip: type.ip,
     title: type.deviceName,
-    lastActiveDate: type.iat.toString(),
+    lastActiveDate: type.iat.toISOString(),
     deviceId: type.deviceId,
   };
 };
@@ -31,7 +31,7 @@ export const authRepository = {
 
     return deletedCount === 1;
   },
-  async getSession(payload: { userId: string; deviceId: string; iat: Date }) {
+  async getSession(payload: { userId?: string; deviceId: string; iat?: Date }) {
     return await authDatabase.findOne(payload);
   },
   async updateSession(
@@ -52,12 +52,34 @@ export const authRepository = {
     const payloadToFind = {
       userId,
       deviceId,
-      deviceName,
       iat,
     };
-    return await authDatabase.updateOne(payloadToFind, { iat: newIat });
+    const updateDocument = {
+      $set: {
+        iat: newIat,
+        deviceName,
+      },
+    };
+
+    return await authDatabase.updateOne(payloadToFind, updateDocument);
   },
   async removeAll() {
     return await authDatabase.deleteMany({});
+  },
+
+  async removeUserSessions(userId: string, deviceId: string): Promise<boolean> {
+    const { deletedCount } = await authDatabase.deleteMany({
+      userId,
+      deviceId: { $ne: deviceId },
+    });
+    return deletedCount > 0;
+  },
+
+  async removeSingleUserSession(
+    userId: string,
+    deviceId: string,
+  ): Promise<boolean> {
+    const { deletedCount } = await authDatabase.deleteOne({ userId, deviceId });
+    return deletedCount > 0;
   },
 };

@@ -14,4 +14,10 @@ export interface ISecurityDevice {
   deviceId: string;
 }
 
-export type ITokenPayload = Pick<IAuthType, "userId" | "iat" | "deviceId">;
+/** JWT payload. Do not put Date into reserved claim `iat` — jsonwebtoken requires seconds. */
+export type ITokenPayload = {
+  userId: string;
+  deviceId: string;
+  /** ISO string of session issue date; must match session.iat in DB */
+  issuedAt: string;
+};
