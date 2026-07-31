@@ -10,12 +10,13 @@ import { authService } from "./auth.service";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 import { REFRESH_COOKIE_NAME } from "../../consants/cookies.const";
 import { appConfig } from "../../common/appConfig";
-import { refreshTokenBlackListService } from "../refreshTokenBlacklist/refteshTokenBlackList.service";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
+import { Decipheriv } from "crypto";
+import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
 
 export const authRouter = Router();
 
-interface LoginBodyParams {
+export interface LoginBodyParams {
   loginOrEmail: string;
   password: string;
 }
@@ -26,7 +27,7 @@ interface AuthMeParams {
   userId: string;
 }
 
-const loginOrEmailValidator = body("loginOrEmail").exists().isString();
+export const loginOrEmailValidator = body("loginOrEmail").exists().isString();
 // login*	string
 // maxLength: 10
 // minLength: 3
@@ -51,7 +52,7 @@ const emailRegistrationValidator = body("email")
 // password*	string
 // maxLength: 20
 // minLength: 6
-const passwordValidator = body("password").exists().isString();
+export const passwordValidator = body("password").exists().isString();
 const passwordRegistrationValidator = body("password")
   .exists()
   .isString()
@@ -63,6 +64,7 @@ authRouter.post(
   loginOrEmailValidator,
   passwordValidator,
   inputValidationMiddleware,
+  deviceNameMiddleware,
   async (req: RequestWithBody<LoginBodyParams>, res) => {
     const body = matchedData<LoginBodyParams>(req);
     const user = await usersService.isLoginOrEmailAndPasswordCorrected(
@@ -74,7 +76,24 @@ authRouter.post(
       return res.status(401).send();
     }
 
-    const [accessToken, refreshToken] = jwtService.createTokensPair(user.id);
+    const ip = req.ip;
+    const deviceName = req.deviceName;
+
+    if (!ip || !deviceName)
+      return res.status(400).send("not enough data to register session");
+
+    const session = await authService.registerSession({
+      userId: user.id,
+      deviceName,
+      ip,
+    });
+
+    if (session === null) {
+      return res.status(500).send();
+    }
+
+    const [accessToken, refreshToken] = session;
+
     const refreshTokenExpTime = Number(appConfig.RT_TIME);
 
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
@@ -91,12 +110,15 @@ authRouter.post(
   authorizationRefreshTokenMiddleware,
   inputValidationMiddleware,
   async (req, res) => {
-    const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
     const userId = req.userId as string;
-    const logoutSuccess = await refreshTokenBlackListService.addToken(
+    const deviceId = req.deviceId as string;
+    const iat = req.iat as string;
+
+    const logoutSuccess = await authService.removeSession({
       userId,
-      refreshToken,
-    );
+      iat,
+      deviceId,
+    });
 
     if (logoutSuccess) {
       res.clearCookie(REFRESH_COOKIE_NAME, {
@@ -118,9 +140,23 @@ authRouter.post(
     // клиент отправляет на бек refreshToken в cookie,
     const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
     const userId = req.userId as string;
+    const deviceId = req.deviceId as string;
+    const iat = req.iat as string;
+    const ip = req.ip;
+    const deviceName = req.deviceName;
+
+    if (!deviceName || !ip) {
+      return res.status(400).send("not enough data to set session");
+    }
     // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
-    const result = await refreshTokenBlackListService.updateTokens(
-      userId,
+    const result = await authService.updateSession(
+      {
+        userId,
+        deviceId,
+        iat,
+        ip,
+        deviceName,
+      },
       refreshToken,
     );
 

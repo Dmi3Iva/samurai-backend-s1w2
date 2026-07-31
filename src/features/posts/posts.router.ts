@@ -16,7 +16,6 @@ import { postsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { IFindCommentsSearchTerm } from "../comments/comments.models";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
-import { postsRepository } from "./repository/posts.repository";
 import { commentsService } from "../comments/comments.service";
 
 interface PostsIdParam {
