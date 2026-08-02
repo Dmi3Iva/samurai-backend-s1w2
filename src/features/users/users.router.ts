@@ -9,11 +9,16 @@ import { inputValidationMiddleware } from "../../middleware/inputValidation.midd
 import { ErrorResponseBody } from "../../types/response.type";
 
 class UsersController {
-  usersRouter: Router = Router();
+  private usersRouter: Router = Router();
+
   constructor(private usersService: UsersService) {
     this.registerDeleteHandler();
     this.registerGetHandler();
     this.registerPostHandler();
+  }
+
+  getRouter() {
+    return this.usersRouter;
   }
 
   registerDeleteHandler = () => {

@@ -6,15 +6,13 @@ import { RequestWithBody } from "../../types/request.type";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
-import { authService } from "./auth.service";
+import { AuthService, authService } from "./auth.service";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 import { REFRESH_COOKIE_NAME } from "../../consants/cookies.const";
 import { appConfig } from "../../common/appConfig";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
 import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
 import { rateLimitMiddleware } from "../../middleware/rate-limit.middleware";
-
-export const authRouter = Router();
 
 export interface LoginBodyParams {
   loginOrEmail: string;
@@ -61,260 +59,266 @@ const passwordRegistrationValidator = body("password")
   .isLength({ min: 6, max: 20 });
 const codeValidator = body("code").exists().isString();
 
-authRouter.post(
-  "/login",
-  rateLimitMiddleware,
-  loginOrEmailValidator,
-  passwordValidator,
-  inputValidationMiddleware,
-  deviceNameMiddleware,
-  async (req: RequestWithBody<LoginBodyParams>, res) => {
-    const body = matchedData<LoginBodyParams>(req);
-    const user = await usersService.isLoginOrEmailAndPasswordCorrected(
-      body.loginOrEmail,
-      body.password,
-    );
+export class AuthController {
+  private router = Router();
+  constructor(private authService: AuthService) {
+    this.registerLogin();
+    this.registerLogout();
+    this.registerRefreshToken();
+    this.registerMe();
+    this.registerRegistration();
+    this.registerRegistrationConfirmation();
+    this.registerRegistrationEmailResending();
+  }
 
-    if (user === null) {
-      return res.status(401).send();
-    }
+  getRouter() {
+    return this.router;
+  }
 
-    const ip = req.ip;
-    const deviceName = req.deviceName;
+  registerLogin() {
+    this.router.post(
+      "/login",
+      rateLimitMiddleware,
+      loginOrEmailValidator,
+      passwordValidator,
+      inputValidationMiddleware,
+      deviceNameMiddleware,
+      async (req: RequestWithBody<LoginBodyParams>, res) => {
+        const body = matchedData<LoginBodyParams>(req);
+        const user = await usersService.isLoginOrEmailAndPasswordCorrected(
+          body.loginOrEmail,
+          body.password,
+        );
 
-    if (!ip || !deviceName)
-      return res.status(400).send("not enough data to register session");
+        if (user === null) {
+          return res.status(401).send();
+        }
 
-    const session = await authService.registerSession({
-      userId: user.id,
-      deviceName,
-      ip,
-    });
+        const ip = req.ip;
+        const deviceName = req.deviceName;
 
-    if (session === null) {
-      return res.status(500).send();
-    }
+        if (!ip || !deviceName)
+          return res.status(400).send("not enough data to register session");
 
-    const [accessToken, refreshToken] = session;
+        const session = await authService.registerSession({
+          userId: user.id,
+          deviceName,
+          ip,
+        });
 
-    const refreshTokenExpTime = Number(appConfig.RT_TIME);
+        if (session === null) {
+          return res.status(500).send();
+        }
 
-    res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: refreshTokenExpTime,
-    });
-    return res.status(200).send({ accessToken });
-  },
-);
+        const [accessToken, refreshToken] = session;
 
-authRouter.post(
-  "/logout",
-  authorizationRefreshTokenMiddleware,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const userId = req.userId as string;
-    const deviceId = req.deviceId as string;
-    const iat = req.iat;
+        const refreshTokenExpTime = Number(appConfig.RT_TIME);
 
-    if (!userId || !deviceId || !iat) {
-      return res.status(400).send("not enought data to logout");
-    }
-
-    const logoutSuccess = await authService.removeSession({
-      userId,
-      iat,
-      deviceId,
-    });
-
-    if (logoutSuccess) {
-      res.clearCookie(REFRESH_COOKIE_NAME, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-      });
-      return res.status(204).send();
-    }
-
-    return res.status(401).send();
-  },
-);
-
-authRouter.post(
-  "/refresh-token",
-  authorizationRefreshTokenMiddleware,
-  inputValidationMiddleware,
-  deviceNameMiddleware,
-  async (req, res) => {
-    // клиент отправляет на бек refreshToken в cookie,
-    const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
-    const userId = req.userId;
-    const deviceId = req.deviceId;
-    const iat = req.iat;
-    const ip = req.ip;
-    const deviceName = req.deviceName;
-
-    if (!deviceName || !ip || !userId || !iat || !deviceId) {
-      return res.status(400).send("not enough data to set session");
-    }
-    // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
-    const result = await authService.updateSession(
-      {
-        userId,
-        deviceId,
-        iat,
-        ip,
-        deviceName,
+        res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: refreshTokenExpTime,
+        });
+        return res.status(200).send({ accessToken });
       },
-      refreshToken,
     );
+  }
 
-    if (!result) {
-      return res.status(401).send();
-    }
+  registerLogout() {
+    this.router.post(
+      "/logout",
+      authorizationRefreshTokenMiddleware,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const userId = req.userId as string;
+        const deviceId = req.deviceId as string;
+        const iat = req.iat;
 
-    const refreshTokenExpTime = Number(appConfig.RT_TIME);
-    const [newAccessToken, newRefreshToken] = result;
-    res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: refreshTokenExpTime,
-    });
+        if (!userId || !deviceId || !iat) {
+          return res.status(400).send("not enought data to logout");
+        }
 
-    return res.status(200).send({ accessToken: newAccessToken });
-  },
-);
+        const logoutSuccess = await authService.removeSession({
+          userId,
+          iat,
+          deviceId,
+        });
 
-// возвращаем короткую инфу о текущем пользователе на основе accessToken.
-authRouter.get(
-  "/me",
-  authorizationTokenMiddleware,
-  inputValidationMiddleware,
-  async (req: Request, res) => {
-    const userId = req.userId;
+        if (logoutSuccess) {
+          res.clearCookie(REFRESH_COOKIE_NAME, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+          });
+          return res.status(204).send();
+        }
 
-    if (!userId) {
-      return res.status(401).send();
-    }
+        return res.status(401).send();
+      },
+    );
+  }
 
-    const user = await usersService.getUserById(userId);
+  registerRefreshToken() {
+    return this.router.post(
+      "/refresh-token",
+      authorizationRefreshTokenMiddleware,
+      inputValidationMiddleware,
+      deviceNameMiddleware,
+      async (req, res) => {
+        // клиент отправляет на бек refreshToken в cookie,
+        const refreshToken = req.cookies[REFRESH_COOKIE_NAME];
+        const userId = req.userId;
+        const deviceId = req.deviceId;
+        const iat = req.iat;
+        const ip = req.ip;
+        const deviceName = req.deviceName;
 
-    if (!user) {
-      return res.status(401).send();
-    }
-    const { email, login } = user;
-
-    res.status(200).send({
-      email,
-      login,
-      userId,
-    });
-  },
-);
-
-/**
- * Регистрирует пользователя в системе и отправляет ему confirmation code на email
- */
-authRouter.post(
-  "/registration",
-  rateLimitMiddleware,
-  loginRegistartionValidator,
-  emailRegistrationValidator,
-  passwordRegistrationValidator,
-  inputValidationMiddleware,
-  async (req: RequestWithBody<IRegistrationBody>, res) => {
-    const registrationBody = matchedData<IRegistrationBody>(req);
-
-    const result = await authService.registerUser(registrationBody);
-
-    if (result !== EAuthRegistrationSTATUS.OK) {
-      return res.status(400).send({
-        errorsMessages: [
+        if (!deviceName || !ip || !userId || !iat || !deviceId) {
+          return res.status(400).send("not enough data to set session");
+        }
+        // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
+        const result = await authService.updateSession(
           {
-            message: "something went wrong during registration",
-            field:
-              result === EAuthRegistrationSTATUS.EMAIL_ERROR
-                ? "email"
-                : "login",
+            userId,
+            deviceId,
+            iat,
+            ip,
+            deviceName,
           },
-        ],
-      });
-    }
+          refreshToken,
+        );
 
-    return res.status(204).send();
-  },
-);
+        if (!result) {
+          return res.status(401).send();
+        }
 
-authRouter.post(
-  "/registration-confirmation",
-  rateLimitMiddleware,
-  codeValidator,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const { code } = matchedData<{ code: string }>(req);
+        const refreshTokenExpTime = Number(appConfig.RT_TIME);
+        const [newAccessToken, newRefreshToken] = result;
+        res.cookie(REFRESH_COOKIE_NAME, newRefreshToken, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          maxAge: refreshTokenExpTime,
+        });
 
-    const result = await authService.confirmRegistration(code);
-    if (!result)
-      return res.status(400).send({
-        errorsMessages: [
-          {
-            message:
-              "confirmation code is incorrect, expired or already been applied",
-            field: "code",
-          },
-        ],
-      });
+        return res.status(200).send({ accessToken: newAccessToken });
+      },
+    );
+  }
 
-    return res.status(204).send();
-  },
-);
+  registerMe() {
+    // возвращаем короткую инфу о текущем пользователе на основе accessToken.
+    this.router.get(
+      "/me",
+      authorizationTokenMiddleware,
+      inputValidationMiddleware,
+      async (req: Request, res) => {
+        const userId = req.userId;
 
-authRouter.post(
-  "/registration-email-resending",
-  rateLimitMiddleware,
-  emailRegistrationValidator,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const { email } = matchedData<{ email: string }>(req);
-    const result = await authService.registrationEmailResending(email);
+        if (!userId) {
+          return res.status(401).send();
+        }
 
-    if (!result) {
-      return res.status(400).send({
-        errorsMessages: [
-          {
-            message: "smth wrong with email",
-            field: "email",
-          },
-        ],
-      });
-    }
+        const user = await usersService.getUserById(userId);
 
-    return res.status(204).send();
-  },
-);
+        if (!user) {
+          return res.status(401).send();
+        }
+        const { email, login } = user;
 
-// authRouter.post("/send", async (req: Request, res: Response) => {
-//   const transporter = nodemailer.createTransport({
-//     host: "smtp.resend.com",
-//     secure: true,
-//     port: 465,
-//     auth: {
-//       user: "resend",
-//       pass: appConfig.SEND_MAIL_API_KEY,
-//     },
-//   });
+        res.status(200).send({
+          email,
+          login,
+          userId,
+        });
+      },
+    );
+  }
 
-//   const info = await transporter.sendMail({
-//     from: "onboarding@resend.dev",
-//     to: "dmi3iva@gmail.com",
-//     subject: "Hello Test",
-//     html: "<strong>It works!</strong>",
-//   });
+  registerRegistration() {
+    this.router.post(
+      "/registration",
+      rateLimitMiddleware,
+      loginRegistartionValidator,
+      emailRegistrationValidator,
+      passwordRegistrationValidator,
+      inputValidationMiddleware,
+      async (req: RequestWithBody<IRegistrationBody>, res) => {
+        const registrationBody = matchedData<IRegistrationBody>(req);
 
-//   console.log("Message sent: %s", info.messageId);
+        const result = await authService.registerUser(registrationBody);
 
-//   res.send({
-//     email: req.body.email,
-//     message: req.body.message,
-//     subject: req.body.subject,
-//   });
-// });
+        if (result !== EAuthRegistrationSTATUS.OK) {
+          return res.status(400).send({
+            errorsMessages: [
+              {
+                message: "something went wrong during registration",
+                field:
+                  result === EAuthRegistrationSTATUS.EMAIL_ERROR
+                    ? "email"
+                    : "login",
+              },
+            ],
+          });
+        }
+
+        return res.status(204).send();
+      },
+    );
+  }
+
+  registerRegistrationConfirmation() {
+    /**
+     * Регистрирует пользователя в системе и отправляет ему confirmation code на email
+     */
+    this.router.post(
+      "/registration-confirmation",
+      rateLimitMiddleware,
+      codeValidator,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { code } = matchedData<{ code: string }>(req);
+
+        const result = await authService.confirmRegistration(code);
+        if (!result)
+          return res.status(400).send({
+            errorsMessages: [
+              {
+                message:
+                  "confirmation code is incorrect, expired or already been applied",
+                field: "code",
+              },
+            ],
+          });
+
+        return res.status(204).send();
+      },
+    );
+  }
+
+  registerRegistrationEmailResending() {
+    this.router.post(
+      "/registration-email-resending",
+      rateLimitMiddleware,
+      emailRegistrationValidator,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { email } = matchedData<{ email: string }>(req);
+        const result = await authService.registrationEmailResending(email);
+
+        if (!result) {
+          return res.status(400).send({
+            errorsMessages: [
+              {
+                message: "smth wrong with email",
+                field: "email",
+              },
+            ],
+          });
+        }
+
+        return res.status(204).send();
+      },
+    );
+  }
+}
+
+export const authController = new AuthController(authService);

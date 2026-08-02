@@ -3,7 +3,7 @@ import { blogsRepository } from "../blogs/blogs.repository";
 import { postsRepository } from "../posts/repository/posts.repository";
 import { usersRepository } from "../users/users.repository";
 import { commentsRepository } from "../comments/comments.repository";
-import { authRepository } from "../auth/repository/auth.repository";
+import { authRepository } from "../auth/auth.repository";
 import { rateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
 
 export const testingRouter = Router();
