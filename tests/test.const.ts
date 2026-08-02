@@ -38,6 +38,13 @@ export const REGISTRATION_USER = {
   email: deliveredTestEmail("reg-user"),
 } as const;
 
+/** User for h10 password recovery flow (email must be resend.dev — recovery sends mail) */
+export const PASSWORD_RECOVERY_USER = {
+  login: "pwd-rec",
+  password: "qwerty12",
+  email: deliveredTestEmail("pwd-rec"),
+} as const;
+
 export const bearerAuthHeader = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`,
 });

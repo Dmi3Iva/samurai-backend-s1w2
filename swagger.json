@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "h09 API - V1",
-    "description": "“Security devices” entity was added. \n\nUser can view his all active sessions. User can logout from all sessions (except Current session) and a specific session.\n\nAuthorization: limit on the number of attempts.",
-    "version": "h09"
+    "title": "h10 API - V1",
+    "description": "User can recover his password.",
+    "version": "h10"
   },
   "paths": {
     "/auth/login": {
@@ -72,6 +72,79 @@
           },
           "401": {
             "description": "If the password or login is wrong"
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/password-recovery": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Password recovery via Email confirmation. Email should be sent with RecoveryCode inside",
+        "requestBody": {
+          "description": "Email",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.PasswordRecoveryInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.PasswordRecoveryInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.PasswordRecoveryInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Even if current email is not registered (for prevent user's email detection)"
+          },
+          "400": {
+            "description": "If the inputModel has invalid email (for example 222^gmail.com)"
+          },
+          "429": {
+            "description": "More than 5 attempts from one IP-address during 10 seconds"
+          }
+        }
+      }
+    },
+    "/auth/new-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Confirm Password recovery",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.NewPasswordRecoveryInputModel"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.NewPasswordRecoveryInputModel"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/h10.NewPasswordRecoveryInputModel"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "If code is valid and new password is accepted"
+          },
+          "400": {
+            "description": "If the inputModel has incorrect value (for incorrect password length) or RecoveryCode is incorrect or expired"
           },
           "429": {
             "description": "More than 5 attempts from one IP-address during 10 seconds"
@@ -2172,6 +2245,36 @@
           "deviceId": {
             "type": "string",
             "description": "Id of connected device session"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h10.NewPasswordRecoveryInputModel": {
+        "required": ["newPassword", "recoveryCode"],
+        "type": "object",
+        "properties": {
+          "newPassword": {
+            "maxLength": 20,
+            "minLength": 6,
+            "type": "string",
+            "description": "New password"
+          },
+          "recoveryCode": {
+            "type": "string",
+            "description": "New password"
+          }
+        },
+        "additionalProperties": false
+      },
+      "h10.PasswordRecoveryInputModel": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "pattern": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+            "type": "string",
+            "description": "Email of registered user",
+            "example": "useremail@company.com"
           }
         },
         "additionalProperties": false
