@@ -1,5 +1,5 @@
 import { WithId } from "mongodb";
-import { blogsDatabase } from "../../../repositories/database";
+import { blogsDatabase } from "../../repositories/database";
 import type {
   CreateBlogModel,
   IFindBlogsSearchTerm,
@@ -9,31 +9,33 @@ import type {
   BlogsRouterResponse,
   IFindPostsByBlogSearchTerm,
   IDBBLogType,
-} from "../models/blog.model";
-import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../../consants/routes.conts";
-import { blogsRepository } from "../blogs.repository";
-import { postsRepository } from "../../posts/repository/posts.repository";
-import { BlogIdParam } from "../../../types/common.type";
+} from "./blog.model";
+import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../consants/routes.conts";
+import { BlogsRepository, blogsRepository } from "./blogs.repository";
+import { postsRepository } from "../posts/repository/posts.repository";
+import { BlogIdParam } from "../../types/common.type";
 
-const mapToBlogType = (b: IDBBLogType): IViewBlog => ({
-  description: b.description,
-  name: b.name,
-  websiteUrl: b.websiteUrl,
-  id: b._id?.toString() || "empty id",
-  isMembership: b.isMembership,
-  createdAt: b.createdAt,
-});
+export class BlogsService {
+  constructor(private blogsRepository: BlogsRepository) {}
 
-export const blogsService = {
+  mapToBlogType = (b: IDBBLogType): IViewBlog => ({
+    description: b.description,
+    name: b.name,
+    websiteUrl: b.websiteUrl,
+    id: b._id?.toString() || "empty id",
+    isMembership: b.isMembership,
+    createdAt: b.createdAt,
+  });
+
   async findBlog(id: string): Promise<IBlogType | null> {
     return await blogsRepository.findBlog(id);
-  },
+  }
 
   async findBlogs(
     findBlogsSearchTerm: IFindBlogsSearchTerm,
   ): Promise<BlogsRouterResponse> {
     return await blogsRepository.findBlogs(findBlogsSearchTerm);
-  },
+  }
 
   async findPostsByBlogId(
     blogId: string,
@@ -46,7 +48,7 @@ export const blogsService = {
       ...searchTerm,
       blogId,
     });
-  },
+  }
 
   async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {
     const newBlogData = {
@@ -56,8 +58,8 @@ export const blogsService = {
     };
     const _id = await blogsRepository.createBlog(newBlogData);
 
-    return mapToBlogType({ ...newBlogData, _id });
-  },
+    return this.mapToBlogType({ ...newBlogData, _id });
+  }
 
   async createPost(data: CreateBlogModel & BlogIdParam) {
     const blog = await blogsRepository.findBlog(data.blogId);
@@ -66,12 +68,12 @@ export const blogsService = {
 
     const createdPost = await postsRepository.createPost(data);
     return createdPost;
-  },
+  }
 
   async deleteBlog(id: string): Promise<boolean> {
     postsRepository.removeAllByBlogs(id);
     return await blogsRepository.deleteBlog(id);
-  },
+  }
 
   async updateBlog({
     id,
@@ -81,8 +83,11 @@ export const blogsService = {
     updateBlogModelData: UpdateBlogModel;
   }): Promise<boolean> {
     return await blogsRepository.updateBlog({ id, updateBlogModelData });
-  },
+  }
+
   async removeAll() {
     return await blogsDatabase.deleteMany({});
-  },
-};
+  }
+}
+
+export const blogsService = new BlogsService(blogsRepository);

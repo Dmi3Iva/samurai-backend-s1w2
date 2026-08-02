@@ -6,18 +6,16 @@ import type {
   UpdateBlogModel,
   BlogsRouterResponse,
   IFindPostsByBlogSearchTerm,
-} from "./models/blog.model";
+} from "./blog.model";
 import type {
   RequestWithBody,
   RequestWithQuery,
 } from "../../types/request.type";
-import { blogsService } from "./services/blogs.service";
+import { BlogsService, blogsService } from "./blogs.service";
 import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
-
-export const blogsRouter = Router();
 
 const nameValidation = body("name")
   .exists()
@@ -91,130 +89,168 @@ const postContentValidation = body("content")
   .isLength({ max: 100 })
   .withMessage("content should be a string max length 100");
 
-blogsRouter.get(
-  "/",
-  async (
-    req: RequestWithQuery<IFindBlogsSearchTerm>,
-    res: Response<BlogsRouterResponse>,
-  ) => {
-    const blogs = await blogsService.findBlogs(req.query);
-    res.send(blogs);
-  },
-);
+export class BlogsController {
+  router: Router = Router();
+  constructor(private blogsService: BlogsService) {
+    this.registerGet();
+    this.registerPost();
+    this.registerGetById();
+    this.registerGetPostsById();
+    this.registerPostByBlogId();
+    this.registerPutById();
+    this.registerDelete();
+  }
 
-blogsRouter.post(
-  "/",
-  authorizationMiddleware,
-  nameValidation,
-  descriptionValidation,
-  websiteUrlValidation,
-  inputValidationMiddleware,
-  async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
-    const data = matchedData<CreateBlogModel>(req);
-    const newBlog = await blogsService.createBlog(data);
+  getRouter() {
+    return this.router;
+  }
 
-    res.status(201).json(newBlog);
-  },
-);
-
-blogsRouter.get(
-  "/:id",
-  inputValidationMiddleware,
-  param("id"),
-  async (req, res) => {
-    const data = matchedData<IdParam>(req);
-    const blog = await blogsService.findBlog(data.id);
-
-    if (!blog) {
-      res.status(404).json({ message: "Blog not found" });
-      return;
-    }
-
-    res.status(200).json(blog);
-  },
-);
-
-blogsRouter.get(
-  "/:id/posts",
-  inputValidationMiddleware,
-  param("id"),
-  async (req: RequestWithQuery<Partial<IFindPostsByBlogSearchTerm>>, res) => {
-    const { id: blogId } = matchedData<IdParam>(req);
-    const query = req.query;
-    const posts = await blogsService.findPostsByBlogId(blogId, query);
-
-    if (!posts) {
-      res
-        .status(404)
-        .json({ message: `Specified blog ${blogId} doesn't exist` });
-      return;
-    }
-
-    res.status(200).json(posts);
-  },
-);
-
-blogsRouter.post(
-  "/:blogId/posts",
-  authorizationMiddleware,
-  param("blogId"),
-  postTitleValidation,
-  postShortDescriptionValidation,
-  postContentValidation,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<CreateBlogModel & BlogIdParam>(req);
-
-    const newPost = await blogsService.createPost(data);
-    if (!newPost) {
-      return res.status(404).json({ message: `Blog ${data.blogId} not found` });
-    }
-
-    res.status(201).json(newPost);
-  },
-);
-
-blogsRouter.put(
-  "/:id",
-  authorizationMiddleware,
-  param("id"),
-  nameValidation,
-  descriptionValidation,
-  websiteUrlValidation,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<UpdateBlogModel & IdParam>(req);
-
-    const isBlogUpdated = await blogsService.updateBlog({
-      id: data.id,
-      updateBlogModelData: {
-        name: data.name,
-        description: data.description,
-        websiteUrl: data.websiteUrl,
+  registerGet() {
+    this.router.get(
+      "/",
+      async (
+        req: RequestWithQuery<IFindBlogsSearchTerm>,
+        res: Response<BlogsRouterResponse>,
+      ) => {
+        const blogs = await blogsService.findBlogs(req.query);
+        res.send(blogs);
       },
-    });
+    );
+  }
 
-    if (!isBlogUpdated) {
-      return res.status(404).json(`Not found blog with id ${data.id}`);
-    }
+  registerPost() {
+    this.router.post(
+      "/",
+      authorizationMiddleware,
+      nameValidation,
+      descriptionValidation,
+      websiteUrlValidation,
+      inputValidationMiddleware,
+      async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
+        const data = matchedData<CreateBlogModel>(req);
+        const newBlog = await blogsService.createBlog(data);
 
-    res.sendStatus(204);
-  },
-);
+        res.status(201).json(newBlog);
+      },
+    );
+  }
 
-blogsRouter.delete(
-  "/:id",
-  authorizationMiddleware,
-  param("id"),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<IdParam>(req);
-    const isRemoved = await blogsService.deleteBlog(data.id);
+  registerGetById() {
+    this.router.get(
+      "/:id",
+      inputValidationMiddleware,
+      param("id"),
+      async (req, res) => {
+        const data = matchedData<IdParam>(req);
+        const blog = await blogsService.findBlog(data.id);
 
-    if (!isRemoved) {
-      return res.status(404).json({ message: "Blog not found" });
-    }
+        if (!blog) {
+          res.status(404).json({ message: "Blog not found" });
+          return;
+        }
 
-    return res.status(204).send();
-  },
-);
+        res.status(200).json(blog);
+      },
+    );
+  }
+
+  registerGetPostsById() {
+    this.router.get(
+      "/:id/posts",
+      inputValidationMiddleware,
+      param("id"),
+      async (
+        req: RequestWithQuery<Partial<IFindPostsByBlogSearchTerm>>,
+        res,
+      ) => {
+        const { id: blogId } = matchedData<IdParam>(req);
+        const query = req.query;
+        const posts = await blogsService.findPostsByBlogId(blogId, query);
+
+        if (!posts) {
+          res
+            .status(404)
+            .json({ message: `Specified blog ${blogId} doesn't exist` });
+          return;
+        }
+
+        res.status(200).json(posts);
+      },
+    );
+  }
+
+  registerPostByBlogId() {
+    this.router.post(
+      "/:blogId/posts",
+      authorizationMiddleware,
+      param("blogId"),
+      postTitleValidation,
+      postShortDescriptionValidation,
+      postContentValidation,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<CreateBlogModel & BlogIdParam>(req);
+
+        const newPost = await blogsService.createPost(data);
+        if (!newPost) {
+          return res
+            .status(404)
+            .json({ message: `Blog ${data.blogId} not found` });
+        }
+
+        res.status(201).json(newPost);
+      },
+    );
+  }
+
+  registerPutById() {
+    this.router.put(
+      "/:id",
+      authorizationMiddleware,
+      param("id"),
+      nameValidation,
+      descriptionValidation,
+      websiteUrlValidation,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<UpdateBlogModel & IdParam>(req);
+
+        const isBlogUpdated = await blogsService.updateBlog({
+          id: data.id,
+          updateBlogModelData: {
+            name: data.name,
+            description: data.description,
+            websiteUrl: data.websiteUrl,
+          },
+        });
+
+        if (!isBlogUpdated) {
+          return res.status(404).json(`Not found blog with id ${data.id}`);
+        }
+
+        res.sendStatus(204);
+      },
+    );
+  }
+
+  registerDelete() {
+    this.router.delete(
+      "/:id",
+      authorizationMiddleware,
+      param("id"),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<IdParam>(req);
+        const isRemoved = await blogsService.deleteBlog(data.id);
+
+        if (!isRemoved) {
+          return res.status(404).json({ message: "Blog not found" });
+        }
+
+        return res.status(204).send();
+      },
+    );
+  }
+}
+
+export const blogsController = new BlogsController(blogsService);

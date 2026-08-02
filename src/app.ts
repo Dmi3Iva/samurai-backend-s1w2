@@ -1,5 +1,5 @@
 import e from "express";
-import { blogsRouter } from "./features/blogs/blogs.router";
+import { blogsController, blogsRouter } from "./features/blogs/blogs.router";
 import { postsRouter } from "./features/posts/posts.router";
 import { testingRouter } from "./features/testing/testing.route";
 import { ROUTES } from "./consants/routes.conts";
@@ -15,10 +15,8 @@ app.use(e.json());
 app.use(cookieParser());
 app.set("trust proxy", true);
 
-// TODO:: refactor 1
 app.use(ROUTES.auth, authController.getRouter());
-// TODO:: refactor 2
-app.use(ROUTES.blogs, blogsRouter);
+app.use(ROUTES.blogs, blogsController.getRouter());
 // TODO:: refactor 3
 app.use(ROUTES.posts, postsRouter);
 // TODO:: refactor 4

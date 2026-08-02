@@ -7,27 +7,27 @@ import type {
   IBlogType,
   CreateBlogModelDB,
   BlogsRouterResponse,
-} from "./models/blog.model";
+} from "./blog.model";
 
-const mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
-  description: b.description,
-  name: b.name,
-  websiteUrl: b.websiteUrl,
-  id: b._id.toString(),
-  isMembership: b.isMembership,
-  createdAt: b.createdAt,
-});
+export class BlogsRepository {
+  mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
+    description: b.description,
+    name: b.name,
+    websiteUrl: b.websiteUrl,
+    id: b._id.toString(),
+    isMembership: b.isMembership,
+    createdAt: b.createdAt,
+  });
 
-export const blogsRepository = {
   async findBlog(id: string): Promise<IBlogType | null> {
     try {
       const foundBlog = await blogsDatabase.findOne({ _id: new ObjectId(id) });
-      return foundBlog ? mapToBlogType(foundBlog) : null;
+      return foundBlog ? this.mapToBlogType(foundBlog) : null;
     } catch (e) {
       console.log(`error while try to get BLOG with id=${id}`);
       return null;
     }
-  },
+  }
 
   async findBlogs(
     findBlogsSearchTerm: IFindBlogsSearchTerm,
@@ -74,7 +74,7 @@ export const blogsRepository = {
       },
     );
 
-    const items = (await searchResult.toArray()).map(mapToBlogType);
+    const items = (await searchResult.toArray()).map(this.mapToBlogType);
     const totalCount = await blogsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
@@ -85,13 +85,13 @@ export const blogsRepository = {
       pageSize: Number(pageSize),
       totalCount,
     };
-  },
+  }
 
   async createBlog(createBlogModelData: CreateBlogModelDB): Promise<ObjectId> {
     const { insertedId } = await blogsDatabase.insertOne(createBlogModelData);
 
     return insertedId;
-  },
+  }
 
   async deleteBlog(id: string): Promise<boolean> {
     try {
@@ -103,7 +103,7 @@ export const blogsRepository = {
       console.error(`failed to delete blog with id=${id}`);
       return false;
     }
-  },
+  }
 
   async updateBlog({
     id,
@@ -127,8 +127,10 @@ export const blogsRepository = {
       console.error(`failed to update blog with id=${id}`);
       return false;
     }
-  },
+  }
   async removeAll() {
     return await blogsDatabase.deleteMany({});
-  },
-};
+  }
+}
+
+export const blogsRepository = new BlogsRepository();
