@@ -6,15 +6,28 @@ import { commentsRepository } from "../comments/comments.repository";
 import { authRepository } from "../auth/auth.repository";
 import { rateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
 
-export const testingRouter = Router();
+export class TestingController {
+  router = Router();
+  constructor() {
+    this.registerDelete();
+  }
 
-testingRouter.delete("/", async (req, res) => {
-  await blogsRepository.removeAll();
-  await postsRepository.removeAll();
-  await usersRepository.removeAll();
-  await commentsRepository.removeAll();
-  await authRepository.removeAll();
-  await rateLimitUpdateRepository.removeAll();
+  getRouter() {
+    return this.router;
+  }
 
-  res.status(204).send();
-});
+  registerDelete() {
+    this.router.delete("/", async (req, res) => {
+      await blogsRepository.removeAll();
+      await postsRepository.removeAll();
+      await usersRepository.removeAll();
+      await commentsRepository.removeAll();
+      await authRepository.removeAll();
+      await rateLimitUpdateRepository.removeAll();
+
+      res.status(204).send();
+    });
+  }
+}
+
+export const testingController = new TestingController();
