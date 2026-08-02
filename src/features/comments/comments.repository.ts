@@ -8,21 +8,21 @@ import {
   IFindCommentsSearchTerm,
 } from "./comments.models";
 
-const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
-  const commentatorInfo: ICommentView["commentatorInfo"] = {
-    userId: dbComment.commentatorInfo.userId,
-    userLogin: dbComment.commentatorInfo.userLogin,
-  };
+export class CommentsRepository {
+  mapDbCommentToView(dbComment: IDBCommentType): ICommentView {
+    const commentatorInfo: ICommentView["commentatorInfo"] = {
+      userId: dbComment.commentatorInfo.userId,
+      userLogin: dbComment.commentatorInfo.userLogin,
+    };
 
-  return {
-    content: dbComment.content,
-    createdAt: dbComment.createdAt,
-    commentatorInfo,
-    id: dbComment._id.toString(),
-  };
-};
+    return {
+      content: dbComment.content,
+      createdAt: dbComment.createdAt,
+      commentatorInfo,
+      id: dbComment._id.toString(),
+    };
+  }
 
-export const commentsRepository = {
   async getCommentById(id: string): Promise<IDBCommentType | null> {
     try {
       const findResult = await commentsDatabase.findOne({
@@ -33,7 +33,7 @@ export const commentsRepository = {
       console.error(`error while try to get comment with id = ${id}`);
       return null;
     }
-  },
+  }
   async removeById(id: string): Promise<boolean> {
     try {
       const removeResult = await commentsDatabase.deleteOne({
@@ -45,7 +45,7 @@ export const commentsRepository = {
       console.error(`can't delet comment with id ${id}`);
       return false;
     }
-  },
+  }
 
   async getComments(
     findPostsSearchTerm: IFindCommentsSearchTerm,
@@ -68,7 +68,7 @@ export const commentsRepository = {
     });
 
     const rawItems = await findResult.toArray();
-    const items = await Promise.all(rawItems.map(mapDbCommentToView));
+    const items = await Promise.all(rawItems.map(this.mapDbCommentToView));
     const page = Number(pageNumber);
     const totalCount = await commentsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
@@ -80,7 +80,7 @@ export const commentsRepository = {
       pagesCount,
       totalCount,
     };
-  },
+  }
 
   async createComment(
     commentModel: ICommentCreateModel,
@@ -93,11 +93,11 @@ export const commentsRepository = {
       console.error("failed to create post", e);
       return null;
     }
-  },
+  }
 
   async removeAll() {
     return await commentsDatabase.deleteMany({});
-  },
+  }
 
   async updateComment({
     commentId,
@@ -117,5 +117,7 @@ export const commentsRepository = {
       console.error("failed to update comment", commentId);
       return false;
     }
-  },
-};
+  }
+}
+
+export const commentsRepository = new CommentsRepository();

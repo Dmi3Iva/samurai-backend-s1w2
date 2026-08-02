@@ -6,27 +6,32 @@ import {
   IPostView,
 } from "../models/post.model";
 import { blogsRepository } from "../../blogs/blogs.repository";
-import { postsRepository } from "../repository/posts.repository";
+import {
+  PostsRepository,
+  postsRepository,
+} from "../repository/posts.repository";
 
-const mapToPostView = async (p: IPostType): Promise<IPostView> => {
-  const foundBlog = await blogsRepository.findBlog(p.blogId);
-  const blogName = foundBlog?.name || "";
-  return {
-    ...p,
-    blogName,
+export class PostsService {
+  constructor(private postsRepository: PostsRepository) {}
+
+  mapToPostView = async (p: IPostType): Promise<IPostView> => {
+    const foundBlog = await blogsRepository.findBlog(p.blogId);
+    const blogName = foundBlog?.name || "";
+    return {
+      ...p,
+      blogName,
+    };
   };
-};
 
-export const postsService = {
   async getPost(id: string): Promise<IPostView | null> {
     const rawPost = await postsRepository.getPost(id);
     if (!rawPost) return null;
-    return await mapToPostView(rawPost);
-  },
+    return await this.mapToPostView(rawPost);
+  }
 
   async getPosts(findPostsSearchTerm: IFindPostsSearchTerm) {
     return await postsRepository.getPosts(findPostsSearchTerm);
-  },
+  }
 
   async createPost(postBody: IPostCreateModel): Promise<IPostView | null> {
     const foundBlog = await blogsRepository.findBlog(postBody.blogId);
@@ -37,10 +42,10 @@ export const postsService = {
     if (!createResult) {
       return null;
     }
-    const result = await mapToPostView(createResult);
+    const result = await this.mapToPostView(createResult);
 
     return result;
-  },
+  }
 
   async updatePost({
     id,
@@ -54,13 +59,15 @@ export const postsService = {
       return postsRepository.updatePost({ id, data });
     }
     return false;
-  },
+  }
 
   async deletePost(id: string): Promise<boolean> {
     return await postsRepository.deletePost(id);
-  },
+  }
 
   async removeAll() {
     return await postsRepository.removeAll();
-  },
-};
+  }
+}
+
+export const postsService = new PostsService(postsRepository);
