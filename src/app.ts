@@ -5,7 +5,7 @@ import { ROUTES } from "./consants/routes.conts";
 import { authController } from "./features/auth/auth.router";
 import { usersController } from "./features/users/users.router";
 import cookieParser from "cookie-parser";
-import { securityDeviceRouter } from "./features/security-devices/security-devices.router";
+import { securityDeviceController } from "./features/security-devices/security-devices.router";
 import { postsController } from "./features/posts/posts.router";
 import { commentsController } from "./features/comments/comments.route";
 
@@ -21,5 +21,4 @@ app.use(ROUTES.posts, postsController.getRouter());
 app.use(ROUTES.comments, commentsController.getRouter());
 app.use(ROUTES.users, usersController.getRouter());
 app.use(ROUTES.testings, testingController.getRouter());
-// TODO:: refactor 6
-app.use(ROUTES.securityDevices, securityDeviceRouter);
+app.use(ROUTES.securityDevices, securityDeviceController.getRouter());
