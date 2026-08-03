@@ -132,5 +132,3 @@ export class BlogsRepository {
     return await blogsDatabase.deleteMany({});
   }
 }
-
-export const blogsRepository = new BlogsRepository();

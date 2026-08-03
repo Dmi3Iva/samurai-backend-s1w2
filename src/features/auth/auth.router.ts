@@ -6,7 +6,7 @@ import { RequestWithBody } from "../../types/request.type";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
-import { AuthService, authService } from "./auth.service";
+import { AuthService } from "./auth.service";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
 import { REFRESH_COOKIE_NAME } from "../../consants/cookies.const";
 import { appConfig } from "../../common/appConfig";
@@ -100,7 +100,7 @@ export class AuthController {
         if (!ip || !deviceName)
           return res.status(400).send("not enough data to register session");
 
-        const session = await authService.registerSession({
+        const session = await this.authService.registerSession({
           userId: user.id,
           deviceName,
           ip,
@@ -138,7 +138,7 @@ export class AuthController {
           return res.status(400).send("not enought data to logout");
         }
 
-        const logoutSuccess = await authService.removeSession({
+        const logoutSuccess = await this.authService.removeSession({
           userId,
           iat,
           deviceId,
@@ -176,7 +176,7 @@ export class AuthController {
           return res.status(400).send("not enough data to set session");
         }
         // мы должны вернуть новую пару токенов (старый refreshToken протухает, т.е. отмечаем refreshToken как невалидный);
-        const result = await authService.updateSession(
+        const result = await this.authService.updateSession(
           {
             userId,
             deviceId,
@@ -244,7 +244,7 @@ export class AuthController {
       async (req: RequestWithBody<IRegistrationBody>, res) => {
         const registrationBody = matchedData<IRegistrationBody>(req);
 
-        const result = await authService.registerUser(registrationBody);
+        const result = await this.authService.registerUser(registrationBody);
 
         if (result !== EAuthRegistrationSTATUS.OK) {
           return res.status(400).send({
@@ -277,7 +277,7 @@ export class AuthController {
       async (req, res) => {
         const { code } = matchedData<{ code: string }>(req);
 
-        const result = await authService.confirmRegistration(code);
+        const result = await this.authService.confirmRegistration(code);
         if (!result)
           return res.status(400).send({
             errorsMessages: [
@@ -302,7 +302,7 @@ export class AuthController {
       inputValidationMiddleware,
       async (req, res) => {
         const { email } = matchedData<{ email: string }>(req);
-        const result = await authService.registrationEmailResending(email);
+        const result = await this.authService.registrationEmailResending(email);
 
         if (!result) {
           return res.status(400).send({
@@ -320,5 +320,3 @@ export class AuthController {
     );
   }
 }
-
-export const authController = new AuthController(authService);

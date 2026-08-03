@@ -83,5 +83,3 @@ export class AuthRepository {
     return deletedCount > 0;
   }
 }
-
-export const authRepository = new AuthRepository();

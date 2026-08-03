@@ -119,5 +119,3 @@ export class CommentsRepository {
     }
   }
 }
-
-export const commentsRepository = new CommentsRepository();

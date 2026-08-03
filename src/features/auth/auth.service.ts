@@ -6,7 +6,7 @@ import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
-import { AuthRepository, authRepository } from "./auth.repository";
+import { AuthRepository } from "./auth.repository";
 import { IAuthType } from "./models/auth.model";
 import { appConfig } from "../../common/appConfig";
 import { jwtService } from "../../auth/adapters/jwt.service";
@@ -204,5 +204,3 @@ export class AuthService {
     return ERemoveSingleUserSessionState.SUCCESS;
   }
 }
-
-export const authService = new AuthService(authRepository);

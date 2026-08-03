@@ -1,13 +1,15 @@
 import e from "express";
-import { blogsController } from "./features/blogs/blogs.router";
-import { testingController } from "./features/testing/testing.route";
 import { ROUTES } from "./consants/routes.conts";
-import { authController } from "./features/auth/auth.router";
-import { usersController } from "./features/users/users.router";
 import cookieParser from "cookie-parser";
-import { securityDeviceController } from "./features/security-devices/security-devices.router";
-import { postsController } from "./features/posts/posts.router";
-import { commentsController } from "./features/comments/comments.route";
+import {
+  authController,
+  blogsController,
+  commentsController,
+  postsController,
+  securityDeviceController,
+  testingController,
+  usersController,
+} from "./composition-root";
 
 export const app = e();
 

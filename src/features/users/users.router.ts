@@ -8,7 +8,7 @@ import { usersRepository } from "./users.repository";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { ErrorResponseBody } from "../../types/response.type";
 
-class UsersController {
+export class UsersController {
   private usersRouter: Router = Router();
 
   constructor(private usersService: UsersService) {
@@ -147,5 +147,3 @@ class UsersController {
     );
   };
 }
-
-export const usersController = new UsersController(usersService);

@@ -1,17 +1,13 @@
 import { Router } from "express";
 import { body, matchedData, param } from "express-validator";
 import { IdParam } from "../../types/common.type";
-import {
-  CommentsService,
-  commentsService,
-  ERemoveUserState,
-} from "./comments.service";
+import { CommentsService, ERemoveUserState } from "./comments.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 
 export class CommentsController {
   router = Router();
-  constructor(private commentsController: CommentsService) {
+  constructor(private commentsService: CommentsService) {
     this.registerGet();
     this.registerDeleteById();
     this.registerPutById();
@@ -28,7 +24,7 @@ export class CommentsController {
       inputValidationMiddleware,
       async (req, res) => {
         const { id } = matchedData<IdParam>(req);
-        const comment = await commentsService.getCommentById(id);
+        const comment = await this.commentsService.getCommentById(id);
         if (!comment) {
           return res.status(404).send("comment not found");
         }
@@ -50,7 +46,7 @@ export class CommentsController {
 
         if (!userId) return res.status(401).send();
 
-        const result = await commentsService.removeById(id, userId);
+        const result = await this.commentsService.removeById(id, userId);
         if (result === ERemoveUserState.NOT_ALLOWED) {
           return res.status(403).send();
         }
@@ -79,7 +75,7 @@ export class CommentsController {
 
         if (!userId) return res.status(401);
 
-        const result = await commentsService.updateComment({
+        const result = await this.commentsService.updateComment({
           commentId,
           content,
           userId,
@@ -98,5 +94,3 @@ export class CommentsController {
     );
   }
 }
-
-export const commentsController = new CommentsController(commentsService);

@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
-import { AuthService, authService } from "../auth/auth.service";
+import { AuthService } from "../auth/auth.service";
 import { ERemoveSingleUserSessionState } from "../auth/models/auth.constants";
 
 export class SecurityDeviceController {
@@ -71,7 +70,3 @@ export class SecurityDeviceController {
     );
   }
 }
-
-export const securityDeviceController = new SecurityDeviceController(
-  authService,
-);

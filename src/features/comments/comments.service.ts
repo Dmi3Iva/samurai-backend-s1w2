@@ -1,4 +1,4 @@
-import { postsService } from "../posts/services/posts.service";
+import { PostsService } from "../posts/services/posts.service";
 import { usersService } from "../users/users.service";
 import {
   ICommentCreateModel,
@@ -8,7 +8,7 @@ import {
   ICommentType,
   GetCommentsResponse,
 } from "./comments.models";
-import { CommentsRepository, commentsRepository } from "./comments.repository";
+import { CommentsRepository } from "./comments.repository";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
   const commentatorInfo: ICommentView["commentatorInfo"] = {
@@ -34,7 +34,10 @@ export enum ERemoveUserState {
 }
 
 export class CommentsService {
-  constructor(private commentsRepository: CommentsRepository) {}
+  constructor(
+    private commentsRepository: CommentsRepository,
+    private postsService: PostsService,
+  ) {}
 
   async getCommentById(id: string) {
     const dbComment = await this.commentsRepository.getCommentById(id);
@@ -93,7 +96,7 @@ export class CommentsService {
     postId: string,
     query: IFindCommentsSearchTerm,
   ): Promise<GetCommentsResponse | null> {
-    const isPostExists = await postsService.getPost(postId);
+    const isPostExists = await this.postsService.getPost(postId);
     if (!isPostExists) {
       return null;
     }
@@ -133,5 +136,3 @@ export class CommentsService {
     return result ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
   }
 }
-
-export const commentsService = new CommentsService(commentsRepository);

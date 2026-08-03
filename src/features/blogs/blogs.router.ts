@@ -11,7 +11,7 @@ import type {
   RequestWithBody,
   RequestWithQuery,
 } from "../../types/request.type";
-import { BlogsService, blogsService } from "./blogs.service";
+import { BlogsService } from "./blogs.service";
 import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
@@ -112,7 +112,7 @@ export class BlogsController {
         req: RequestWithQuery<IFindBlogsSearchTerm>,
         res: Response<BlogsRouterResponse>,
       ) => {
-        const blogs = await blogsService.findBlogs(req.query);
+        const blogs = await this.blogsService.findBlogs(req.query);
         res.send(blogs);
       },
     );
@@ -128,7 +128,7 @@ export class BlogsController {
       inputValidationMiddleware,
       async (req: RequestWithBody<CreateBlogModel>, res: Response) => {
         const data = matchedData<CreateBlogModel>(req);
-        const newBlog = await blogsService.createBlog(data);
+        const newBlog = await this.blogsService.createBlog(data);
 
         res.status(201).json(newBlog);
       },
@@ -142,7 +142,7 @@ export class BlogsController {
       param("id"),
       async (req, res) => {
         const data = matchedData<IdParam>(req);
-        const blog = await blogsService.findBlog(data.id);
+        const blog = await this.blogsService.findBlog(data.id);
 
         if (!blog) {
           res.status(404).json({ message: "Blog not found" });
@@ -165,7 +165,7 @@ export class BlogsController {
       ) => {
         const { id: blogId } = matchedData<IdParam>(req);
         const query = req.query;
-        const posts = await blogsService.findPostsByBlogId(blogId, query);
+        const posts = await this.blogsService.findPostsByBlogId(blogId, query);
 
         if (!posts) {
           res
@@ -191,7 +191,7 @@ export class BlogsController {
       async (req, res) => {
         const data = matchedData<CreateBlogModel & BlogIdParam>(req);
 
-        const newPost = await blogsService.createPost(data);
+        const newPost = await this.blogsService.createPost(data);
         if (!newPost) {
           return res
             .status(404)
@@ -215,7 +215,7 @@ export class BlogsController {
       async (req, res) => {
         const data = matchedData<UpdateBlogModel & IdParam>(req);
 
-        const isBlogUpdated = await blogsService.updateBlog({
+        const isBlogUpdated = await this.blogsService.updateBlog({
           id: data.id,
           updateBlogModelData: {
             name: data.name,
@@ -241,7 +241,7 @@ export class BlogsController {
       inputValidationMiddleware,
       async (req, res) => {
         const data = matchedData<IdParam>(req);
-        const isRemoved = await blogsService.deleteBlog(data.id);
+        const isRemoved = await this.blogsService.deleteBlog(data.id);
 
         if (!isRemoved) {
           return res.status(404).json({ message: "Blog not found" });
@@ -252,5 +252,3 @@ export class BlogsController {
     );
   }
 }
-
-export const blogsController = new BlogsController(blogsService);

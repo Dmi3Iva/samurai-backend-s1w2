@@ -9,9 +9,11 @@ import {
   IPostUpadteModel,
   IViewPostType,
 } from "../models/post.model";
-import { blogsRepository } from "../../blogs/blogs.repository";
+import { BlogsRepository } from "../../blogs/blogs.repository";
 
 export class PostsRepository {
+  constructor(private blogsRepository: BlogsRepository) {}
+
   mapToPostType = (p: IDBPostType): IViewPostType => {
     return {
       id: p._id?.toString() || "not-existing-id",
@@ -72,7 +74,7 @@ export class PostsRepository {
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
     try {
-      const blog = await blogsRepository.findBlog(postBody.blogId);
+      const blog = await this.blogsRepository.findBlog(postBody.blogId);
 
       const newPost = {
         ...postBody,
@@ -133,5 +135,3 @@ export class PostsRepository {
     return await postsDatabase.deleteMany({});
   }
 }
-
-export const postsRepository = new PostsRepository();

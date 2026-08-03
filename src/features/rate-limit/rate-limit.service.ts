@@ -1,13 +1,17 @@
 import { subSeconds } from "date-fns";
 import { rateLimitDatabase } from "../../repositories/database";
-import { rateLimitReadRepository } from "./repository/rate-limit-read.repository";
-import { rateLimitUpdateRepository } from "./repository/rate-limit-update.repository";
+import { RateLimitReadRepository } from "./repository/rate-limit-read.repository";
+import { RateLimitUpdateRepository } from "./repository/rate-limit-update.repository";
 
 const RATE_LIMIT = 5;
 const RATE_LIMIT_SECONDS = 10;
 const REQUEST_WILL_BE_ADDED = 1;
 
-export const rateLimitService = {
+export class RateLimitService {
+  constructor(
+    private rateLimitReadRepository: RateLimitReadRepository,
+    private rateLimitUpdateRepository: RateLimitUpdateRepository,
+  ) {}
   async checkRequestLimit({
     ip: rawIp,
     url,
@@ -19,7 +23,7 @@ export const rateLimitService = {
     const finishDate = new Date();
     const startDate = subSeconds(finishDate, RATE_LIMIT_SECONDS);
     const currentRateLimitsCount =
-      (await rateLimitReadRepository.rateLimitsCount({
+      (await this.rateLimitReadRepository.rateLimitsCount({
         ip,
         url,
         startDate,
@@ -28,11 +32,11 @@ export const rateLimitService = {
     if (currentRateLimitsCount > RATE_LIMIT) {
       return false;
     }
-    await rateLimitUpdateRepository.addRateLimit({
+    await this.rateLimitUpdateRepository.addRateLimit({
       ip,
       url,
       date: finishDate,
     });
     return true;
-  },
-};
+  }
+}

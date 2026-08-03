@@ -12,11 +12,11 @@ import type {
 } from "../../types/request.type";
 import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
-import { PostsService, postsService } from "./services/posts.service";
+import { PostsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { IFindCommentsSearchTerm } from "../comments/comments.models";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
-import { CommentsService, commentsService } from "../comments/comments.service";
+import { CommentsService } from "../comments/comments.service";
 
 interface PostsIdParam {
   id: string;
@@ -232,8 +232,3 @@ export class PostsController {
     );
   }
 }
-
-export const postsController = new PostsController(
-  postsService,
-  commentsService,
-);
