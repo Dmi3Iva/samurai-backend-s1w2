@@ -368,7 +368,14 @@ export class AuthController {
           return res.status(204).send();
         }
 
-        return res.status(400).send();
+        return res.status(400).send({
+          errorsMessages: [
+            {
+              message: "recovery code is incorrect",
+              field: "recoveryCode",
+            },
+          ],
+        });
       },
     );
   }
