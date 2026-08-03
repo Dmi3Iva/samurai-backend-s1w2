@@ -9,30 +9,32 @@ import {
   IPostUpadteModel,
   IViewPostType,
 } from "../models/post.model";
-import { blogsRepository } from "../../blogs/blogs.repository";
+import { BlogsRepository } from "../../blogs/blogs.repository";
 
-const mapToPostType = (p: IDBPostType): IViewPostType => {
-  return {
-    id: p._id?.toString() || "not-existing-id",
-    title: p.title,
-    shortDescription: p.shortDescription,
-    content: p.content,
-    blogId: p.blogId,
-    createdAt: p.createdAt,
-    blogName: p.blogName,
+export class PostsRepository {
+  constructor(private blogsRepository: BlogsRepository) {}
+
+  mapToPostType = (p: IDBPostType): IViewPostType => {
+    return {
+      id: p._id?.toString() || "not-existing-id",
+      title: p.title,
+      shortDescription: p.shortDescription,
+      content: p.content,
+      blogId: p.blogId,
+      createdAt: p.createdAt,
+      blogName: p.blogName,
+    };
   };
-};
 
-export const postsRepository = {
   async getPost(id: string): Promise<IPostType | null> {
     try {
       const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });
-      return findResult ? await mapToPostType(findResult) : null;
+      return findResult ? await this.mapToPostType(findResult) : null;
     } catch (e) {
       console.log(`error while try to get post with id=${id}`);
       return null;
     }
-  },
+  }
 
   async getPosts(
     findPostsSearchTerm: IFindPostsSearchTerm,
@@ -56,7 +58,7 @@ export const postsRepository = {
     });
 
     const rawItems = await findResult.toArray();
-    const items = await Promise.all(rawItems.map(mapToPostType));
+    const items = await Promise.all(rawItems.map(this.mapToPostType));
     const page = Number(pageNumber);
     const totalCount = await postsDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
@@ -68,11 +70,11 @@ export const postsRepository = {
       pagesCount,
       totalCount,
     };
-  },
+  }
 
   async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
     try {
-      const blog = await blogsRepository.findBlog(postBody.blogId);
+      const blog = await this.blogsRepository.findBlog(postBody.blogId);
 
       const newPost = {
         ...postBody,
@@ -85,12 +87,12 @@ export const postsRepository = {
 
       newPost._id = insertedId;
 
-      return mapToPostType(newPost as WithId<IPostType>);
+      return this.mapToPostType(newPost as WithId<IPostType>);
     } catch (e) {
       console.error("failed to create post", e);
       return null;
     }
-  },
+  }
 
   async updatePost({
     id,
@@ -110,7 +112,7 @@ export const postsRepository = {
       console.error(`failed to update posts with id=${id}`);
       return false;
     }
-  },
+  }
 
   async deletePost(id: string): Promise<boolean> {
     try {
@@ -123,13 +125,13 @@ export const postsRepository = {
       console.error(`failed to delete post with id=${id}`);
       return false;
     }
-  },
+  }
 
   async removeAllByBlogs(blogId: string) {
     return await postsDatabase.deleteMany({ blogId });
-  },
+  }
 
   async removeAll() {
     return await postsDatabase.deleteMany({});
-  },
-};
+  }
+}

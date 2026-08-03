@@ -1,20 +1,24 @@
 import { emailService } from "../../auth/adapters/email.service";
 import { ICreateRegistrationDataBaseBody } from "../users/models/users.model";
-import { usersRepository } from "../users/users.repository";
-import { usersService } from "../users/users.service";
+import { UsersService } from "../users/users.service";
 import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
 import { EAuthRegistrationSTATUS } from "./constants/auth.service.const";
-import { authRepository } from "./repository/auth.repository";
+import { AuthRepository } from "./auth.repository";
 import { IAuthType } from "./models/auth.model";
 import { appConfig } from "../../common/appConfig";
 import { jwtService } from "../../auth/adapters/jwt.service";
-import { authRouter } from "./auth.router";
-import { authDatabase } from "../../repositories/database";
 import { ERemoveSingleUserSessionState } from "./models/auth.constants";
+import { UsersRepository } from "../users/users.repository";
 
-export const authService = {
+export class AuthService {
+  constructor(
+    private authRepository: AuthRepository,
+    private usersService: UsersService,
+    private usersRepository: UsersRepository,
+  ) {}
+
   async registerUser(
     registerBody: IRegistrationBody,
   ): Promise<EAuthRegistrationSTATUS> {
@@ -25,8 +29,9 @@ export const authService = {
 
     const { login, email } = registerBody;
 
-    const isLoginUnique = await usersService.isUniqueLogin(login);
-    const isEmailUnique = await usersService.isUniqueEmail(email);
+    const isLoginUnique = await this.usersService.isUniqueLogin(login);
+    const isEmailUnique = await this.usersService.isUniqueEmail(email);
+
     if (!isLoginUnique) return EAuthRegistrationSTATUS.LOGIN_ERROR;
     if (!isEmailUnique) return EAuthRegistrationSTATUS.EMAIL_ERROR;
 
@@ -42,7 +47,7 @@ export const authService = {
       },
     };
 
-    const id = await usersRepository.createRegistrationUser(
+    const id = await this.usersRepository.createRegistrationUser(
       registrationDataBaseBody,
     );
 
@@ -58,10 +63,10 @@ export const authService = {
     return result
       ? EAuthRegistrationSTATUS.OK
       : EAuthRegistrationSTATUS.SEND_EMAIL_ERROR;
-  },
+  }
 
   async confirmRegistration(code: string) {
-    const user = await usersRepository.findUserByConfirmationCode(code);
+    const user = await this.usersRepository.findUserByConfirmationCode(code);
 
     if (!user) return false;
 
@@ -73,35 +78,35 @@ export const authService = {
     if (isCodeAlreadyApplied) return false;
     if (isCodeExpired) return false;
 
-    const result = await usersRepository.confirmRegistrationByUserId(
+    const result = await this.usersRepository.confirmRegistrationByUserId(
       user._id.toString(),
     );
 
     return result;
-  },
+  }
 
   async registrationEmailResending(email: string): Promise<boolean> {
-    const user = await usersRepository.findUserByEmail(email, {
-      fullMapping: true,
+    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
+      emailMapping: true,
     });
-    if (!user) return false;
-    if (user.user.emailConfirmation?.isConfirmed) return false;
+    if (!userWithPassword) return false;
+    if (userWithPassword.user.emailConfirmation?.isConfirmed) return false;
     const confirmationCode = crypto.randomUUID();
 
     const updatedConfirmationCode =
-      await usersRepository.updateConfirmRegistrationByUserId(
-        user.user.id,
+      await this.usersRepository.updateConfirmRegistrationByUserId(
+        userWithPassword.user.id,
         confirmationCode,
       );
     if (!updatedConfirmationCode) return false;
 
     const result = await emailService.sendRegistrationConfirmationEmail({
-      toEmail: user.user.email,
+      toEmail: userWithPassword.user.email,
       confirmationCode,
     });
 
     return result;
-  },
+  }
 
   /**
    * Регистрирует сессию пользователя и отдаёт токены access and refresh
@@ -129,7 +134,7 @@ export const authService = {
       ip,
       exp,
     };
-    const res = await authRepository.createSession(createSessionPayload);
+    const res = await this.authRepository.createSession(createSessionPayload);
     if (res) {
       return jwtService.createTokensPair({
         userId,
@@ -139,15 +144,15 @@ export const authService = {
     } else {
       return null;
     }
-  },
+  }
 
   async removeSession(payload: {
     userId: string;
     deviceId: string;
     iat: Date;
   }) {
-    return authRepository.removeSession(payload);
-  },
+    return this.authRepository.removeSession(payload);
+  }
 
   async updateSession(
     payload: {
@@ -163,7 +168,7 @@ export const authService = {
     if (!isRefreshTokenValid) return null;
 
     const { userId, iat, deviceId } = payload;
-    const session = await authRepository.getSession({
+    const session = await this.authRepository.getSession({
       userId,
       iat,
       deviceId,
@@ -172,35 +177,85 @@ export const authService = {
     if (!session) return null;
 
     const newIat = new Date();
-    await authRepository.updateSession(payload, newIat);
+    await this.authRepository.updateSession(payload, newIat);
 
     return jwtService.createTokensPair({
       userId: payload.userId,
       deviceId: payload.deviceId,
       issuedAt: newIat.toISOString(),
     });
-  },
+  }
 
   async getUserSessions(userId: string) {
-    return await authRepository.getSessions(userId);
-  },
+    return await this.authRepository.getSessions(userId);
+  }
 
   async removeUserSessions(userId: string, deviceId: string): Promise<boolean> {
-    return await authRepository.removeUserSessions(userId, deviceId);
-  },
+    return await this.authRepository.removeUserSessions(userId, deviceId);
+  }
 
   async removeSingleUserSession(
     userId: string,
     deviceId: string,
   ): Promise<ERemoveSingleUserSessionState> {
-    const session = await authRepository.getSession({ deviceId });
+    const session = await this.authRepository.getSession({ deviceId });
     if (session === null) {
       return ERemoveSingleUserSessionState.NOT_FOUND;
     }
     if (session?.userId !== userId) {
       return ERemoveSingleUserSessionState.FORBIDDEN;
     }
-    await authRepository.removeSingleUserSession(userId, deviceId);
+    await this.authRepository.removeSingleUserSession(userId, deviceId);
     return ERemoveSingleUserSessionState.SUCCESS;
-  },
-};
+  }
+
+  async passwordRecovery(email: string) {
+    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
+      emailMapping: true,
+    });
+    if (!userWithPassword) return false;
+    const { user } = userWithPassword;
+    if (user.emailConfirmation?.isConfirmed) return false;
+
+    const isUserRecoveryCodeExpired =
+      user?.passwordRecovery?.expirationDate &&
+      user?.passwordRecovery?.expirationDate < new Date();
+    if (isUserRecoveryCodeExpired) {
+      return false;
+    }
+
+    const recoveryCode = crypto.randomUUID();
+
+    const recoveryInformation =
+      await this.usersRepository.setRecoveryToUserById(user.id, recoveryCode);
+    if (!recoveryInformation) return false;
+
+    const result = await emailService.sendPasswordRecoveryEmail({
+      toEmail: user.email,
+      recoveryCode,
+    });
+
+    return result;
+  }
+
+  async applyNewPassword({
+    newPassword,
+    recoveryCode,
+  }: {
+    newPassword: string;
+    recoveryCode: string;
+  }): Promise<boolean> {
+    const user = await this.usersRepository.getUserByRecoveryCode(recoveryCode);
+
+    if (!user) {
+      return false;
+    }
+
+    const newPasswordHash = await encryptPassword(newPassword);
+    const result = await this.usersRepository.setNewPassword(
+      user.id,
+      newPasswordHash,
+    );
+    return result;
+  }
+}

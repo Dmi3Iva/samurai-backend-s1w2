@@ -12,17 +12,15 @@ import type {
 } from "../../types/request.type";
 import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
-import { postsService } from "./services/posts.service";
+import { PostsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { IFindCommentsSearchTerm } from "../comments/comments.models";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
-import { commentsService } from "../comments/comments.service";
+import { CommentsService } from "../comments/comments.service";
 
 interface PostsIdParam {
   id: string;
 }
-
-export const postsRouter = Router();
 
 const titleValidation = body("title")
   .exists()
@@ -63,137 +61,174 @@ const blogIdValidation = body("blogId")
   .isString()
   .withMessage("blogId should be a string");
 
-postsRouter.get(
-  "/",
-  async (
-    req: RequestWithQuery<IFindPostsSearchTerm>,
-    res: Response<GetPostsResponse>,
-  ) => {
-    const posts = await postsService.getPosts(req.query);
-    res.send(posts);
-  },
-);
+export class PostsController {
+  router = Router();
+  constructor(
+    private postsService: PostsService,
+    private commentsService: CommentsService,
+  ) {
+    this.registerGet();
+    this.registerPost();
+    this.registerGetById();
+    this.registerPut();
+    this.registerDeleteById();
+    this.registerPostCommentById();
+    this.registerGetCommentById();
+  }
 
-postsRouter.post(
-  "/",
-  authorizationMiddleware,
-  titleValidation,
-  shortDescriptionValidation,
-  contentValidation,
-  blogIdValidation,
-  inputValidationMiddleware,
-  async (req: RequestWithBody<IPostCreateModel>, res: Response) => {
-    const data = matchedData<IPostCreateModel>(req);
+  getRouter() {
+    return this.router;
+  }
 
-    const createdPost = await postsService.createPost(data);
+  registerGet() {
+    this.router.get(
+      "/",
+      async (
+        req: RequestWithQuery<IFindPostsSearchTerm>,
+        res: Response<GetPostsResponse>,
+      ) => {
+        const posts = await this.postsService.getPosts(req.query);
+        res.send(posts);
+      },
+    );
+  }
 
-    if (!createdPost) {
-      return res.status(404).json(`Not found blog with id ${data.blogId}`);
-    }
-    res.status(201).json(createdPost);
-  },
-);
+  registerPost() {
+    this.router.post(
+      "/",
+      authorizationMiddleware,
+      titleValidation,
+      shortDescriptionValidation,
+      contentValidation,
+      blogIdValidation,
+      inputValidationMiddleware,
+      async (req: RequestWithBody<IPostCreateModel>, res: Response) => {
+        const data = matchedData<IPostCreateModel>(req);
 
-postsRouter.get(
-  "/:id",
-  param("id"),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<PostsIdParam>(req);
-    const post = await postsService.getPost(data.id);
+        const createdPost = await this.postsService.createPost(data);
 
-    if (!post) {
-      res.status(404).json({ message: "Post not found" });
-      return;
-    }
+        if (!createdPost) {
+          return res.status(404).json(`Not found blog with id ${data.blogId}`);
+        }
+        res.status(201).json(createdPost);
+      },
+    );
+  }
 
-    res.status(200).json(post);
-  },
-);
+  registerGetById() {
+    this.router.get(
+      "/:id",
+      param("id"),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<PostsIdParam>(req);
+        const post = await this.postsService.getPost(data.id);
 
-postsRouter.put(
-  "/:id",
-  authorizationMiddleware,
-  param("id"),
-  titleValidation,
-  shortDescriptionValidation,
-  contentValidation,
-  blogIdValidation,
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<IPostUpadteModel & PostsIdParam>(req);
+        if (!post) {
+          res.status(404).json({ message: "Post not found" });
+          return;
+        }
 
-    const updatedPostResult = await postsService.updatePost({
-      id: data.id,
-      data: data,
-    });
+        res.status(200).json(post);
+      },
+    );
+  }
 
-    if (!updatedPostResult) {
-      return res.status(404).json(`Not found blog with id  ${data.id}`);
-    }
+  registerPut() {
+    this.router.put(
+      "/:id",
+      authorizationMiddleware,
+      param("id"),
+      titleValidation,
+      shortDescriptionValidation,
+      contentValidation,
+      blogIdValidation,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<IPostUpadteModel & PostsIdParam>(req);
 
-    res.sendStatus(204);
-  },
-);
+        const updatedPostResult = await this.postsService.updatePost({
+          id: data.id,
+          data: data,
+        });
 
-postsRouter.delete(
-  "/:id",
-  authorizationMiddleware,
-  param("id"),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const data = matchedData<PostsIdParam>(req);
-    const isRemoved = await postsService.deletePost(data.id);
+        if (!updatedPostResult) {
+          return res.status(404).json(`Not found blog with id  ${data.id}`);
+        }
 
-    if (!isRemoved) {
-      return res.status(404).json({ message: "Blog not found" });
-    }
+        res.sendStatus(204);
+      },
+    );
+  }
 
-    return res.status(204).send();
-  },
-);
+  registerDeleteById() {
+    this.router.delete(
+      "/:id",
+      authorizationMiddleware,
+      param("id"),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const data = matchedData<PostsIdParam>(req);
+        const isRemoved = await this.postsService.deletePost(data.id);
 
-// POST /posts/{postId}/comments
-postsRouter.post(
-  "/:postId/comments",
-  authorizationTokenMiddleware,
-  param("postId").notEmpty().isString(),
-  body("content").notEmpty().isString().isLength({ min: 20, max: 300 }),
-  inputValidationMiddleware,
-  async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
-    const { postId, content } = matchedData<{
-      postId: string;
-      content: string;
-    }>(req);
-    const userId = req.userId;
-    const post = await postsService.getPost(postId);
+        if (!isRemoved) {
+          return res.status(404).json({ message: "Blog not found" });
+        }
 
-    if (!userId) {
-      return res.status(401).send();
-    }
-    if (!post) {
-      return res.status(404).send();
-    }
+        return res.status(204).send();
+      },
+    );
+  }
 
-    const createdComment = await commentsService.createComment({
-      postId,
-      content,
-      userId,
-    });
+  registerPostCommentById() {
+    // POST /posts/{postId}/comments
+    this.router.post(
+      "/:postId/comments",
+      authorizationTokenMiddleware,
+      param("postId").notEmpty().isString(),
+      body("content").notEmpty().isString().isLength({ min: 20, max: 300 }),
+      inputValidationMiddleware,
+      async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
+        const { postId, content } = matchedData<{
+          postId: string;
+          content: string;
+        }>(req);
+        const userId = req.userId;
+        const post = await this.postsService.getPost(postId);
 
-    return res.status(201).send(createdComment);
-  },
-);
+        if (!userId) {
+          return res.status(401).send();
+        }
+        if (!post) {
+          return res.status(404).send();
+        }
 
-// GET /posts/{postId}/comments
-postsRouter.get(
-  "/:postId/comments",
-  param("postId").notEmpty().isString(),
-  async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
-    const { postId } = matchedData<{ postId: string }>(req);
-    const comments = await commentsService.getComments(postId, req.query);
-    if (!comments) return res.status(404).send();
+        const createdComment = await this.commentsService.createComment({
+          postId,
+          content,
+          userId,
+        });
 
-    return res.status(200).send(comments);
-  },
-);
+        return res.status(201).send(createdComment);
+      },
+    );
+  }
+
+  registerGetCommentById() {
+    // GET /posts/{postId}/comments
+    this.router.get(
+      "/:postId/comments",
+      param("postId").notEmpty().isString(),
+      async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
+        const { postId } = matchedData<{ postId: string }>(req);
+        const comments = await this.commentsService.getComments(
+          postId,
+          req.query,
+        );
+        if (!comments) return res.status(404).send();
+
+        return res.status(200).send(comments);
+      },
+    );
+  }
+}

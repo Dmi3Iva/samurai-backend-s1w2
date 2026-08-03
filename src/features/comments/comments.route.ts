@@ -1,79 +1,96 @@
 import { Router } from "express";
 import { body, matchedData, param } from "express-validator";
 import { IdParam } from "../../types/common.type";
-import { commentsService, ERemoveUserState } from "./comments.service";
+import { CommentsService, ERemoveUserState } from "./comments.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 
-export const commentsRouter = Router();
+export class CommentsController {
+  router = Router();
+  constructor(private commentsService: CommentsService) {
+    this.registerGet();
+    this.registerDeleteById();
+    this.registerPutById();
+  }
 
-commentsRouter.get(
-  "/:id",
-  param("id").notEmpty().isString(),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const { id } = matchedData<IdParam>(req);
-    const comment = await commentsService.getCommentById(id);
-    if (!comment) {
-      return res.status(404).send("comment not found");
-    }
+  getRouter() {
+    return this.router;
+  }
 
-    return res.status(200).send(comment);
-  },
-);
+  registerGet() {
+    this.router.get(
+      "/:id",
+      param("id").notEmpty().isString(),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { id } = matchedData<IdParam>(req);
+        const comment = await this.commentsService.getCommentById(id);
+        if (!comment) {
+          return res.status(404).send("comment not found");
+        }
 
-commentsRouter.delete(
-  "/:id",
-  authorizationTokenMiddleware,
-  param("id").notEmpty().isString(),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const { id } = matchedData<IdParam>(req);
-    const userId = req.userId;
+        return res.status(200).send(comment);
+      },
+    );
+  }
 
-    if (!userId) return res.status(401).send();
+  registerDeleteById() {
+    this.router.delete(
+      "/:id",
+      authorizationTokenMiddleware,
+      param("id").notEmpty().isString(),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { id } = matchedData<IdParam>(req);
+        const userId = req.userId;
 
-    const result = await commentsService.removeById(id, userId);
-    if (result === ERemoveUserState.NOT_ALLOWED) {
-      return res.status(403).send();
-    }
+        if (!userId) return res.status(401).send();
 
-    if (result === ERemoveUserState.FAILED) {
-      return res.status(404).send();
-    }
+        const result = await this.commentsService.removeById(id, userId);
+        if (result === ERemoveUserState.NOT_ALLOWED) {
+          return res.status(403).send();
+        }
 
-    return res.status(204).send();
-  },
-);
+        if (result === ERemoveUserState.FAILED) {
+          return res.status(404).send();
+        }
 
-commentsRouter.put(
-  "/:id",
-  authorizationTokenMiddleware,
-  param("id").notEmpty().isString(),
-  body("content").notEmpty().isString().isLength({ max: 300, min: 20 }),
-  inputValidationMiddleware,
-  async (req, res) => {
-    const { id: commentId, content } = matchedData<
-      IdParam & { content: string }
-    >(req);
-    const userId = req.userId;
+        return res.status(204).send();
+      },
+    );
+  }
 
-    if (!userId) return res.status(401);
+  registerPutById() {
+    this.router.put(
+      "/:id",
+      authorizationTokenMiddleware,
+      param("id").notEmpty().isString(),
+      body("content").notEmpty().isString().isLength({ max: 300, min: 20 }),
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { id: commentId, content } = matchedData<
+          IdParam & { content: string }
+        >(req);
+        const userId = req.userId;
 
-    const result = await commentsService.updateComment({
-      commentId,
-      content,
-      userId,
-    });
+        if (!userId) return res.status(401);
 
-    if (result === ERemoveUserState.NOT_ALLOWED) {
-      return res.status(403).send();
-    }
+        const result = await this.commentsService.updateComment({
+          commentId,
+          content,
+          userId,
+        });
 
-    if (result === ERemoveUserState.FAILED) {
-      return res.status(404).send();
-    }
+        if (result === ERemoveUserState.NOT_ALLOWED) {
+          return res.status(403).send();
+        }
 
-    return res.status(204).send();
-  },
-);
+        if (result === ERemoveUserState.FAILED) {
+          return res.status(404).send();
+        }
+
+        return res.status(204).send();
+      },
+    );
+  }
+}

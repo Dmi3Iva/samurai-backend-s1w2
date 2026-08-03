@@ -1,6 +1,6 @@
 import { rateLimitDatabase } from "../../../repositories/database";
 
-export const rateLimitReadRepository = {
+export class RateLimitReadRepository {
   async rateLimitsCount({
     ip,
     url,
@@ -21,5 +21,5 @@ export const rateLimitReadRepository = {
       },
     });
     return (await cursor.toArray()).length;
-  },
-};
+  }
+}

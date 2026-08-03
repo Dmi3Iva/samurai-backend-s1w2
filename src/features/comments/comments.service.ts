@@ -1,5 +1,5 @@
-import { postsService } from "../posts/services/posts.service";
-import { usersService } from "../users/users.service";
+import { PostsService } from "../posts/services/posts.service";
+import { UsersService } from "../users/users.service";
 import {
   ICommentCreateModel,
   IDBCommentType,
@@ -8,7 +8,7 @@ import {
   ICommentType,
   GetCommentsResponse,
 } from "./comments.models";
-import { commentsRepository } from "./comments.repository";
+import { CommentsRepository } from "./comments.repository";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
   const commentatorInfo: ICommentView["commentatorInfo"] = {
@@ -33,15 +33,21 @@ export enum ERemoveUserState {
   FAILED,
 }
 
-export const commentsService = {
+export class CommentsService {
+  constructor(
+    private commentsRepository: CommentsRepository,
+    private postsService: PostsService,
+    private usersService: UsersService,
+  ) {}
+
   async getCommentById(id: string) {
-    const dbComment = await commentsRepository.getCommentById(id);
+    const dbComment = await this.commentsRepository.getCommentById(id);
     if (!dbComment) return null;
 
     const result = mapDbCommentToView(dbComment);
 
     return result;
-  },
+  }
   async createComment({
     postId,
     content,
@@ -51,7 +57,7 @@ export const commentsService = {
     content: string;
     userId: string;
   }): Promise<ICommentView | null> {
-    const user = await usersService.getUserById(userId);
+    const user = await this.usersService.getUserById(userId);
 
     const commentModel: ICommentCreateModel = {
       content: content,
@@ -62,7 +68,7 @@ export const commentsService = {
       },
       postId,
     };
-    const idResult = await commentsRepository.createComment(commentModel);
+    const idResult = await this.commentsRepository.createComment(commentModel);
     if (!idResult) return null;
 
     const result: ICommentView = {
@@ -76,30 +82,30 @@ export const commentsService = {
     };
 
     return result;
-  },
+  }
   async removeById(id: string, userId: string): Promise<ERemoveUserState> {
-    const dbComment = await commentsRepository.getCommentById(id);
+    const dbComment = await this.commentsRepository.getCommentById(id);
     if (!dbComment) return ERemoveUserState.FAILED;
     if (dbComment.commentatorInfo.userId !== userId)
       return ERemoveUserState.NOT_ALLOWED;
 
-    const removeResult = await commentsRepository.removeById(id);
+    const removeResult = await this.commentsRepository.removeById(id);
     return removeResult ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
-  },
+  }
 
   async getComments(
     postId: string,
     query: IFindCommentsSearchTerm,
   ): Promise<GetCommentsResponse | null> {
-    const isPostExists = await postsService.getPost(postId);
+    const isPostExists = await this.postsService.getPost(postId);
     if (!isPostExists) {
       return null;
     }
 
-    const comments = await commentsRepository.getComments(query, postId);
+    const comments = await this.commentsRepository.getComments(query, postId);
 
     return comments;
-  },
+  }
   async updateComment({
     commentId,
     content,
@@ -123,11 +129,11 @@ export const commentsService = {
       content,
     };
 
-    const result = await commentsRepository.updateComment({
+    const result = await this.commentsRepository.updateComment({
       commentId,
       updatedCommentData,
     });
 
     return result ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
-  },
-};
+  }
+}

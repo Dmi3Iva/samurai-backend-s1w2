@@ -1,5 +1,5 @@
-import { MongoClient, OptionalId } from "mongodb";
-import { IBlogType } from "../features/blogs/models/blog.model";
+import { MongoClient } from "mongodb";
+import { IBlogType } from "../features/blogs/blog.model";
 import { IPostType } from "../features/posts/models/post.model";
 import "dotenv/config";
 import { IUserType } from "../features/users/models/users.model";

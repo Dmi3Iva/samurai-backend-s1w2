@@ -3,19 +3,21 @@ import {
   IUsersPostBody,
   IUserView,
 } from "./models/users.model";
-import { usersRepository } from "./users.repository";
+import { UsersRepository } from "./users.repository";
 import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
 
-export const usersService = {
+export class UsersService {
+  constructor(private usersRepository: UsersRepository) {}
+
   async isUniqueLogin(login: string): Promise<boolean> {
-    const result = await usersRepository.findUserByLogin(login);
+    const result = await this.usersRepository.findUserByLogin(login);
     return result === null;
-  },
+  }
   async isUniqueEmail(email: string): Promise<boolean> {
-    const result = await usersRepository.findUserByEmail(email);
+    const result = await this.usersRepository.findUserByEmail(email);
     return result === null;
-  },
+  }
   async createUser(data: IUsersPostBody): Promise<IUserView> {
     const createdAt = new Date();
     let password: string;
@@ -28,7 +30,7 @@ export const usersService = {
       createdAt,
     };
 
-    const id = await usersRepository.createUser(createDBUserParam);
+    const id = await this.usersRepository.createUser(createDBUserParam);
 
     const result: IUserView = {
       id,
@@ -38,19 +40,22 @@ export const usersService = {
     };
 
     return result;
-  },
+  }
   async removeUserById(id: string): Promise<boolean> {
-    const result = await usersRepository.removeUserById(id);
+    const result = await this.usersRepository.removeUserById(id);
 
     return result;
-  },
+  }
   async isLoginOrEmailAndPasswordCorrected(
     loginOrEmail: string,
     password: string,
   ) {
-    const resultByLogin = await usersRepository.findUserByLogin(loginOrEmail, {
-      fullMapping: true,
-    });
+    const resultByLogin = await this.usersRepository.findUserByLogin(
+      loginOrEmail,
+      {
+        emailMapping: true,
+      },
+    );
     if (resultByLogin) {
       const isPasswordCorrect = await comparePasswords(
         password,
@@ -64,9 +69,12 @@ export const usersService = {
         : null;
     }
 
-    const resultByEmail = await usersRepository.findUserByEmail(loginOrEmail, {
-      fullMapping: true,
-    });
+    const resultByEmail = await this.usersRepository.findUserByEmail(
+      loginOrEmail,
+      {
+        emailMapping: true,
+      },
+    );
     if (resultByEmail) {
       const isPasswordCorrect = await comparePasswords(
         password,
@@ -81,9 +89,9 @@ export const usersService = {
     }
 
     return null;
-  },
+  }
   async getUserById(id: string): Promise<IUserView | null> {
-    const user = await usersRepository.findUserById(id);
+    const user = await this.usersRepository.findUserById(id);
     return user;
-  },
-};
+  }
+}

@@ -1,13 +1,15 @@
 import e from "express";
-import { blogsRouter } from "./features/blogs/blogs.router";
-import { postsRouter } from "./features/posts/posts.router";
-import { testingRouter } from "./features/testing/testing.route";
 import { ROUTES } from "./consants/routes.conts";
-import { authRouter } from "./features/auth/auth.router";
-import { usersRouter } from "./features/users/users.router";
-import { commentsRouter } from "./features/comments/comments.route";
 import cookieParser from "cookie-parser";
-import { securityDeviceRouter } from "./features/security-devices/security-devices.router";
+import {
+  authController,
+  blogsController,
+  commentsController,
+  postsController,
+  securityDeviceController,
+  testingController,
+  usersController,
+} from "./composition-root";
 
 export const app = e();
 
@@ -15,10 +17,10 @@ app.use(e.json());
 app.use(cookieParser());
 app.set("trust proxy", true);
 
-app.use(ROUTES.auth, authRouter);
-app.use(ROUTES.blogs, blogsRouter);
-app.use(ROUTES.posts, postsRouter);
-app.use(ROUTES.comments, commentsRouter);
-app.use(ROUTES.users, usersRouter);
-app.use(ROUTES.testings, testingRouter);
-app.use(ROUTES.securityDevices, securityDeviceRouter);
+app.use(ROUTES.auth, authController.getRouter());
+app.use(ROUTES.blogs, blogsController.getRouter());
+app.use(ROUTES.posts, postsController.getRouter());
+app.use(ROUTES.comments, commentsController.getRouter());
+app.use(ROUTES.users, usersController.getRouter());
+app.use(ROUTES.testings, testingController.getRouter());
+app.use(ROUTES.securityDevices, securityDeviceController.getRouter());

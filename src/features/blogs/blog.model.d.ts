@@ -1,5 +1,5 @@
 import { ObjectId, OptionalId, WithId } from "mongodb";
-import { ESortDirection } from "../../../types/common.type";
+import { ESortDirection } from "../../types/common.type";
 
 export interface IViewBlog {
   id: string;

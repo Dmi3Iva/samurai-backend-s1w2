@@ -1,6 +1,6 @@
 import { rateLimitDatabase } from "../../../repositories/database";
 
-export const rateLimitUpdateRepository = {
+export class RateLimitUpdateRepository {
   async addRateLimit({
     ip,
     url,
@@ -21,8 +21,8 @@ export const rateLimitUpdateRepository = {
     }
 
     return false;
-  },
+  }
   async removeAll() {
     return await rateLimitDatabase.deleteMany({});
-  },
-};
+  }
+}

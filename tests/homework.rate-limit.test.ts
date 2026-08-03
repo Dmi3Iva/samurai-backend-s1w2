@@ -31,7 +31,7 @@ const expectRateLimitedOnSixth = async (requestFactory: () => Test) => {
   expect(blocked.status).toBe(429);
 };
 
-describe("Homework 9 — Auth rate limiting (swagger 429)", () => {
+describe("Auth rate limiting (swagger 429)", () => {
   beforeEach(async () => {
     await request(app).delete(`${ROUTES.testings}`);
   });
@@ -87,6 +87,30 @@ describe("Homework 9 — Auth rate limiting (swagger 429)", () => {
         request(app)
           .post(`${ROUTES.auth}/registration-email-resending`)
           .send({ email: deliveredTestEmail("rate-limit-resending") }),
+      ),
+    );
+  });
+
+  it("POST /auth/password-recovery: should return 429 after more than 5 attempts from one IP", async () => {
+    // Unregistered email → 204 without sending mail (swagger: do not reveal existence)
+    await expectRateLimitedOnSixth(() =>
+      withIp(
+        request(app)
+          .post(`${ROUTES.auth}/password-recovery`)
+          .send({ email: deliveredTestEmail("rate-limit-pwd-recovery") }),
+      ),
+    );
+  });
+
+  it("POST /auth/new-password: should return 429 after more than 5 attempts from one IP", async () => {
+    await expectRateLimitedOnSixth(() =>
+      withIp(
+        request(app)
+          .post(`${ROUTES.auth}/new-password`)
+          .send({
+            newPassword: "newPass12",
+            recoveryCode: "invalid-recovery-code",
+          }),
       ),
     );
   });

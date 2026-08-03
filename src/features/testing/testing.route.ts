@@ -1,20 +1,38 @@
 import { Router } from "express";
-import { blogsRepository } from "../blogs/blogs.repository";
-import { postsRepository } from "../posts/repository/posts.repository";
-import { usersRepository } from "../users/users.repository";
-import { commentsRepository } from "../comments/comments.repository";
-import { authRepository } from "../auth/repository/auth.repository";
-import { rateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
+import { BlogsRepository } from "../blogs/blogs.repository";
+import { PostsRepository } from "../posts/repository/posts.repository";
+import { UsersRepository } from "../users/users.repository";
+import { CommentsRepository } from "../comments/comments.repository";
+import { AuthRepository } from "../auth/auth.repository";
+import { RateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
 
-export const testingRouter = Router();
+export class TestingController {
+  router = Router();
+  constructor(
+    private blogsRepository: BlogsRepository,
+    private postsRepository: PostsRepository,
+    private usersRepository: UsersRepository,
+    private commentsRepository: CommentsRepository,
+    private authRepository: AuthRepository,
+    private rateLimitUpdateRepository: RateLimitUpdateRepository,
+  ) {
+    this.registerDelete();
+  }
 
-testingRouter.delete("/", async (req, res) => {
-  await blogsRepository.removeAll();
-  await postsRepository.removeAll();
-  await usersRepository.removeAll();
-  await commentsRepository.removeAll();
-  await authRepository.removeAll();
-  await rateLimitUpdateRepository.removeAll();
+  getRouter() {
+    return this.router;
+  }
 
-  res.status(204).send();
-});
+  registerDelete() {
+    this.router.delete("/", async (req, res) => {
+      await this.blogsRepository.removeAll();
+      await this.postsRepository.removeAll();
+      await this.usersRepository.removeAll();
+      await this.commentsRepository.removeAll();
+      await this.authRepository.removeAll();
+      await this.rateLimitUpdateRepository.removeAll();
+
+      res.status(204).send();
+    });
+  }
+}

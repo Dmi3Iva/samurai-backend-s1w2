@@ -1,9 +1,8 @@
 import { ObjectId, WithId } from "mongodb";
-import { db, usersDatabase } from "../../repositories/database";
+import { usersDatabase } from "../../repositories/database";
 import {
   ICreatedDBUserParam,
   ICreateRegistrationDataBaseBody,
-  ICreateRegistrationPostBody,
   IDBUserType,
   IUsersGetQueries,
   IUserType,
@@ -11,68 +10,68 @@ import {
 } from "./models/users.model";
 import { add } from "date-fns";
 
-const mapDBUserToView = (
-  dbUser: IDBUserType,
-  options?: { fullMapping?: boolean },
-): IUserView => {
-  return {
-    id: dbUser._id.toString(),
-    createdAt: dbUser.createdAt,
-    email: dbUser.email,
-    login: dbUser.login,
-    ...(options?.fullMapping && dbUser.emailConfirmation
-      ? {
-          emailConfirmation: {
-            expirationDate: dbUser.emailConfirmation.expirationDate,
-            isConfirmed: dbUser.emailConfirmation.isConfirmed,
-            confirmationCode: dbUser.emailConfirmation.confirmationCode,
-          },
-        }
-      : {}),
+export class UsersRepository {
+  mapDBUserToView = (
+    dbUser: IDBUserType,
+    options?: { emailMapping?: boolean },
+  ): IUserView => {
+    return {
+      id: dbUser._id.toString(),
+      createdAt: dbUser.createdAt,
+      email: dbUser.email,
+      login: dbUser.login,
+      ...(options?.emailMapping && dbUser.emailConfirmation
+        ? {
+            emailConfirmation: {
+              expirationDate: dbUser.emailConfirmation.expirationDate,
+              isConfirmed: dbUser.emailConfirmation.isConfirmed,
+              confirmationCode: dbUser.emailConfirmation.confirmationCode,
+            },
+          }
+        : {}),
+    };
   };
-};
 
-export const usersRepository = {
   async findUserByLogin(
     login: string,
-    options?: { fullMapping?: boolean },
+    options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ login });
 
     return result
       ? {
-          user: mapDBUserToView(result, options),
+          user: this.mapDBUserToView(result, options),
           password: result.password,
         }
       : null;
-  },
+  }
 
   async findUserByEmail(
     email: string,
-    options?: { fullMapping?: boolean },
+    options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ email });
 
     return result
       ? {
-          user: mapDBUserToView(result, options),
+          user: this.mapDBUserToView(result, options),
           password: result.password,
         }
       : null;
-  },
+  }
 
   async findUserById(userId: string): Promise<IUserView | null> {
     const _id = new ObjectId(userId);
     const result = await usersDatabase.findOne({ _id });
 
-    return result ? mapDBUserToView(result) : null;
-  },
+    return result ? this.mapDBUserToView(result) : null;
+  }
 
   async createUser(dbUserData: ICreatedDBUserParam): Promise<string> {
     const { insertedId } = await usersDatabase.insertOne(dbUserData);
 
     return insertedId.toString();
-  },
+  }
 
   async createRegistrationUser(
     dbUserData: ICreateRegistrationDataBaseBody,
@@ -84,7 +83,7 @@ export const usersRepository = {
     } catch (e) {
       return null;
     }
-  },
+  }
 
   async removeUserById(id: string) {
     try {
@@ -96,7 +95,7 @@ export const usersRepository = {
       console.error(e);
       return false;
     }
-  },
+  }
 
   async getUsersWithQuery(queries: IUsersGetQueries) {
     const {
@@ -134,7 +133,9 @@ export const usersRepository = {
     const totalCount = await usersDatabase.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
     const page = Number(pageNumber);
-    const items = (await cursor.toArray()).map((item) => mapDBUserToView(item));
+    const items = (await cursor.toArray()).map((item) =>
+      this.mapDBUserToView(item),
+    );
 
     return {
       pagesCount,
@@ -143,10 +144,10 @@ export const usersRepository = {
       totalCount,
       items,
     };
-  },
+  }
   async removeAll() {
     return await usersDatabase.deleteMany({});
-  },
+  }
 
   async findUserByConfirmationCode(
     confirmationCode: string,
@@ -156,7 +157,7 @@ export const usersRepository = {
     });
 
     return result ?? null;
-  },
+  }
 
   async confirmRegistrationByUserId(userId: string): Promise<boolean> {
     const result = await usersDatabase.updateOne(
@@ -169,7 +170,7 @@ export const usersRepository = {
     );
 
     return result.modifiedCount === 1;
-  },
+  }
 
   async updateConfirmRegistrationByUserId(
     userId: string,
@@ -180,7 +181,6 @@ export const usersRepository = {
       {
         $set: {
           "emailConfirmation.confirmationCode": confirmationCode,
-          // TODO:: 15 minutes to another function
           "emailConfirmation.expirationDate": add(new Date(), {
             minutes: 15,
             seconds: 0,
@@ -190,5 +190,49 @@ export const usersRepository = {
     );
 
     return result.modifiedCount === 1;
-  },
-};
+  }
+
+  async setRecoveryToUserById(
+    userId: string,
+    confirmationCode: string,
+  ): Promise<boolean> {
+    const result = await usersDatabase.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          "passwordRecovery.code": confirmationCode,
+          "passwordRecovery.expirationDate": add(new Date(), {
+            hours: 1,
+            seconds: 0,
+          }),
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
+  }
+
+  async getUserByRecoveryCode(code: string): Promise<IUserView | null> {
+    const userDB = await usersDatabase.findOne({
+      "passwordRecovery.code": code,
+    });
+
+    if (userDB === null) return null;
+
+    return this.mapDBUserToView(userDB);
+  }
+
+  async setNewPassword(userId: string, newPassword: string): Promise<boolean> {
+    const result = await usersDatabase.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          password: newPassword,
+          passwordRecovery: null,
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
+  }
+}

@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { rateLimitService } from "../features/rate-limit/rate-limit.service";
+import { rateLimitService } from "../composition-root";
 
 export const rateLimitMiddleware: RequestHandler = async (req, res, next) => {
   const ip = req.ip;
