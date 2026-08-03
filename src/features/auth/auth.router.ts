@@ -1,9 +1,7 @@
 import { Router, Request } from "express";
 import { body, matchedData } from "express-validator";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
-import { usersService } from "../users/users.service";
 import { RequestWithBody } from "../../types/request.type";
-import { jwtService } from "../../auth/adapters/jwt.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { IRegistrationBody as IRegistrationBody } from "./types/auth.router";
 import { AuthService } from "./auth.service";
@@ -13,6 +11,7 @@ import { appConfig } from "../../common/appConfig";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
 import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
 import { rateLimitMiddleware } from "../../middleware/rate-limit.middleware";
+import { UsersService } from "../users/users.service";
 
 export interface LoginBodyParams {
   loginOrEmail: string;
@@ -59,9 +58,18 @@ const passwordRegistrationValidator = body("password")
   .isLength({ min: 6, max: 20 });
 const codeValidator = body("code").exists().isString();
 
+const newPasswordValidator = body("newPassword")
+  .exists()
+  .isString()
+  .isLength({ min: 6, max: 20 });
+const recoveryCodeValidator = body("recoveryCode").exists().isString();
+
 export class AuthController {
   private router = Router();
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private usersService: UsersService,
+  ) {
     this.registerLogin();
     this.registerLogout();
     this.registerRefreshToken();
@@ -69,6 +77,8 @@ export class AuthController {
     this.registerRegistration();
     this.registerRegistrationConfirmation();
     this.registerRegistrationEmailResending();
+    this.registerPasswordRecovery();
+    this.registerNewPassword();
   }
 
   getRouter() {
@@ -85,7 +95,7 @@ export class AuthController {
       deviceNameMiddleware,
       async (req: RequestWithBody<LoginBodyParams>, res) => {
         const body = matchedData<LoginBodyParams>(req);
-        const user = await usersService.isLoginOrEmailAndPasswordCorrected(
+        const user = await this.usersService.isLoginOrEmailAndPasswordCorrected(
           body.loginOrEmail,
           body.password,
         );
@@ -217,7 +227,7 @@ export class AuthController {
           return res.status(401).send();
         }
 
-        const user = await usersService.getUserById(userId);
+        const user = await this.usersService.getUserById(userId);
 
         if (!user) {
           return res.status(401).send();
@@ -316,6 +326,49 @@ export class AuthController {
         }
 
         return res.status(204).send();
+      },
+    );
+  }
+
+  registerPasswordRecovery() {
+    this.router.post(
+      "/password-recovery",
+      rateLimitMiddleware,
+      emailRegistrationValidator,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { email } = matchedData<{ email: string }>(req);
+
+        await this.authService.passwordRecovery(email);
+
+        return res.status(204).send();
+      },
+    );
+  }
+
+  registerNewPassword() {
+    this.router.post(
+      "/new-password",
+      rateLimitMiddleware,
+      newPasswordValidator,
+      recoveryCodeValidator,
+      inputValidationMiddleware,
+      async (req, res) => {
+        const { newPassword, recoveryCode } = matchedData<{
+          newPassword: string;
+          recoveryCode: string;
+        }>(req);
+
+        const result = await this.authService.applyNewPassword({
+          newPassword,
+          recoveryCode,
+        });
+
+        if (result) {
+          return res.status(204).send();
+        }
+
+        return res.status(400).send();
       },
     );
   }

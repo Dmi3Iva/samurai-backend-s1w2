@@ -3,7 +3,7 @@ import {
   IUsersPostBody,
   IUserView,
 } from "./models/users.model";
-import { usersRepository, UsersRepository } from "./users.repository";
+import { UsersRepository } from "./users.repository";
 import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
 
@@ -53,7 +53,7 @@ export class UsersService {
     const resultByLogin = await this.usersRepository.findUserByLogin(
       loginOrEmail,
       {
-        fullMapping: true,
+        emailMapping: true,
       },
     );
     if (resultByLogin) {
@@ -72,7 +72,7 @@ export class UsersService {
     const resultByEmail = await this.usersRepository.findUserByEmail(
       loginOrEmail,
       {
-        fullMapping: true,
+        emailMapping: true,
       },
     );
     if (resultByEmail) {
@@ -95,5 +95,3 @@ export class UsersService {
     return user;
   }
 }
-
-export const usersService = new UsersService(usersRepository);

@@ -19,19 +19,23 @@ import { UsersRepository } from "./features/users/users.repository";
 import { UsersController } from "./features/users/users.router";
 import { UsersService } from "./features/users/users.service";
 
-const rateLimitUpdateRepository = new RateLimitUpdateRepository();
-const rateLimitReadRepository = new RateLimitReadRepository();
-
-const authRepository = new AuthRepository();
-const authService = new AuthService(authRepository);
-export const authController = new AuthController(authService);
-
 const blogsRepository = new BlogsRepository();
 const postsRepository = new PostsRepository(blogsRepository);
 const postsService = new PostsService(postsRepository, blogsRepository);
 
+const usersRepository = new UsersRepository();
+const usersService = new UsersService(usersRepository);
+export const usersController = new UsersController(
+  usersService,
+  usersRepository,
+);
+
 const commentsRepository = new CommentsRepository();
-const commentsService = new CommentsService(commentsRepository, postsService);
+const commentsService = new CommentsService(
+  commentsRepository,
+  postsService,
+  usersService,
+);
 export const commentsController = new CommentsController(commentsService);
 
 const blogsService = new BlogsService(blogsRepository, postsRepository);
@@ -42,12 +46,24 @@ export const postsController = new PostsController(
   commentsService,
 );
 
-const usersRepository = new UsersRepository();
-const usersService = new UsersService(usersRepository);
-export const usersController = new UsersController(usersService);
+const authRepository = new AuthRepository();
+const authService = new AuthService(
+  authRepository,
+  usersService,
+  usersRepository,
+);
+export const authController = new AuthController(authService, usersService);
 
 export const securityDeviceController = new SecurityDeviceController(
   authService,
+);
+
+const rateLimitUpdateRepository = new RateLimitUpdateRepository();
+const rateLimitReadRepository = new RateLimitReadRepository();
+
+export const rateLimitService = new RateLimitService(
+  rateLimitReadRepository,
+  rateLimitUpdateRepository,
 );
 
 export const testingController = new TestingController(
@@ -56,10 +72,5 @@ export const testingController = new TestingController(
   usersRepository,
   commentsRepository,
   authRepository,
-  rateLimitUpdateRepository,
-);
-
-export const rateLimitService = new RateLimitService(
-  rateLimitReadRepository,
   rateLimitUpdateRepository,
 );

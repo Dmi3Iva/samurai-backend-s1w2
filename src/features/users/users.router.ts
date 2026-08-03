@@ -1,17 +1,20 @@
 import { RequestHandler, Router } from "express";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { body, matchedData, param, query } from "express-validator";
-import { UsersService, usersService } from "./users.service";
+import { UsersService } from "./users.service";
 import { RequestWithBody, RequestWithQuery } from "../../types/request.type";
 import { IUsersGetQueries, IUsersPostBody } from "./models/users.model";
-import { usersRepository } from "./users.repository";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { ErrorResponseBody } from "../../types/response.type";
+import { UsersRepository } from "./users.repository";
 
 export class UsersController {
   private usersRouter: Router = Router();
 
-  constructor(private usersService: UsersService) {
+  constructor(
+    private usersService: UsersService,
+    private usersRepository: UsersRepository,
+  ) {
     this.registerDeleteHandler();
     this.registerGetHandler();
     this.registerPostHandler();
@@ -29,7 +32,7 @@ export class UsersController {
       async (req, res) => {
         const { id } = matchedData<{ id: string }>(req);
 
-        const result = await usersService.removeUserById(id);
+        const result = await this.usersService.removeUserById(id);
         if (result) {
           return res.status(204).send();
         }
@@ -51,7 +54,7 @@ export class UsersController {
       async (req: RequestWithQuery<IUsersGetQueries>, res) => {
         const queries = matchedData<IUsersGetQueries>(req);
 
-        const result = await usersRepository.getUsersWithQuery(queries);
+        const result = await this.usersRepository.getUsersWithQuery(queries);
 
         return res.status(200).send(result);
       },
@@ -69,7 +72,7 @@ export class UsersController {
       res,
       next,
     ) => {
-      if (await usersService.isUniqueLogin(req.body.login)) {
+      if (await this.usersService.isUniqueLogin(req.body.login)) {
         return next();
       }
 
@@ -86,7 +89,7 @@ export class UsersController {
     };
 
     const emailIsUniqueValidator: RequestHandler = async (req, res, next) => {
-      if (await usersService.isUniqueEmail(req.body.email)) {
+      if (await this.usersService.isUniqueEmail(req.body.email)) {
         return next();
       }
 
@@ -129,7 +132,7 @@ export class UsersController {
       emailIsUniqueValidator,
       async (req: RequestWithBody<IUsersPostBody>, res) => {
         const data = matchedData<IUsersPostBody>(req);
-        const user = await usersService.createUser(data);
+        const user = await this.usersService.createUser(data);
         if (!user) {
           const errorResponse: ErrorResponseBody = {
             errorsMessages: [

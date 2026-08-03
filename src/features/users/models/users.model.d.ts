@@ -6,12 +6,18 @@ export interface IEmailConfirmation {
   isConfirmed: boolean;
 }
 
+export interface IPasswordRecovery {
+  code?: string;
+  expirationDate?: Date;
+}
+
 export interface IUserType {
   login: string;
   email: string;
   createdAt: Date;
   password: string;
   emailConfirmation?: IEmailConfirmation;
+  passwordRecovery?: IPasswordRecovery;
 }
 
 export interface IUserView extends Omit<IUserType, "password"> {

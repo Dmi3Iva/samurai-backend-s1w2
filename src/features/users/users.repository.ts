@@ -13,14 +13,14 @@ import { add } from "date-fns";
 export class UsersRepository {
   mapDBUserToView = (
     dbUser: IDBUserType,
-    options?: { fullMapping?: boolean },
+    options?: { emailMapping?: boolean },
   ): IUserView => {
     return {
       id: dbUser._id.toString(),
       createdAt: dbUser.createdAt,
       email: dbUser.email,
       login: dbUser.login,
-      ...(options?.fullMapping && dbUser.emailConfirmation
+      ...(options?.emailMapping && dbUser.emailConfirmation
         ? {
             emailConfirmation: {
               expirationDate: dbUser.emailConfirmation.expirationDate,
@@ -34,7 +34,7 @@ export class UsersRepository {
 
   async findUserByLogin(
     login: string,
-    options?: { fullMapping?: boolean },
+    options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ login });
 
@@ -48,7 +48,7 @@ export class UsersRepository {
 
   async findUserByEmail(
     email: string,
-    options?: { fullMapping?: boolean },
+    options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
     const result = await usersDatabase.findOne({ email });
 
@@ -191,6 +191,48 @@ export class UsersRepository {
 
     return result.modifiedCount === 1;
   }
-}
 
-export const usersRepository = new UsersRepository();
+  async setRecoveryToUserById(
+    userId: string,
+    confirmationCode: string,
+  ): Promise<boolean> {
+    const result = await usersDatabase.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          "passwordRecovery.code": confirmationCode,
+          "passwordRecovery.expirationDate": add(new Date(), {
+            hours: 1,
+            seconds: 0,
+          }),
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
+  }
+
+  async getUserByRecoveryCode(code: string): Promise<IUserView | null> {
+    const userDB = await usersDatabase.findOne({
+      "passwordRecovery.code": code,
+    });
+
+    if (userDB === null) return null;
+
+    return this.mapDBUserToView(userDB);
+  }
+
+  async setNewPassword(userId: string, newPassword: string): Promise<boolean> {
+    const result = await usersDatabase.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: {
+          password: newPassword,
+          passwordRecovery: null,
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
+  }
+}

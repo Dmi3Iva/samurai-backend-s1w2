@@ -1,7 +1,6 @@
 import { emailService } from "../../auth/adapters/email.service";
 import { ICreateRegistrationDataBaseBody } from "../users/models/users.model";
-import { usersRepository } from "../users/users.repository";
-import { usersService } from "../users/users.service";
+import { UsersService } from "../users/users.service";
 import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
 import { add } from "date-fns";
@@ -11,9 +10,14 @@ import { IAuthType } from "./models/auth.model";
 import { appConfig } from "../../common/appConfig";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { ERemoveSingleUserSessionState } from "./models/auth.constants";
+import { UsersRepository } from "../users/users.repository";
 
 export class AuthService {
-  constructor(private authRepository: AuthRepository) {}
+  constructor(
+    private authRepository: AuthRepository,
+    private usersService: UsersService,
+    private usersRepository: UsersRepository,
+  ) {}
 
   async registerUser(
     registerBody: IRegistrationBody,
@@ -25,8 +29,9 @@ export class AuthService {
 
     const { login, email } = registerBody;
 
-    const isLoginUnique = await usersService.isUniqueLogin(login);
-    const isEmailUnique = await usersService.isUniqueEmail(email);
+    const isLoginUnique = await this.usersService.isUniqueLogin(login);
+    const isEmailUnique = await this.usersService.isUniqueEmail(email);
+
     if (!isLoginUnique) return EAuthRegistrationSTATUS.LOGIN_ERROR;
     if (!isEmailUnique) return EAuthRegistrationSTATUS.EMAIL_ERROR;
 
@@ -42,7 +47,7 @@ export class AuthService {
       },
     };
 
-    const id = await usersRepository.createRegistrationUser(
+    const id = await this.usersRepository.createRegistrationUser(
       registrationDataBaseBody,
     );
 
@@ -61,7 +66,7 @@ export class AuthService {
   }
 
   async confirmRegistration(code: string) {
-    const user = await usersRepository.findUserByConfirmationCode(code);
+    const user = await this.usersRepository.findUserByConfirmationCode(code);
 
     if (!user) return false;
 
@@ -73,7 +78,7 @@ export class AuthService {
     if (isCodeAlreadyApplied) return false;
     if (isCodeExpired) return false;
 
-    const result = await usersRepository.confirmRegistrationByUserId(
+    const result = await this.usersRepository.confirmRegistrationByUserId(
       user._id.toString(),
     );
 
@@ -81,22 +86,22 @@ export class AuthService {
   }
 
   async registrationEmailResending(email: string): Promise<boolean> {
-    const user = await usersRepository.findUserByEmail(email, {
-      fullMapping: true,
+    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
+      emailMapping: true,
     });
-    if (!user) return false;
-    if (user.user.emailConfirmation?.isConfirmed) return false;
+    if (!userWithPassword) return false;
+    if (userWithPassword.user.emailConfirmation?.isConfirmed) return false;
     const confirmationCode = crypto.randomUUID();
 
     const updatedConfirmationCode =
-      await usersRepository.updateConfirmRegistrationByUserId(
-        user.user.id,
+      await this.usersRepository.updateConfirmRegistrationByUserId(
+        userWithPassword.user.id,
         confirmationCode,
       );
     if (!updatedConfirmationCode) return false;
 
     const result = await emailService.sendRegistrationConfirmationEmail({
-      toEmail: user.user.email,
+      toEmail: userWithPassword.user.email,
       confirmationCode,
     });
 
@@ -202,5 +207,55 @@ export class AuthService {
     }
     await this.authRepository.removeSingleUserSession(userId, deviceId);
     return ERemoveSingleUserSessionState.SUCCESS;
+  }
+
+  async passwordRecovery(email: string) {
+    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
+      emailMapping: true,
+    });
+    if (!userWithPassword) return false;
+    const { user } = userWithPassword;
+    if (user.emailConfirmation?.isConfirmed) return false;
+
+    const isUserRecoveryCodeExpired =
+      user?.passwordRecovery?.expirationDate &&
+      user?.passwordRecovery?.expirationDate < new Date();
+    if (isUserRecoveryCodeExpired) {
+      return false;
+    }
+
+    const recoveryCode = crypto.randomUUID();
+
+    const recoveryInformation =
+      await this.usersRepository.setRecoveryToUserById(user.id, recoveryCode);
+    if (!recoveryInformation) return false;
+
+    const result = await emailService.sendPasswordRecoveryEmail({
+      toEmail: user.email,
+      recoveryCode,
+    });
+
+    return result;
+  }
+
+  async applyNewPassword({
+    newPassword,
+    recoveryCode,
+  }: {
+    newPassword: string;
+    recoveryCode: string;
+  }): Promise<boolean> {
+    const user = await this.usersRepository.getUserByRecoveryCode(recoveryCode);
+
+    if (!user) {
+      return false;
+    }
+
+    const newPasswordHash = await encryptPassword(newPassword);
+    const result = await this.usersRepository.setNewPassword(
+      user.id,
+      newPasswordHash,
+    );
+    return result;
   }
 }

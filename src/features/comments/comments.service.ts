@@ -1,5 +1,5 @@
 import { PostsService } from "../posts/services/posts.service";
-import { usersService } from "../users/users.service";
+import { UsersService } from "../users/users.service";
 import {
   ICommentCreateModel,
   IDBCommentType,
@@ -37,6 +37,7 @@ export class CommentsService {
   constructor(
     private commentsRepository: CommentsRepository,
     private postsService: PostsService,
+    private usersService: UsersService,
   ) {}
 
   async getCommentById(id: string) {
@@ -56,7 +57,7 @@ export class CommentsService {
     content: string;
     userId: string;
   }): Promise<ICommentView | null> {
-    const user = await usersService.getUserById(userId);
+    const user = await this.usersService.getUserById(userId);
 
     const commentModel: ICommentCreateModel = {
       content: content,
