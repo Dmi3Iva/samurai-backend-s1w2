@@ -17,7 +17,7 @@ export interface IUserType {
   createdAt: Date;
   password: string;
   emailConfirmation?: IEmailConfirmation;
-  passwordRecovery?: IPasswordRecovery;
+  passwordRecovery?: IPasswordRecovery | null;
 }
 
 export interface IUserView extends Omit<IUserType, "password"> {
