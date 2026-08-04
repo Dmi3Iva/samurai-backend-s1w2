@@ -4,10 +4,14 @@ import { IdParam } from "../../types/common.type";
 import { CommentsService, ERemoveUserState } from "./comments.service";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
+import { injectable, inject } from "inversify";
 
+@injectable()
 export class CommentsController {
   router = Router();
-  constructor(private commentsService: CommentsService) {
+  constructor(
+    @inject(CommentsService) private commentsService: CommentsService,
+  ) {
     this.registerGet();
     this.registerDeleteById();
     this.registerPutById();

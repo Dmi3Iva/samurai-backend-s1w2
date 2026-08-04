@@ -1,7 +1,9 @@
 import { WithId } from "mongodb";
 import { authDatabase } from "../../repositories/database";
 import { IAuthType, ISecurityDevice } from "./models/auth.model";
+import { injectable } from "inversify";
 
+@injectable()
 export class AuthRepository {
   mapToAuthType = (type: WithId<IAuthType>): ISecurityDevice => {
     return {

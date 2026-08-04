@@ -11,11 +11,16 @@ import { appConfig } from "../../common/appConfig";
 import { jwtService } from "../../auth/adapters/jwt.service";
 import { ERemoveSingleUserSessionState } from "./models/auth.constants";
 import { UsersRepository } from "../users/users.repository";
+import { inject, injectable } from "inversify";
 
+@injectable()
 export class AuthService {
   constructor(
+    @inject(AuthRepository)
     private authRepository: AuthRepository,
+    @inject(UsersService)
     private usersService: UsersService,
+    @inject(UsersRepository)
     private usersRepository: UsersRepository,
   ) {}
 

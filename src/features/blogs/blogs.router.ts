@@ -16,6 +16,7 @@ import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { BlogIdParam, IdParam } from "../../types/common.type";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
+import { inject, injectable } from "inversify";
 
 const nameValidation = body("name")
   .exists()
@@ -89,9 +90,13 @@ const postContentValidation = body("content")
   .isLength({ max: 100 })
   .withMessage("content should be a string max length 100");
 
+@injectable()
 export class BlogsController {
   router: Router = Router();
-  constructor(private blogsService: BlogsService) {
+  constructor(
+    @inject(BlogsService)
+    private blogsService: BlogsService,
+  ) {
     this.registerGet();
     this.registerPost();
     this.registerGetById();

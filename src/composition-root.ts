@@ -1,3 +1,4 @@
+import { Container } from "inversify";
 import { AuthRepository } from "./features/auth/auth.repository";
 import { AuthController } from "./features/auth/auth.router";
 import { AuthService } from "./features/auth/auth.service";
@@ -10,7 +11,6 @@ import { CommentsService } from "./features/comments/comments.service";
 import { PostsController } from "./features/posts/posts.router";
 import { PostsRepository } from "./features/posts/repository/posts.repository";
 import { PostsService } from "./features/posts/services/posts.service";
-import { RateLimitService } from "./features/rate-limit/rate-limit.service";
 import { RateLimitReadRepository } from "./features/rate-limit/repository/rate-limit-read.repository";
 import { RateLimitUpdateRepository } from "./features/rate-limit/repository/rate-limit-update.repository";
 import { SecurityDeviceController } from "./features/security-devices/security-devices.router";
@@ -18,59 +18,34 @@ import { TestingController } from "./features/testing/testing.route";
 import { UsersRepository } from "./features/users/users.repository";
 import { UsersController } from "./features/users/users.router";
 import { UsersService } from "./features/users/users.service";
+import { RateLimitService } from "./features/rate-limit/rate-limit.service";
 
-const blogsRepository = new BlogsRepository();
-const postsRepository = new PostsRepository(blogsRepository);
-const postsService = new PostsService(postsRepository, blogsRepository);
+export const iocContainer = new Container();
 
-const usersRepository = new UsersRepository();
-const usersService = new UsersService(usersRepository);
-export const usersController = new UsersController(
-  usersService,
-  usersRepository,
-);
+iocContainer.bind(RateLimitReadRepository).toSelf();
+iocContainer.bind(RateLimitUpdateRepository).toSelf();
+iocContainer.bind(RateLimitService).toSelf();
 
-const commentsRepository = new CommentsRepository();
-const commentsService = new CommentsService(
-  commentsRepository,
-  postsService,
-  usersService,
-);
-export const commentsController = new CommentsController(commentsService);
+iocContainer.bind(AuthController).toSelf();
+iocContainer.bind(AuthService).toSelf();
+iocContainer.bind(AuthRepository).toSelf();
 
-const blogsService = new BlogsService(blogsRepository, postsRepository);
-export const blogsController = new BlogsController(blogsService);
+iocContainer.bind(BlogsController).toSelf();
+iocContainer.bind(BlogsService).toSelf();
+iocContainer.bind(BlogsRepository).toSelf();
 
-export const postsController = new PostsController(
-  postsService,
-  commentsService,
-);
+iocContainer.bind(PostsController).toSelf();
+iocContainer.bind(PostsService).toSelf();
+iocContainer.bind(PostsRepository).toSelf();
 
-const authRepository = new AuthRepository();
-const authService = new AuthService(
-  authRepository,
-  usersService,
-  usersRepository,
-);
-export const authController = new AuthController(authService, usersService);
+iocContainer.bind(CommentsController).toSelf();
+iocContainer.bind(CommentsService).toSelf();
+iocContainer.bind(CommentsRepository).toSelf();
 
-export const securityDeviceController = new SecurityDeviceController(
-  authService,
-);
+iocContainer.bind(UsersController).toSelf();
+iocContainer.bind(UsersService).toSelf();
+iocContainer.bind(UsersRepository).toSelf();
 
-const rateLimitUpdateRepository = new RateLimitUpdateRepository();
-const rateLimitReadRepository = new RateLimitReadRepository();
+iocContainer.bind(TestingController).toSelf();
 
-export const rateLimitService = new RateLimitService(
-  rateLimitReadRepository,
-  rateLimitUpdateRepository,
-);
-
-export const testingController = new TestingController(
-  blogsRepository,
-  postsRepository,
-  usersRepository,
-  commentsRepository,
-  authRepository,
-  rateLimitUpdateRepository,
-);
+iocContainer.bind(SecurityDeviceController).toSelf();

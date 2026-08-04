@@ -10,9 +10,13 @@ import {
   IViewPostType,
 } from "../models/post.model";
 import { BlogsRepository } from "../../blogs/blogs.repository";
+import { injectable, inject } from "inversify";
 
+@injectable()
 export class PostsRepository {
-  constructor(private blogsRepository: BlogsRepository) {}
+  constructor(
+    @inject(BlogsRepository) private blogsRepository: BlogsRepository,
+  ) {}
 
   mapToPostType = (p: IDBPostType): IViewPostType => {
     return {

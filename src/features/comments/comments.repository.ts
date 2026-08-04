@@ -7,7 +7,9 @@ import {
   IDBCommentType,
   IFindCommentsSearchTerm,
 } from "./comments.models";
+import { injectable } from "inversify";
 
+@injectable()
 export class CommentsRepository {
   mapDbCommentToView(dbComment: IDBCommentType): ICommentView {
     const commentatorInfo: ICommentView["commentatorInfo"] = {

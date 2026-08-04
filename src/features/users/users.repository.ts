@@ -9,7 +9,9 @@ import {
   IUserView,
 } from "./models/users.model";
 import { add } from "date-fns";
+import { injectable } from "inversify";
 
+@injectable()
 export class UsersRepository {
   mapDBUserToView = (
     dbUser: IDBUserType,

@@ -12,6 +12,7 @@ import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizat
 import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
 import { rateLimitMiddleware } from "../../middleware/rate-limit.middleware";
 import { UsersService } from "../users/users.service";
+import { inject, injectable } from "inversify";
 
 export interface LoginBodyParams {
   loginOrEmail: string;
@@ -64,10 +65,13 @@ const newPasswordValidator = body("newPassword")
   .isLength({ min: 6, max: 20 });
 const recoveryCodeValidator = body("recoveryCode").exists().isString();
 
+@injectable()
 export class AuthController {
   private router = Router();
   constructor(
+    @inject(AuthService)
     private authService: AuthService,
+    @inject(UsersService)
     private usersService: UsersService,
   ) {
     this.registerLogin();

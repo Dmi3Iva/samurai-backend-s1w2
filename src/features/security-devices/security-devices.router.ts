@@ -2,10 +2,15 @@ import { Router } from "express";
 import { authorizationRefreshTokenMiddleware } from "../../middleware/authorizationRefreshToken.middleware";
 import { AuthService } from "../auth/auth.service";
 import { ERemoveSingleUserSessionState } from "../auth/models/auth.constants";
+import { inject, injectable } from "inversify";
 
+@injectable()
 export class SecurityDeviceController {
   router = Router();
-  constructor(private authService: AuthService) {
+  constructor(
+    @inject(AuthService)
+    private authService: AuthService,
+  ) {
     this.registerGet();
     this.registerDelete();
     this.registerDeleteById();

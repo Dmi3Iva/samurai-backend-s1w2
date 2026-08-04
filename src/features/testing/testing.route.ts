@@ -5,15 +5,23 @@ import { UsersRepository } from "../users/users.repository";
 import { CommentsRepository } from "../comments/comments.repository";
 import { AuthRepository } from "../auth/auth.repository";
 import { RateLimitUpdateRepository } from "../rate-limit/repository/rate-limit-update.repository";
+import { injectable, inject } from "inversify";
 
+@injectable()
 export class TestingController {
   router = Router();
   constructor(
+    @inject(BlogsRepository)
     private blogsRepository: BlogsRepository,
+    @inject(PostsRepository)
     private postsRepository: PostsRepository,
+    @inject(UsersRepository)
     private usersRepository: UsersRepository,
+    @inject(CommentsRepository)
     private commentsRepository: CommentsRepository,
+    @inject(AuthRepository)
     private authRepository: AuthRepository,
+    @inject(RateLimitUpdateRepository)
     private rateLimitUpdateRepository: RateLimitUpdateRepository,
   ) {
     this.registerDelete();

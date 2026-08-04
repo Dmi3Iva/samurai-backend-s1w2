@@ -1,3 +1,4 @@
+import { injectable, inject } from "inversify";
 import { BlogsRepository } from "../../blogs/blogs.repository";
 import {
   IFindPostsSearchTerm,
@@ -8,9 +9,12 @@ import {
 } from "../models/post.model";
 import { PostsRepository } from "../repository/posts.repository";
 
+@injectable()
 export class PostsService {
   constructor(
+    @inject(PostsRepository)
     private postsRepository: PostsRepository,
+    @inject(BlogsRepository)
     private blogsRepository: BlogsRepository,
   ) {}
 

@@ -14,10 +14,14 @@ import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../consants/routes.conts";
 import { BlogsRepository } from "./blogs.repository";
 import { BlogIdParam } from "../../types/common.type";
 import { PostsRepository } from "../posts/repository/posts.repository";
+import { inject, injectable } from "inversify";
 
+@injectable()
 export class BlogsService {
   constructor(
+    @inject(BlogsRepository)
     private blogsRepository: BlogsRepository,
+    @inject(PostsRepository)
     private postsRepository: PostsRepository,
   ) {}
 
