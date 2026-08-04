@@ -1,3 +1,4 @@
+import { inject, injectable } from "inversify";
 import {
   ICreatedDBUserParam,
   IUsersPostBody,
@@ -7,8 +8,12 @@ import { UsersRepository } from "./users.repository";
 import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
 
+@injectable()
 export class UsersService {
-  constructor(private usersRepository: UsersRepository) {}
+  constructor(
+    @inject(UsersRepository)
+    private usersRepository: UsersRepository,
+  ) {}
 
   async isUniqueLogin(login: string): Promise<boolean> {
     const result = await this.usersRepository.findUserByLogin(login);

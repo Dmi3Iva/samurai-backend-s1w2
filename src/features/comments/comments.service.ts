@@ -1,3 +1,4 @@
+import { injectable, inject } from "inversify";
 import { PostsService } from "../posts/services/posts.service";
 import { UsersService } from "../users/users.service";
 import {
@@ -33,10 +34,14 @@ export enum ERemoveUserState {
   FAILED,
 }
 
+@injectable()
 export class CommentsService {
   constructor(
+    @inject(CommentsRepository)
     private commentsRepository: CommentsRepository,
+    @inject(PostsService)
     private postsService: PostsService,
+    @inject(UsersService)
     private usersService: UsersService,
   ) {}
 

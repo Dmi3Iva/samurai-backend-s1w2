@@ -1,5 +1,7 @@
+import { injectable } from "inversify";
 import { rateLimitDatabase } from "../../../repositories/database";
 
+@injectable()
 export class RateLimitReadRepository {
   async rateLimitsCount({
     ip,

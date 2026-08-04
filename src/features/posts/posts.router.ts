@@ -17,6 +17,7 @@ import { inputValidationMiddleware } from "../../middleware/inputValidation.midd
 import { IFindCommentsSearchTerm } from "../comments/comments.models";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { CommentsService } from "../comments/comments.service";
+import { inject, injectable } from "inversify";
 
 interface PostsIdParam {
   id: string;
@@ -61,10 +62,13 @@ const blogIdValidation = body("blogId")
   .isString()
   .withMessage("blogId should be a string");
 
+@injectable()
 export class PostsController {
   router = Router();
   constructor(
+    @inject(PostsService)
     private postsService: PostsService,
+    @inject(CommentsService)
     private commentsService: CommentsService,
   ) {
     this.registerGet();

@@ -1,5 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { blogsDatabase } from "../../repositories/database";
+import { injectable } from "inversify";
 import type {
   IFindBlogsSearchTerm,
   UpdateBlogModel,
@@ -9,6 +10,7 @@ import type {
   BlogsRouterResponse,
 } from "./blog.model";
 
+@injectable()
 export class BlogsRepository {
   mapToBlogType = (b: WithId<IBlogType>): IViewBlog => ({
     description: b.description,

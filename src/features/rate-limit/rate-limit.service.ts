@@ -2,14 +2,18 @@ import { subSeconds } from "date-fns";
 import { rateLimitDatabase } from "../../repositories/database";
 import { RateLimitReadRepository } from "./repository/rate-limit-read.repository";
 import { RateLimitUpdateRepository } from "./repository/rate-limit-update.repository";
+import { injectable, inject } from "inversify";
 
 const RATE_LIMIT = 5;
 const RATE_LIMIT_SECONDS = 10;
 const REQUEST_WILL_BE_ADDED = 1;
 
+@injectable()
 export class RateLimitService {
   constructor(
+    @inject(RateLimitReadRepository)
     private rateLimitReadRepository: RateLimitReadRepository,
+    @inject(RateLimitUpdateRepository)
     private rateLimitUpdateRepository: RateLimitUpdateRepository,
   ) {}
   async checkRequestLimit({

@@ -7,12 +7,16 @@ import { IUsersGetQueries, IUsersPostBody } from "./models/users.model";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { ErrorResponseBody } from "../../types/response.type";
 import { UsersRepository } from "./users.repository";
+import { inject, injectable } from "inversify";
 
+@injectable()
 export class UsersController {
   private usersRouter: Router = Router();
 
   constructor(
+    @inject(UsersService)
     private usersService: UsersService,
+    @inject(UsersRepository)
     private usersRepository: UsersRepository,
   ) {
     this.registerDeleteHandler();

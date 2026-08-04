@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
-import { rateLimitService } from "../composition-root";
+import { iocContainer } from "../composition-root";
+import { RateLimitService } from "../features/rate-limit/rate-limit.service";
 
 export const rateLimitMiddleware: RequestHandler = async (req, res, next) => {
   const ip = req.ip;
@@ -9,9 +10,9 @@ export const rateLimitMiddleware: RequestHandler = async (req, res, next) => {
     url,
   };
 
-  const result = await rateLimitService.checkRequestLimit(
-    checkRequestLimitPayload,
-  );
+  const result = await iocContainer
+    .get(RateLimitService)
+    .checkRequestLimit(checkRequestLimitPayload);
 
   if (result === false) {
     return res.status(429).send(`rate limit, try again later`);
