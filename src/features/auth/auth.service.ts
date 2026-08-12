@@ -1,5 +1,5 @@
 import { emailService } from "../../auth/adapters/email.service";
-import { ICreateRegistrationDataBaseBody } from "../users/models/users.model";
+import { ICreateRegistrationDataBaseBody } from "../users/models/user-types";
 import { UsersService } from "../users/users.service";
 import { encryptPassword } from "../users/utils/encrpypt-password";
 import { IRegistrationBody } from "./types/auth.router";
@@ -84,7 +84,7 @@ export class AuthService {
     if (isCodeExpired) return false;
 
     const result = await this.usersRepository.confirmRegistrationByUserId(
-      user._id.toString(),
+      user._id.toString()
     );
 
     return result;

@@ -17,6 +17,7 @@ import { authorizationMiddleware } from "../../middleware/authorization.middlewa
 import { BlogIdParam, IdParam } from "../../types/common.type";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { inject, injectable } from "inversify";
+import { IPostCreateModel } from "../comments/comments.types";
 
 const nameValidation = body("name")
   .exists()
@@ -194,7 +195,7 @@ export class BlogsController {
       postContentValidation,
       inputValidationMiddleware,
       async (req, res) => {
-        const data = matchedData<CreateBlogModel & BlogIdParam>(req);
+        const data = matchedData<IPostCreateModel>(req);
 
         const newPost = await this.blogsService.createPost(data);
         if (!newPost) {

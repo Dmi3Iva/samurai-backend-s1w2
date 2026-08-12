@@ -1,13 +1,13 @@
 import { ObjectId, WithId } from "mongodb";
-import { blogsDatabase } from "../../repositories/database";
 import { injectable } from "inversify";
-import type {
-  IFindBlogsSearchTerm,
-  UpdateBlogModel,
-  IViewBlog,
-  IBlogType,
-  CreateBlogModelDB,
-  BlogsRouterResponse,
+import {
+  type IFindBlogsSearchTerm,
+  type UpdateBlogModel,
+  type IViewBlog,
+  type IBlogType,
+  type CreateBlogModelDB,
+  type BlogsRouterResponse,
+  BlogModel,
 } from "./blog.model";
 
 @injectable()
@@ -23,7 +23,7 @@ export class BlogsRepository {
 
   async findBlog(id: string): Promise<IBlogType | null> {
     try {
-      const foundBlog = await blogsDatabase.findOne({ _id: new ObjectId(id) });
+      const foundBlog = await BlogModel.findById(id);
       return foundBlog ? this.mapToBlogType(foundBlog) : null;
     } catch (e) {
       console.log(`error while try to get BLOG with id=${id}`);
@@ -56,28 +56,14 @@ export class BlogsRepository {
         : {}),
     };
 
-    const searchResult = blogsDatabase.find(
-      filter,
-      // sortBy string (query)
-      // Default value : createdAt
-      // sortDirection string (query)
-      // Default value: desc
-      // Available values : asc, desc
-      // pageNumber integer($int32) (query)
-      // pageNumber is number of portions that should be returned
-      // Default value : 1
-      // PageSize integer($int32) (query)
-      // pageSize is portions size that should be returned
-      // Default value : 10
-      {
-        sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
-        skip,
-        limit,
-      },
-    );
+    const searchResult = await BlogModel.find(filter)
+      .sort({ [sortBy]: sortDirection === "asc" ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    const items = (await searchResult.toArray()).map(this.mapToBlogType);
-    const totalCount = await blogsDatabase.countDocuments(filter);
+    const items = searchResult.map(this.mapToBlogType);
+    const totalCount = await BlogModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
@@ -89,15 +75,16 @@ export class BlogsRepository {
     };
   }
 
-  async createBlog(createBlogModelData: CreateBlogModelDB): Promise<ObjectId> {
-    const { insertedId } = await blogsDatabase.insertOne(createBlogModelData);
+  async createBlog(createBlogModelData: CreateBlogModelDB): Promise<string> {
+    const model = new BlogModel(createBlogModelData);
+    const result = await model.save();
 
-    return insertedId;
+    return result.id;
   }
 
   async deleteBlog(id: string): Promise<boolean> {
     try {
-      const removingResult = await blogsDatabase.deleteOne({
+      const removingResult = await BlogModel.deleteOne({
         _id: new ObjectId(id),
       });
       return removingResult.deletedCount === 1;
@@ -115,7 +102,7 @@ export class BlogsRepository {
     updateBlogModelData: UpdateBlogModel;
   }): Promise<boolean> {
     try {
-      const updateResult = await blogsDatabase.updateOne(
+      const updateResult = await BlogModel.updateOne(
         { _id: new ObjectId(id) },
         {
           $set: {
@@ -131,6 +118,6 @@ export class BlogsRepository {
     }
   }
   async removeAll() {
-    return await blogsDatabase.deleteMany({});
+    return await BlogModel.deleteMany({});
   }
 }

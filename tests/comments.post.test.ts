@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  DEFAULT_LIKES_INFO,
+} from "./commentsTestManager";
 import {
   ROUTES,
   bearerAuthHeader,
@@ -61,6 +64,7 @@ describe("POST /posts/:postId/comments", () => {
         userLogin: "commenter",
       },
       createdAt: expect.any(String),
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

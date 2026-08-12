@@ -14,7 +14,7 @@ import { body, matchedData, param } from "express-validator";
 import { authorizationMiddleware } from "../../middleware/authorization.middleware";
 import { PostsService } from "./services/posts.service";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
-import { IFindCommentsSearchTerm } from "../comments/comments.models";
+import { IFindCommentsSearchTerm } from "../comments/comments.types";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { CommentsService } from "../comments/comments.service";
 import { inject, injectable } from "inversify";

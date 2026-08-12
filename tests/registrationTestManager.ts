@@ -2,7 +2,7 @@ import { expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
 import { ROUTES } from "./test.const";
-import type { IUsersPostBody } from "../src/features/users/models/users.model";
+import type { IUsersPostBody } from "../src/features/users/models/user-types";
 
 class RegistrationTestManager {
   async register(data: IUsersPostBody, expectedStatus = 204) {

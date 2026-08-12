@@ -1,5 +1,4 @@
 import { ObjectId, WithId } from "mongodb";
-import { usersDatabase } from "../../repositories/database";
 import {
   ICreatedDBUserParam,
   ICreateRegistrationDataBaseBody,
@@ -7,9 +6,10 @@ import {
   IUsersGetQueries,
   IUserType,
   IUserView,
-} from "./models/users.model";
+} from "./models/user-types";
 import { add } from "date-fns";
 import { injectable } from "inversify";
+import { UserModel } from "./models/user.model";
 
 @injectable()
 export class UsersRepository {
@@ -38,7 +38,7 @@ export class UsersRepository {
     login: string,
     options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
-    const result = await usersDatabase.findOne({ login });
+    const result = await UserModel.findOne({ login });
 
     return result
       ? {
@@ -52,7 +52,7 @@ export class UsersRepository {
     email: string,
     options?: { emailMapping?: boolean },
   ): Promise<{ user: IUserView; password: string } | null> {
-    const result = await usersDatabase.findOne({ email });
+    const result = await UserModel.findOne({ email });
 
     return result
       ? {
@@ -63,25 +63,26 @@ export class UsersRepository {
   }
 
   async findUserById(userId: string): Promise<IUserView | null> {
-    const _id = new ObjectId(userId);
-    const result = await usersDatabase.findOne({ _id });
+    const result = await UserModel.findById(userId);
 
     return result ? this.mapDBUserToView(result) : null;
   }
 
-  async createUser(dbUserData: ICreatedDBUserParam): Promise<string> {
-    const { insertedId } = await usersDatabase.insertOne(dbUserData);
+  async createUser(dbUserData: ICreatedDBUserParam): Promise<IUserView> {
+    const model = new UserModel(dbUserData);
+    const result = await model.save();
 
-    return insertedId.toString();
+    return this.mapDBUserToView(result);
   }
 
   async createRegistrationUser(
     dbUserData: ICreateRegistrationDataBaseBody,
   ): Promise<string | null> {
     try {
-      const { insertedId } = await usersDatabase.insertOne(dbUserData);
+      const model = new UserModel(dbUserData);
+      const result = await model.save();
 
-      return insertedId.toString();
+      return result.id;
     } catch (e) {
       return null;
     }
@@ -89,10 +90,9 @@ export class UsersRepository {
 
   async removeUserById(id: string) {
     try {
-      const _id = new ObjectId(id);
-      const { deletedCount } = await usersDatabase.deleteOne({ _id });
+      const result = await UserModel.findByIdAndDelete(id);
 
-      return deletedCount === 1;
+      return result !== null;
     } catch (e) {
       console.error(e);
       return false;
@@ -126,18 +126,16 @@ export class UsersRepository {
         : {}),
     };
 
-    const cursor = usersDatabase.find(filter, {
-      sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
-      skip,
-      limit,
-    });
+    const result = await UserModel.find(filter)
+      .sort({ [sortBy]: sortDirection === "asc" ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    const totalCount = await usersDatabase.countDocuments(filter);
+    const totalCount = await UserModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
     const page = Number(pageNumber);
-    const items = (await cursor.toArray()).map((item) =>
-      this.mapDBUserToView(item),
-    );
+    const items = result.map((item) => this.mapDBUserToView(item));
 
     return {
       pagesCount,
@@ -148,38 +146,33 @@ export class UsersRepository {
     };
   }
   async removeAll() {
-    return await usersDatabase.deleteMany({});
+    return await UserModel.deleteMany({});
   }
 
   async findUserByConfirmationCode(
     confirmationCode: string,
   ): Promise<WithId<IUserType> | null> {
-    const result = await usersDatabase.findOne({
+    const result = await UserModel.findOne({
       "emailConfirmation.confirmationCode": confirmationCode,
-    });
+    }).lean();
 
     return result ?? null;
   }
 
   async confirmRegistrationByUserId(userId: string): Promise<boolean> {
-    const result = await usersDatabase.updateOne(
-      { _id: new ObjectId(userId) },
-      {
-        $set: {
-          "emailConfirmation.isConfirmed": true,
-        },
-      },
-    );
+    const result = await UserModel.findByIdAndUpdate(userId, {
+      "emailConfirmation.isConfirmed": true,
+    });
 
-    return result.modifiedCount === 1;
+    return result !== null;
   }
 
   async updateConfirmRegistrationByUserId(
     userId: string,
     confirmationCode: string,
   ): Promise<boolean> {
-    const result = await usersDatabase.updateOne(
-      { _id: new ObjectId(userId) },
+    const result = await UserModel.updateOne(
+      { _id: userId },
       {
         $set: {
           "emailConfirmation.confirmationCode": confirmationCode,
@@ -198,8 +191,8 @@ export class UsersRepository {
     userId: string,
     confirmationCode: string,
   ): Promise<boolean> {
-    const result = await usersDatabase.updateOne(
-      { _id: new ObjectId(userId) },
+    const result = await UserModel.updateOne(
+      { _id: userId },
       {
         $set: {
           "passwordRecovery.code": confirmationCode,
@@ -215,7 +208,7 @@ export class UsersRepository {
   }
 
   async getUserByRecoveryCode(code: string): Promise<IUserView | null> {
-    const userDB = await usersDatabase.findOne({
+    const userDB = await UserModel.findOne({
       "passwordRecovery.code": code,
     });
 
@@ -225,8 +218,8 @@ export class UsersRepository {
   }
 
   async setNewPassword(userId: string, newPassword: string): Promise<boolean> {
-    const result = await usersDatabase.updateOne(
-      { _id: new ObjectId(userId) },
+    const result = await UserModel.updateOne(
+      { _id: userId },
       {
         $set: {
           password: newPassword,

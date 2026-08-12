@@ -1,7 +1,7 @@
 import { WithId } from "mongodb";
-import { authDatabase } from "../../repositories/database";
 import { IAuthType, ISecurityDevice } from "./models/auth.model";
 import { injectable } from "inversify";
+import { AuthModel } from "./auth.model";
 
 @injectable()
 export class AuthRepository {
@@ -15,26 +15,27 @@ export class AuthRepository {
   };
 
   async getSessions(userId: string) {
-    const cursor = authDatabase.find({ userId });
+    const result = await AuthModel.find({ userId }).lean();
 
-    return (await cursor.toArray()).map(this.mapToAuthType);
+    return result.map(this.mapToAuthType);
   }
   async createSession(session: IAuthType) {
-    const { insertedId } = await authDatabase.insertOne(session);
+    const model = new AuthModel(session);
+    await model.save();
 
-    return insertedId.toString();
+    return model.id;
   }
   async removeSession(payload: {
     userId: string;
     deviceId: string;
     iat: Date;
   }) {
-    const { deletedCount } = await authDatabase.deleteOne(payload);
+    const { deletedCount } = await AuthModel.deleteOne(payload);
 
     return deletedCount === 1;
   }
   async getSession(payload: { userId?: string; deviceId: string; iat?: Date }) {
-    return await authDatabase.findOne(payload);
+    return await AuthModel.findOne(payload);
   }
   async updateSession(
     {
@@ -57,20 +58,18 @@ export class AuthRepository {
       iat,
     };
     const updateDocument = {
-      $set: {
-        iat: newIat,
-        deviceName,
-      },
+      iat: newIat,
+      deviceName,
     };
 
-    return await authDatabase.updateOne(payloadToFind, updateDocument);
+    return await AuthModel.updateOne(payloadToFind, updateDocument);
   }
   async removeAll() {
-    return await authDatabase.deleteMany({});
+    return await AuthModel.deleteMany({});
   }
 
   async removeUserSessions(userId: string, deviceId: string): Promise<boolean> {
-    const { deletedCount } = await authDatabase.deleteMany({
+    const { deletedCount } = await AuthModel.deleteMany({
       userId,
       deviceId: { $ne: deviceId },
     });
@@ -81,7 +80,7 @@ export class AuthRepository {
     userId: string,
     deviceId: string,
   ): Promise<boolean> {
-    const { deletedCount } = await authDatabase.deleteOne({ userId, deviceId });
+    const { deletedCount } = await AuthModel.deleteOne({ userId, deviceId });
     return deletedCount > 0;
   }
 }

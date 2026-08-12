@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  DEFAULT_LIKES_INFO,
+} from "./commentsTestManager";
 import {
   ROUTES,
   HOMEWORK_USER,
@@ -67,6 +70,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
         userLogin: HOMEWORK_USER.login,
       },
       createdAt: expect.any(String),
+      likesInfo: DEFAULT_LIKES_INFO,
     });
 
     const fetched = await commentsTestManager.getEntity(comment.id);
@@ -111,6 +115,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
           content: VALID_COMMENT_CONTENT,
           commentatorInfo: comment.commentatorInfo,
           createdAt: expect.any(String),
+          likesInfo: DEFAULT_LIKES_INFO,
         },
       ],
       page: 1,
@@ -136,6 +141,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: created.commentatorInfo,
       createdAt: expect.any(String),
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

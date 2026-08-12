@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import type { IUsersPostBody } from "../src/features/users/models/users.model";
+import type { IUsersPostBody } from "../src/features/users/models/user-types";
 import { ROUTES } from "../src/consants/routes.conts";
 
 const ADMIN_AUTH_HEADER = {

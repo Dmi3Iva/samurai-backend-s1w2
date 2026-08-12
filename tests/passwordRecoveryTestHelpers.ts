@@ -1,18 +1,17 @@
-import { usersDatabase } from "../src/repositories/database";
+import { UserModel } from "../src/features/users/models/user.model";
 
 export async function getRecoveryCodeByEmail(email: string): Promise<string> {
-  const user = await usersDatabase.findOne({ email });
+  const user = await UserModel.findOne({ email }).lean();
 
   if (!user) {
     throw new Error(`User with email ${email} not found in database`);
   }
 
-  const userWithRecovery = user;
-  const code = userWithRecovery.passwordRecovery?.code;
+  const code = user.passwordRecovery?.code;
 
   if (!code) {
     throw new Error(
-      `Recovery code not found for ${email}. Expected user.passwordRecovery.recoveryCode in DB`,
+      `Recovery code not found for ${email}. Expected user.passwordRecovery.code in DB`,
     );
   }
 

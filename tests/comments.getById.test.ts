@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  DEFAULT_LIKES_INFO,
+} from "./commentsTestManager";
 import { ROUTES, VALID_COMMENT_CONTENT } from "./test.const";
 
 describe("GET /comments/:id", () => {
@@ -51,6 +54,7 @@ describe("GET /comments/:id", () => {
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: createdComment.commentatorInfo,
       createdAt: expect.any(String),
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

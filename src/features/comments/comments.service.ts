@@ -8,7 +8,7 @@ import {
   ICommentView,
   ICommentType,
   GetCommentsResponse,
-} from "./comments.models";
+} from "./comments.types";
 import { CommentsRepository } from "./comments.repository";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {

@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { rateLimitDatabase } from "../../../repositories/database";
+import { RateLimitModel } from "../rate-limit.model";
 
 @injectable()
 export class RateLimitUpdateRepository {
@@ -12,19 +12,15 @@ export class RateLimitUpdateRepository {
     url: string;
     date: Date;
   }) {
-    const result = await rateLimitDatabase.insertOne({
-      ip,
-      url,
-      date,
-    });
-
-    if (result?.insertedId) {
+    try {
+      const model = new RateLimitModel({ ip, url, date });
+      await model.save();
       return true;
+    } catch (e: unknown) {
+      return false;
     }
-
-    return false;
   }
   async removeAll() {
-    return await rateLimitDatabase.deleteMany({});
+    return await RateLimitModel.deleteMany({});
   }
 }

@@ -3,7 +3,7 @@ import { authorizationMiddleware } from "../../middleware/authorization.middlewa
 import { body, matchedData, param, query } from "express-validator";
 import { UsersService } from "./users.service";
 import { RequestWithBody, RequestWithQuery } from "../../types/request.type";
-import { IUsersGetQueries, IUsersPostBody } from "./models/users.model";
+import { IUsersGetQueries, IUsersPostBody } from "./models/user-types";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { ErrorResponseBody } from "../../types/response.type";
 import { UsersRepository } from "./users.repository";

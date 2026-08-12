@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 import request from "supertest";
 import { app } from "../src/app";
-import type { CreateBlogModel } from "../src/features/blogs/models/blog.model";
+import type { CreateBlogModel } from "../src/features/blogs/blog.model";
 import { ROUTES } from "../src/consants/routes.conts";
 
 const ADMIN_AUTH_HEADER = {

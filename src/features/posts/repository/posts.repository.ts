@@ -1,5 +1,4 @@
 import { ObjectId, WithId } from "mongodb";
-import { blogsDatabase, postsDatabase } from "../../../repositories/database";
 import {
   GetPostsResponse,
   IDBPostType,
@@ -8,6 +7,7 @@ import {
   IPostType,
   IPostUpadteModel,
   IViewPostType,
+  PostModel,
 } from "../models/post.model";
 import { BlogsRepository } from "../../blogs/blogs.repository";
 import { injectable, inject } from "inversify";
@@ -32,8 +32,8 @@ export class PostsRepository {
 
   async getPost(id: string): Promise<IPostType | null> {
     try {
-      const findResult = await postsDatabase.findOne({ _id: new ObjectId(id) });
-      return findResult ? await this.mapToPostType(findResult) : null;
+      const findResult = await PostModel.findById(id);
+      return findResult ? this.mapToPostType(findResult) : null;
     } catch (e) {
       console.log(`error while try to get post with id=${id}`);
       return null;
@@ -55,16 +55,18 @@ export class PostsRepository {
 
     const filter = blogId ? { blogId } : {};
 
-    const findResult = postsDatabase.find(filter, {
-      sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
-      skip,
-      limit,
-    });
+    const findResult = await PostModel.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({
+        [sortBy]: sortDirection === "asc" ? 1 : -1,
+      })
+      .lean();
 
-    const rawItems = await findResult.toArray();
-    const items = await Promise.all(rawItems.map(this.mapToPostType));
+    const rawItems = findResult;
+    const items = rawItems.map(this.mapToPostType);
     const page = Number(pageNumber);
-    const totalCount = await postsDatabase.countDocuments(filter);
+    const totalCount = await PostModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
@@ -80,18 +82,11 @@ export class PostsRepository {
     try {
       const blog = await this.blogsRepository.findBlog(postBody.blogId);
 
-      const newPost = {
-        ...postBody,
-        createdAt: new Date(),
-        blogName: blog?.name,
-      };
-      const { insertedId } = await postsDatabase.insertOne({
-        ...newPost,
-      });
+      const model = new PostModel(postBody);
+      model.blogName = blog?.name ?? "";
+      await model.save();
 
-      newPost._id = insertedId;
-
-      return this.mapToPostType(newPost as WithId<IPostType>);
+      return this.mapToPostType(model);
     } catch (e) {
       console.error("failed to create post", e);
       return null;
@@ -106,12 +101,17 @@ export class PostsRepository {
     data: IPostUpadteModel;
   }): Promise<boolean> {
     try {
-      const updateResult = await postsDatabase.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: updatedPost },
-      );
+      const post = await PostModel.findById(id);
+      if (post === null) return false;
 
-      return updateResult.matchedCount === 1;
+      post.title = updatedPost.title;
+      post.shortDescription = updatedPost.shortDescription;
+      post.content = updatedPost.content;
+      post.blogId = updatedPost.blogId;
+
+      await post.save();
+
+      return true;
     } catch (e) {
       console.error(`failed to update posts with id=${id}`);
       return false;
@@ -120,7 +120,7 @@ export class PostsRepository {
 
   async deletePost(id: string): Promise<boolean> {
     try {
-      const deleteResult = await postsDatabase.deleteOne({
+      const deleteResult = await PostModel.deleteOne({
         _id: new ObjectId(id),
       });
 
@@ -132,10 +132,10 @@ export class PostsRepository {
   }
 
   async removeAllByBlogs(blogId: string) {
-    return await postsDatabase.deleteMany({ blogId });
+    return await PostModel.deleteMany({ blogId });
   }
 
   async removeAll() {
-    return await postsDatabase.deleteMany({});
+    return await PostModel.deleteMany({});
   }
 }

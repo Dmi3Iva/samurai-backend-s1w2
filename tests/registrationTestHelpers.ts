@@ -1,4 +1,4 @@
-import { usersDatabase } from "../src/repositories/database";
+import { UserModel } from "../src/features/users/models/user.model";
 
 interface EmailConfirmationData {
   confirmationCode: string;
@@ -14,7 +14,7 @@ interface UserWithEmailConfirmation {
 export async function getConfirmationCodeByEmail(
   email: string,
 ): Promise<string> {
-  const user = await usersDatabase.findOne({ email });
+  const user = await UserModel.findOne({ email }).lean();
 
   if (!user) {
     throw new Error(`User with email ${email} not found in database`);
@@ -33,7 +33,7 @@ export async function getConfirmationCodeByEmail(
 }
 
 export async function isUserEmailConfirmed(email: string): Promise<boolean> {
-  const user = await usersDatabase.findOne({ email });
+  const user = await UserModel.findOne({ email }).lean();
 
   if (!user) {
     return false;
