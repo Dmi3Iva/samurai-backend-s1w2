@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  expectCommentView,
+} from "./commentsTestManager";
 import {
   ROUTES,
   bearerAuthHeader,
@@ -63,11 +66,10 @@ describe("PUT /comments/:id", () => {
 
     const updatedComment = await commentsTestManager.getEntity(comment.id);
 
-    expect(updatedComment).toEqual({
+    expectCommentView(updatedComment, {
       id: comment.id,
       content: updatedContent,
       commentatorInfo: comment.commentatorInfo,
-      createdAt: expect.any(String),
     });
   });
 

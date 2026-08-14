@@ -1,4 +1,5 @@
 import { WithId } from "mongodb";
+import { ELikeStatus } from "../likes/like.model";
 
 export interface ICommentType {
   content: string;
@@ -8,18 +9,32 @@ export interface ICommentType {
   };
   createdAt: Date;
   postId: string;
+  likesInfo: {
+    likesCount: number;
+    dislikesCount: number;
+  } | null;
 }
 
 export interface ICommentCreateBody {
   content: string;
 }
 
+export type ILikeStatusPutBody = { likeStatus: ELikeStatus; commentId: string };
+
 export type ICommentCreateModel = Omit<ICommentType, "id">;
 
 export type IDBCommentType = WithId<Omit<ICommentType, "id">>;
 
-export interface ICommentView extends Omit<ICommentType, "postId"> {
+export interface ICommentView extends Omit<
+  ICommentType,
+  "postId" | "likesInfo"
+> {
   id: string;
+  likesInfo?: {
+    likesCount: number;
+    dislikesCount: number;
+    myStatus?: ELikeStatus;
+  };
 }
 
 export type IPostCreateModel = Omit<

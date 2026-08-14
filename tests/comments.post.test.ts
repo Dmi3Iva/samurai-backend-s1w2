@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  expectCommentView,
+} from "./commentsTestManager";
 import {
   ROUTES,
   bearerAuthHeader,
@@ -53,14 +56,12 @@ describe("POST /posts/:postId/comments", () => {
       accessToken,
     );
 
-    expect(comment).toEqual({
-      id: expect.any(String),
+    expectCommentView(comment, {
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: {
         userId: user.id,
         userLogin: "commenter",
       },
-      createdAt: expect.any(String),
     });
   });
 

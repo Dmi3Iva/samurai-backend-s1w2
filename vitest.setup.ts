@@ -1,10 +1,11 @@
 import { beforeAll, afterAll } from "vitest";
-import { runDB, client } from "./src/repositories/database";
+import { runDB } from "./src/repositories/database";
+import mongoose from "mongoose";
 
 beforeAll(async () => {
   await runDB();
 });
 
 afterAll(async () => {
-  await client.close();
+  await mongoose.connection.close();
 });

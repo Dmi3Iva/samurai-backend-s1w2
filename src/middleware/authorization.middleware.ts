@@ -1,6 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
 import jwt from "jsonwebtoken";
-import { IUserView } from "../features/users/models/users.model";
+import { IUserView } from "../features/users/models/user-types";
 
 const ADMIN_LOGIN = "admin";
 const ADMIN_PASS = "qwerty";

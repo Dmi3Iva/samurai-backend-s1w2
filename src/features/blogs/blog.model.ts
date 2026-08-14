@@ -1,5 +1,6 @@
 import { ObjectId, OptionalId, WithId } from "mongodb";
 import { ESortDirection } from "../../types/common.type";
+import { model, Schema } from "mongoose";
 
 export interface IViewBlog {
   id: string;
@@ -60,3 +61,31 @@ export interface IFindPostsByBlogSearchTerm {
   sortDirection?: ESortDirection;
   blogId?: string;
 }
+
+const BlogSchema = new Schema<IBlogType>({
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+
+  websiteUrl: {
+    type: String,
+    required: true,
+  },
+
+  isMembership: {
+    type: Boolean,
+    required: true,
+  },
+
+  createdAt: {
+    type: Date,
+    required: true,
+  },
+});
+
+export const BlogModel = model("blog", BlogSchema);

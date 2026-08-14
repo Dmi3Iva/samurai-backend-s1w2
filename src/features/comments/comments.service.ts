@@ -8,8 +8,10 @@ import {
   ICommentView,
   ICommentType,
   GetCommentsResponse,
-} from "./comments.models";
+} from "./comments.types";
 import { CommentsRepository } from "./comments.repository";
+import { LikesRepository } from "../likes/likes.repository";
+import { ELikeStatus } from "../likes/like.model";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
   const commentatorInfo: ICommentView["commentatorInfo"] = {
@@ -22,6 +24,10 @@ const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
     createdAt: dbComment.createdAt,
     commentatorInfo,
     id: dbComment._id.toString(),
+    likesInfo: {
+      likesCount: dbComment?.likesInfo?.likesCount ?? 0,
+      dislikesCount: dbComment?.likesInfo?.dislikesCount ?? 0,
+    },
   };
 };
 
@@ -43,16 +49,27 @@ export class CommentsService {
     private postsService: PostsService,
     @inject(UsersService)
     private usersService: UsersService,
+    @inject(LikesRepository)
+    private likesRepository: LikesRepository,
   ) {}
 
-  async getCommentById(id: string) {
+  async getCommentById(id: string, userId?: string | null) {
     const dbComment = await this.commentsRepository.getCommentById(id);
     if (!dbComment) return null;
 
     const result = mapDbCommentToView(dbComment);
+    if (userId) {
+      const userLike = await this.likesRepository.getLike(userId, id);
+      const userLikeStatus = userLike?.likeStatus;
+
+      if (result.likesInfo) {
+        result.likesInfo.myStatus = userLikeStatus || ELikeStatus.None;
+      }
+    }
 
     return result;
   }
+
   async createComment({
     postId,
     content,
@@ -72,6 +89,10 @@ export class CommentsService {
         userLogin: user?.login ?? "",
       },
       postId,
+      likesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+      },
     };
     const idResult = await this.commentsRepository.createComment(commentModel);
     if (!idResult) return null;

@@ -6,8 +6,9 @@ import {
   ICommentView,
   IDBCommentType,
   IFindCommentsSearchTerm,
-} from "./comments.models";
+} from "./comments.types";
 import { injectable } from "inversify";
+import { CommentModel } from "./comments.models";
 
 @injectable()
 export class CommentsRepository {
@@ -27,10 +28,9 @@ export class CommentsRepository {
 
   async getCommentById(id: string): Promise<IDBCommentType | null> {
     try {
-      const findResult = await commentsDatabase.findOne({
-        _id: new ObjectId(id),
-      });
-      return findResult ?? null;
+      const findResult = await CommentModel.findById(id).lean();
+
+      return findResult;
     } catch (e) {
       console.error(`error while try to get comment with id = ${id}`);
       return null;
@@ -38,7 +38,7 @@ export class CommentsRepository {
   }
   async removeById(id: string): Promise<boolean> {
     try {
-      const removeResult = await commentsDatabase.deleteOne({
+      const removeResult = await CommentModel.deleteOne({
         _id: new ObjectId(id),
       });
       const isRemoved = removeResult.deletedCount === 1;
@@ -63,16 +63,15 @@ export class CommentsRepository {
     const skip = (Number(pageNumber) - 1) * Number(pageSize);
     const limit = Number(pageSize);
 
-    const findResult = commentsDatabase.find(filter, {
-      sort: { [sortBy]: sortDirection === "asc" ? 1 : -1 },
-      skip,
-      limit,
-    });
+    const rawItems = await CommentModel.find(filter)
+      .sort({ [sortBy]: sortDirection === "asc" ? 1 : -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
 
-    const rawItems = await findResult.toArray();
-    const items = await Promise.all(rawItems.map(this.mapDbCommentToView));
+    const items = rawItems.map(this.mapDbCommentToView);
     const page = Number(pageNumber);
-    const totalCount = await commentsDatabase.countDocuments(filter);
+    const totalCount = await CommentModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
 
     return {
@@ -84,13 +83,12 @@ export class CommentsRepository {
     };
   }
 
-  async createComment(
-    commentModel: ICommentCreateModel,
-  ): Promise<string | null> {
+  async createComment(payload: ICommentCreateModel): Promise<string | null> {
     try {
-      const { insertedId } = await commentsDatabase.insertOne(commentModel);
+      const model = new CommentModel(payload);
+      await model.save();
 
-      return insertedId.toString();
+      return model.id;
     } catch (e) {
       console.error("failed to create post", e);
       return null;
@@ -98,7 +96,7 @@ export class CommentsRepository {
   }
 
   async removeAll() {
-    return await commentsDatabase.deleteMany({});
+    return await CommentModel.deleteMany({});
   }
 
   async updateComment({
@@ -109,15 +107,43 @@ export class CommentsRepository {
     updatedCommentData: { content: string };
   }) {
     try {
-      const result = await commentsDatabase.updateOne(
-        { _id: new ObjectId(commentId) },
-        { $set: { content: updatedCommentData.content } },
-      );
+      const m = await CommentModel.findById(commentId);
+      if (m === null) return false;
 
-      return result.modifiedCount === 1;
+      m.content = updatedCommentData.content;
+
+      await m.save();
+      return true;
     } catch (e) {
       console.error("failed to update comment", commentId);
       return false;
     }
+  }
+
+  async getLikesCount(commentId: string): Promise<[number, number]> {
+    try {
+      const comment = await CommentModel.findById(commentId);
+
+      if (!comment || !comment?.likesInfo) return [0, 0];
+
+      const { likesCount, dislikesCount } = comment.likesInfo;
+
+      return [likesCount ?? 0, dislikesCount ?? 0];
+    } catch (e: unknown) {
+      console.error(e);
+      return [0, 0];
+    }
+  }
+
+  async updateLikes(commentId: string, newLikesCount: [number, number]) {
+    const comment = await CommentModel.findById(commentId);
+
+    if (comment === null) return;
+
+    comment.likesInfo = {
+      likesCount: newLikesCount[0],
+      dislikesCount: newLikesCount[1],
+    };
+    await comment.save();
   }
 }

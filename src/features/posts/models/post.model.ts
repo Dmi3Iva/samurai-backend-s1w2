@@ -1,3 +1,4 @@
+import { model, Schema } from "mongoose";
 import { ESortDirection } from "../../../types/common.type";
 import { WithId } from "mongodb";
 
@@ -16,7 +17,10 @@ export interface IViewPostType extends IPostType {
 
 export type IDBPostType = WithId<IPostType>;
 
-export type IPostCreateModel = Omit<IPostType, "_id", "createdAt">;
+export type IPostCreateModel = Pick<
+  IPostType,
+  "title" | "shortDescription" | "content" | "blogId"
+>;
 export type IPostUpadteModel = IPostCreateModel;
 export interface IPostView extends IPostType {
   blogName: string;
@@ -37,3 +41,19 @@ export interface IFindPostsSearchTerm {
   sortDirection?: ESortDirection;
   blogId?: string;
 }
+
+const PostSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+    },
+    shortDescription: { type: String, required: true },
+    content: { type: String, required: true },
+    blogId: { type: String, required: true },
+    blogName: { type: String, required: true },
+  },
+  { timestamps: true },
+);
+
+export const PostModel = model("post", PostSchema);

@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { rateLimitDatabase } from "../../../repositories/database";
+import { RateLimitModel } from "../rate-limit.model";
 
 @injectable()
 export class RateLimitReadRepository {
@@ -14,14 +14,15 @@ export class RateLimitReadRepository {
     startDate: Date;
     finishDate: Date;
   }) {
-    const cursor = rateLimitDatabase.find({
-      ip,
-      url,
-      date: {
-        $gte: startDate,
-        $lt: finishDate,
-      },
-    });
-    return (await cursor.toArray()).length;
+    return (
+      await RateLimitModel.find({
+        ip,
+        url,
+        date: {
+          $gte: startDate,
+          $lt: finishDate,
+        },
+      })
+    ).length;
   }
 }

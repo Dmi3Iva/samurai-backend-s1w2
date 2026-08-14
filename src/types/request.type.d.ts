@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { IUserView } from "../features/users/models/users.model";
+import { IUserView } from "../features/users/models/user-types";
 
 export interface RequestWithBody<T> extends Request {
   body: T;

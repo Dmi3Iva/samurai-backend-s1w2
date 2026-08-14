@@ -5,7 +5,10 @@ import { usersTestManager } from "./usersTestManager";
 import { authTestManager } from "./authTestManager";
 import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
-import { commentsTestManager } from "./commentsTestManager";
+import {
+  commentsTestManager,
+  expectCommentView,
+} from "./commentsTestManager";
 import { ROUTES, VALID_COMMENT_CONTENT } from "./test.const";
 
 describe("GET /comments/:id", () => {
@@ -46,11 +49,10 @@ describe("GET /comments/:id", () => {
 
     const comment = await commentsTestManager.getEntity(createdComment.id);
 
-    expect(comment).toEqual({
+    expectCommentView(comment, {
       id: createdComment.id,
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: createdComment.commentatorInfo,
-      createdAt: expect.any(String),
     });
   });
 

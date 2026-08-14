@@ -3,7 +3,7 @@ import {
   ICreatedDBUserParam,
   IUsersPostBody,
   IUserView,
-} from "./models/users.model";
+} from "./models/user-types";
 import { UsersRepository } from "./users.repository";
 import { comparePasswords } from "./utils/compare-passwords";
 import { encryptPassword } from "./utils/encrpypt-password";
@@ -35,14 +35,14 @@ export class UsersService {
       createdAt,
     };
 
-    const id = await this.usersRepository.createUser(createDBUserParam);
+    const result = await this.usersRepository.createUser(createDBUserParam);
 
-    const result: IUserView = {
-      id,
-      login: data.login,
-      email: data.email,
-      createdAt,
-    };
+    // const result: IUserView = {
+    //   id,
+    //   login: data.login,
+    //   email: data.email,
+    //   createdAt,
+    // };
 
     return result;
   }

@@ -1,20 +1,21 @@
-import { WithId } from "mongodb";
-import { blogsDatabase } from "../../repositories/database";
-import type {
-  CreateBlogModel,
-  IFindBlogsSearchTerm,
-  UpdateBlogModel,
-  IViewBlog,
-  IBlogType,
-  BlogsRouterResponse,
-  IFindPostsByBlogSearchTerm,
-  IDBBLogType,
+import {
+  type CreateBlogModel,
+  type IFindBlogsSearchTerm,
+  type UpdateBlogModel,
+  type IViewBlog,
+  type IBlogType,
+  type BlogsRouterResponse,
+  type IFindPostsByBlogSearchTerm,
+  type IDBBLogType,
+  BlogModel,
 } from "./blog.model";
 import { IS_MEMBERSHIP_DEFAULT_VALUE } from "../../consants/routes.conts";
 import { BlogsRepository } from "./blogs.repository";
 import { BlogIdParam } from "../../types/common.type";
 import { PostsRepository } from "../posts/repository/posts.repository";
 import { inject, injectable } from "inversify";
+import { ObjectId } from "mongodb";
+import { IPostCreateModel } from "../posts/models/post.model";
 
 @injectable()
 export class BlogsService {
@@ -65,10 +66,10 @@ export class BlogsService {
     };
     const _id = await this.blogsRepository.createBlog(newBlogData);
 
-    return this.mapToBlogType({ ...newBlogData, _id });
+    return this.mapToBlogType({ ...newBlogData, _id: new ObjectId(_id) });
   }
 
-  async createPost(data: CreateBlogModel & BlogIdParam) {
+  async createPost(data: IPostCreateModel & BlogIdParam) {
     const blog = await this.blogsRepository.findBlog(data.blogId);
 
     if (!blog) return null;
@@ -93,6 +94,6 @@ export class BlogsService {
   }
 
   async removeAll() {
-    return await blogsDatabase.deleteMany({});
+    return await BlogModel.deleteMany({});
   }
 }
