@@ -136,10 +136,14 @@ class CommentsTestManager {
     postId: string,
     expectedStatus = 200,
     accessToken?: string,
+    query?: Record<string, string | number>,
   ) {
     const req = request(app).get(`${ROUTES.posts}/${postId}/comments`);
     if (accessToken) {
       req.set(bearerAuthHeader(accessToken));
+    }
+    if (query) {
+      req.query(query);
     }
     const response = await req;
     expect(response.status).toBe(expectedStatus);

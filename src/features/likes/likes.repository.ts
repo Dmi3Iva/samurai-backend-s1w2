@@ -23,21 +23,21 @@ export class LikesRepository {
   }
 
   async getCommentLikesCount(commentId: string) {
-    const result = await LikeModel.find({
+    const result = await LikeModel.countDocuments({
       commentId,
       likeStatus: ELikeStatus.Like,
     });
 
-    return result.length;
+    return result;
   }
 
   async getCommentDislikesCount(commentId: string) {
-    const result = await LikeModel.find({
+    const result = await LikeModel.countDocuments({
       commentId,
       likeStatus: ELikeStatus.Dislike,
     });
 
-    return result.length;
+    return result;
   }
 
   async getUsersLikes(userId: string) {

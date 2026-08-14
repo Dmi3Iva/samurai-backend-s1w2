@@ -26,9 +26,6 @@ export class LikeService {
     commentId,
     likeStatus: newLikeStatus,
   }: ILikeStatusPutBody & { userId: string }) {
-    const [likesCount, dislikesCount] =
-      await this.commentsRepository.getLikesCount(commentId);
-
     const userLike = await this.likesRepository.getLike(userId, commentId);
     const oldLikeStatus = userLike?.likeStatus;
 
