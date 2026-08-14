@@ -7,9 +7,9 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
+  DEFAULT_LIKES_INFO,
   expectCommentView,
-  expectLikesInfoFieldIfPresent,
-  expectLikesInfoSchema,
+  expectLikesInfo,
 } from "./commentsTestManager";
 import {
   ROUTES,
@@ -74,8 +74,8 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
     });
   };
 
-  describe("CommentViewModel (likesInfo optional)", () => {
-    it("POST comment: required fields only; likesInfo is optional", async () => {
+  describe("CommentViewModel (likesInfo required)", () => {
+    it("POST comment: should return likesInfo with defaults; status 201", async () => {
       const { comment } = await createBlogPostAndComment();
 
       expectCommentView(comment, {
@@ -84,10 +84,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
           userId: expect.any(String),
           userLogin: HOMEWORK_USER.login,
         },
+        likesInfo: DEFAULT_LIKES_INFO,
       });
     });
 
-    it("GET /comments/:id without auth: 200 with required fields", async () => {
+    it("GET /comments/:id without auth: should return likesInfo with myStatus None", async () => {
       const { comment } = await createBlogPostAndComment();
 
       const fetched = await commentsTestManager.getEntity(comment.id);
@@ -96,10 +97,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
         id: comment.id,
         content: VALID_COMMENT_CONTENT,
         commentatorInfo: comment.commentatorInfo,
+        likesInfo: DEFAULT_LIKES_INFO,
       });
     });
 
-    it("GET /comments/:id with auth: 200 with required fields", async () => {
+    it("GET /comments/:id with auth: should return likesInfo with myStatus None", async () => {
       const { comment, accessToken } = await createBlogPostAndComment();
 
       const fetched = await commentsTestManager.getEntity(
@@ -112,10 +114,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
         id: comment.id,
         content: VALID_COMMENT_CONTENT,
         commentatorInfo: comment.commentatorInfo,
+        likesInfo: DEFAULT_LIKES_INFO,
       });
     });
 
-    it("GET /posts/:postId/comments: items have required fields; likesInfo optional", async () => {
+    it("GET /posts/:postId/comments: items must include likesInfo", async () => {
       const { comment, post, accessToken } = await createBlogPostAndComment();
 
       const list = await commentsTestManager.getEntitiesForPost(
@@ -130,16 +133,8 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
         id: comment.id,
         content: VALID_COMMENT_CONTENT,
         commentatorInfo: comment.commentatorInfo,
+        likesInfo: DEFAULT_LIKES_INFO,
       });
-    });
-
-    it("if likesInfo is present, only known optional fields are allowed", async () => {
-      const { comment } = await createBlogPostAndComment();
-      const fetched = await commentsTestManager.getEntity(comment.id);
-
-      if (fetched.likesInfo !== undefined) {
-        expectLikesInfoSchema(fetched.likesInfo);
-      }
     });
   });
 
@@ -164,9 +159,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
         content: VALID_COMMENT_CONTENT,
         commentatorInfo: comment.commentatorInfo,
       });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "likesCount", 1);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "dislikesCount", 0);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "Like");
+      expectLikesInfo(fetched.likesInfo, {
+        likesCount: 1,
+        dislikesCount: 0,
+        myStatus: "Like",
+      });
     });
 
     it("should dislike comment; status 204", async () => {
@@ -185,9 +182,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       );
 
       expectCommentView(fetched, { id: comment.id });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "likesCount", 0);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "dislikesCount", 1);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "Dislike");
+      expectLikesInfo(fetched.likesInfo, {
+        likesCount: 0,
+        dislikesCount: 1,
+        myStatus: "Dislike",
+      });
     });
 
     it("should accept None status; status 204", async () => {
@@ -205,7 +204,7 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
         accessToken,
       );
       expectCommentView(fetched, { id: comment.id });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "None");
+      expectLikesInfo(fetched.likesInfo, DEFAULT_LIKES_INFO);
     });
 
     it("should switch Like -> Dislike; status 204", async () => {
@@ -229,9 +228,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       );
 
       expectCommentView(fetched, { id: comment.id });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "likesCount", 0);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "dislikesCount", 1);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "Dislike");
+      expectLikesInfo(fetched.likesInfo, {
+        likesCount: 0,
+        dislikesCount: 1,
+        myStatus: "Dislike",
+      });
     });
 
     it("should reset Like with None; status 204", async () => {
@@ -255,9 +256,7 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       );
 
       expectCommentView(fetched, { id: comment.id });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "likesCount", 0);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "dislikesCount", 0);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "None");
+      expectLikesInfo(fetched.likesInfo, DEFAULT_LIKES_INFO);
     });
 
     it("repeating the same status should stay 204", async () => {
@@ -281,8 +280,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       );
 
       expectCommentView(fetched, { id: comment.id });
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "likesCount", 1);
-      expectLikesInfoFieldIfPresent(fetched.likesInfo, "myStatus", "Like");
+      expectLikesInfo(fetched.likesInfo, {
+        likesCount: 1,
+        dislikesCount: 0,
+        myStatus: "Like",
+      });
     });
 
     it("should allow likes from different users; status 204", async () => {
@@ -318,11 +320,26 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       expectCommentView(asGuest, { id: comment.id });
       expectCommentView(list.items[0], { id: comment.id });
 
-      expectLikesInfoFieldIfPresent(asFirst.likesInfo, "likesCount", 2);
-      expectLikesInfoFieldIfPresent(asFirst.likesInfo, "myStatus", "Like");
-      expectLikesInfoFieldIfPresent(asSecond.likesInfo, "myStatus", "Like");
-      expectLikesInfoFieldIfPresent(asGuest.likesInfo, "likesCount", 2);
-      expectLikesInfoFieldIfPresent(asGuest.likesInfo, "myStatus", "None");
+      expectLikesInfo(asFirst.likesInfo, {
+        likesCount: 2,
+        dislikesCount: 0,
+        myStatus: "Like",
+      });
+      expectLikesInfo(asSecond.likesInfo, {
+        likesCount: 2,
+        dislikesCount: 0,
+        myStatus: "Like",
+      });
+      expectLikesInfo(asGuest.likesInfo, {
+        likesCount: 2,
+        dislikesCount: 0,
+        myStatus: "None",
+      });
+      expectLikesInfo(list.items[0].likesInfo, {
+        likesCount: 2,
+        dislikesCount: 0,
+        myStatus: "None",
+      });
     });
 
     it("should allow mixed likes and dislikes from different users", async () => {
@@ -363,10 +380,16 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
 
       expectCommentView(asThird, { id: comment.id });
       expectCommentView(asSecond, { id: comment.id });
-      expectLikesInfoFieldIfPresent(asThird.likesInfo, "likesCount", 2);
-      expectLikesInfoFieldIfPresent(asThird.likesInfo, "dislikesCount", 1);
-      expectLikesInfoFieldIfPresent(asThird.likesInfo, "myStatus", "Like");
-      expectLikesInfoFieldIfPresent(asSecond.likesInfo, "myStatus", "Dislike");
+      expectLikesInfo(asThird.likesInfo, {
+        likesCount: 2,
+        dislikesCount: 1,
+        myStatus: "Like",
+      });
+      expectLikesInfo(asSecond.likesInfo, {
+        likesCount: 2,
+        dislikesCount: 1,
+        myStatus: "Dislike",
+      });
     });
 
     it("should not change comment content after like-status", async () => {
@@ -379,8 +402,16 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
       );
 
       const fetched = await commentsTestManager.getEntity(comment.id);
-      expect(fetched.content).toBe(VALID_COMMENT_CONTENT);
-      expect(fetched.commentatorInfo).toEqual(comment.commentatorInfo);
+      expectCommentView(fetched, {
+        id: comment.id,
+        content: VALID_COMMENT_CONTENT,
+        commentatorInfo: comment.commentatorInfo,
+      });
+      expectLikesInfo(fetched.likesInfo, {
+        likesCount: 1,
+        dislikesCount: 0,
+        myStatus: "None",
+      });
     });
 
     it("should return 401 if auth credentials is incorrect", async () => {
@@ -493,11 +524,11 @@ describe("Homework 11 — Comment likes (swagger h11)", () => {
           accessToken,
         );
         expectCommentView(fetched, { id: comment.id });
-        expectLikesInfoFieldIfPresent(
-          fetched.likesInfo,
-          "myStatus",
-          likeStatus,
-        );
+        expectLikesInfo(fetched.likesInfo, {
+          likesCount: likeStatus === "Like" ? 1 : 0,
+          dislikesCount: likeStatus === "Dislike" ? 1 : 0,
+          myStatus: likeStatus,
+        });
       },
     );
   });

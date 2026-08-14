@@ -7,6 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
+  DEFAULT_LIKES_INFO,
   expectCommentView,
 } from "./commentsTestManager";
 import {
@@ -68,6 +69,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
         userId: expect.any(String),
         userLogin: HOMEWORK_USER.login,
       },
+      likesInfo: DEFAULT_LIKES_INFO,
     });
 
     const fetched = await commentsTestManager.getEntity(comment.id);
@@ -114,6 +116,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
       id: comment.id,
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: comment.commentatorInfo,
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 
@@ -132,6 +135,7 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
       id: created.id,
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: created.commentatorInfo,
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

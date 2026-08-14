@@ -11,7 +11,8 @@ import {
 } from "./comments.types";
 import { CommentsRepository } from "./comments.repository";
 import { LikesRepository } from "../likes/likes.repository";
-import { ELikeStatus } from "../likes/like.model";
+import { ELikeStatus, ILikeType } from "../likes/like.model";
+import { Types } from "mongoose";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
   const commentatorInfo: ICommentView["commentatorInfo"] = {
@@ -27,6 +28,7 @@ const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
     likesInfo: {
       likesCount: dbComment?.likesInfo?.likesCount ?? 0,
       dislikesCount: dbComment?.likesInfo?.dislikesCount ?? 0,
+      myStatus: ELikeStatus.None,
     },
   };
 };
@@ -60,11 +62,9 @@ export class CommentsService {
     const result = mapDbCommentToView(dbComment);
     if (userId) {
       const userLike = await this.likesRepository.getLike(userId, id);
-      const userLikeStatus = userLike?.likeStatus;
+      const userLikeStatus = userLike?.likeStatus || ELikeStatus.None;
 
-      if (result.likesInfo) {
-        result.likesInfo.myStatus = userLikeStatus || ELikeStatus.None;
-      }
+      result.likesInfo.myStatus = userLikeStatus || ELikeStatus.None;
     }
 
     return result;
@@ -105,6 +105,11 @@ export class CommentsService {
       },
       createdAt: commentModel.createdAt,
       content: content,
+      likesInfo: {
+        likesCount: 0,
+        dislikesCount: 0,
+        myStatus: ELikeStatus.None,
+      },
     };
 
     return result;
@@ -122,6 +127,7 @@ export class CommentsService {
   async getComments(
     postId: string,
     query: IFindCommentsSearchTerm,
+    userId?: string | null,
   ): Promise<GetCommentsResponse | null> {
     const isPostExists = await this.postsService.getPost(postId);
     if (!isPostExists) {
@@ -130,7 +136,11 @@ export class CommentsService {
 
     const comments = await this.commentsRepository.getComments(query, postId);
 
-    return comments;
+    const usersLikes = userId
+      ? await this.likesRepository.getUsersLikes(userId)
+      : [];
+
+    return mergeCommentsWithUserLikes(comments, usersLikes);
   }
   async updateComment({
     commentId,
@@ -162,4 +172,16 @@ export class CommentsService {
 
     return result ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
   }
+}
+function mergeCommentsWithUserLikes(
+  comments: GetCommentsResponse,
+  usersLikes: (ILikeType & { _id: Types.ObjectId } & { __v: number })[],
+): GetCommentsResponse | PromiseLike<GetCommentsResponse | null> | null {
+  comments.items = comments.items.map((comment) => {
+    const userStatus = usersLikes.find((user) => user.commentId === comment.id);
+    comment.likesInfo.myStatus = userStatus?.likeStatus ?? ELikeStatus.None;
+    return comment;
+  });
+
+  return comments;
 }

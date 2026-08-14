@@ -7,6 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
+  DEFAULT_LIKES_INFO,
   expectCommentView,
 } from "./commentsTestManager";
 import {
@@ -62,6 +63,7 @@ describe("POST /posts/:postId/comments", () => {
         userId: user.id,
         userLogin: "commenter",
       },
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

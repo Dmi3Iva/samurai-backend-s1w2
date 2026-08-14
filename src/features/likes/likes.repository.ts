@@ -39,4 +39,10 @@ export class LikesRepository {
 
     return result.length;
   }
+
+  async getUsersLikes(userId: string) {
+    const result = await LikeModel.find({ userId }).lean();
+
+    return result;
+  }
 }

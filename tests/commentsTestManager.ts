@@ -11,9 +11,9 @@ interface CommentatorInfo {
 }
 
 export interface LikesInfoViewModel {
-  likesCount?: number;
-  dislikesCount?: number;
-  myStatus?: LikeStatus;
+  likesCount: number;
+  dislikesCount: number;
+  myStatus: LikeStatus;
 }
 
 export interface CommentViewModel {
@@ -21,8 +21,14 @@ export interface CommentViewModel {
   content: string;
   commentatorInfo: CommentatorInfo;
   createdAt: string;
-  likesInfo?: LikesInfoViewModel;
+  likesInfo: LikesInfoViewModel;
 }
+
+export const DEFAULT_LIKES_INFO: LikesInfoViewModel = {
+  likesCount: 0,
+  dislikesCount: 0,
+  myStatus: "None",
+};
 
 const COMMENT_VIEW_KEYS = [
   "id",
@@ -43,68 +49,58 @@ interface PaginatedCommentsResponse {
   totalCount: number;
 }
 
-/** Swagger h11.CommentViewModel: likesInfo is optional */
+/** Remote checker requires likesInfo with likesCount, dislikesCount, myStatus */
 export function expectCommentView(
   comment: CommentViewModel,
   expected: {
     id?: string;
     content?: string;
     commentatorInfo?: CommentatorInfo;
+    likesInfo?: LikesInfoViewModel;
   } = {},
 ) {
-  expect(comment).toEqual(
-    expect.objectContaining({
-      id: expected.id ?? expect.any(String),
-      content: expected.content ?? expect.any(String),
-      commentatorInfo: expected.commentatorInfo ?? {
-        userId: expect.any(String),
-        userLogin: expect.any(String),
-      },
-      createdAt: expect.any(String),
-    }),
-  );
+  expect(comment).toEqual({
+    id: expected.id ?? expect.any(String),
+    content: expected.content ?? expect.any(String),
+    commentatorInfo: expected.commentatorInfo ?? {
+      userId: expect.any(String),
+      userLogin: expect.any(String),
+    },
+    createdAt: expect.any(String),
+    likesInfo: expected.likesInfo ?? {
+      likesCount: expect.any(Number),
+      dislikesCount: expect.any(Number),
+      myStatus: expect.stringMatching(/^Like$|^Dislike$|^None$/),
+    },
+  });
 
   const extraKeys = Object.keys(comment).filter(
     (key) => !COMMENT_VIEW_KEYS.includes(key as (typeof COMMENT_VIEW_KEYS)[number]),
   );
   expect(extraKeys).toEqual([]);
 
-  if (comment.likesInfo !== undefined) {
-    expectLikesInfoSchema(comment.likesInfo);
-  }
+  expectLikesInfoSchema(comment.likesInfo);
 }
 
-/** Swagger h11.LikesInfoViewModel: no required fields */
 export function expectLikesInfoSchema(likesInfo: LikesInfoViewModel) {
-  expect(likesInfo).toEqual(expect.any(Object));
-  expect(likesInfo).not.toBeNull();
+  expect(likesInfo).toEqual({
+    likesCount: expect.any(Number),
+    dislikesCount: expect.any(Number),
+    myStatus: expect.stringMatching(/^Like$|^Dislike$|^None$/),
+  });
 
   const extraKeys = Object.keys(likesInfo).filter(
     (key) => !LIKES_INFO_KEYS.includes(key as (typeof LIKES_INFO_KEYS)[number]),
   );
   expect(extraKeys).toEqual([]);
-
-  if (likesInfo.likesCount !== undefined) {
-    expect(likesInfo.likesCount).toEqual(expect.any(Number));
-  }
-  if (likesInfo.dislikesCount !== undefined) {
-    expect(likesInfo.dislikesCount).toEqual(expect.any(Number));
-  }
-  if (likesInfo.myStatus !== undefined) {
-    expect(LIKE_STATUSES).toContain(likesInfo.myStatus);
-  }
+  expect(LIKE_STATUSES).toContain(likesInfo.myStatus);
 }
 
-/** Assert a likesInfo field only when the API actually returned it */
-export function expectLikesInfoFieldIfPresent(
-  likesInfo: LikesInfoViewModel | undefined,
-  field: keyof LikesInfoViewModel,
-  value: number | LikeStatus,
+export function expectLikesInfo(
+  likesInfo: LikesInfoViewModel,
+  expected: LikesInfoViewModel,
 ) {
-  if (likesInfo?.[field] === undefined) {
-    return;
-  }
-  expect(likesInfo[field]).toBe(value);
+  expect(likesInfo).toEqual(expected);
 }
 
 class CommentsTestManager {

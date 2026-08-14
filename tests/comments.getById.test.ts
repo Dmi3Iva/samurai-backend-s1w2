@@ -7,6 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
+  DEFAULT_LIKES_INFO,
   expectCommentView,
 } from "./commentsTestManager";
 import { ROUTES, VALID_COMMENT_CONTENT } from "./test.const";
@@ -53,6 +54,7 @@ describe("GET /comments/:id", () => {
       id: createdComment.id,
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: createdComment.commentatorInfo,
+      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

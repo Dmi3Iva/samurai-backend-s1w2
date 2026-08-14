@@ -8,6 +8,7 @@ import {
 } from "./comments.types";
 import { injectable } from "inversify";
 import { CommentModel } from "./comments.models";
+import { ELikeStatus } from "../likes/like.model";
 
 @injectable()
 export class CommentsRepository {
@@ -22,6 +23,11 @@ export class CommentsRepository {
       createdAt: dbComment.createdAt,
       commentatorInfo,
       id: dbComment._id.toString(),
+      likesInfo: {
+        likesCount: dbComment.likesInfo?.likesCount,
+        dislikesCount: dbComment.likesInfo?.dislikesCount,
+        myStatus: ELikeStatus.None,
+      },
     };
   }
 

@@ -12,7 +12,7 @@ export interface ICommentType {
   likesInfo: {
     likesCount: number;
     dislikesCount: number;
-  } | null;
+  };
 }
 
 export interface ICommentCreateBody {
@@ -30,10 +30,10 @@ export interface ICommentView extends Omit<
   "postId" | "likesInfo"
 > {
   id: string;
-  likesInfo?: {
+  likesInfo: {
     likesCount: number;
     dislikesCount: number;
-    myStatus?: ELikeStatus;
+    myStatus: ELikeStatus;
   };
 }
 

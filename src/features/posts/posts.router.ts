@@ -18,6 +18,7 @@ import { IFindCommentsSearchTerm } from "../comments/comments.types";
 import { authorizationTokenMiddleware } from "../../middleware/authorizationToken.middleware";
 import { CommentsService } from "../comments/comments.service";
 import { inject, injectable } from "inversify";
+import { authorizationTokenWithoutRestriction } from "../../middleware/authorizationTokenWihtoutRestriction.middleware";
 
 interface PostsIdParam {
   id: string;
@@ -223,11 +224,13 @@ export class PostsController {
     this.router.get(
       "/:postId/comments",
       param("postId").notEmpty().isString(),
+      authorizationTokenWithoutRestriction,
       async (req: RequestWithQuery<IFindCommentsSearchTerm>, res: Response) => {
         const { postId } = matchedData<{ postId: string }>(req);
         const comments = await this.commentsService.getComments(
           postId,
           req.query,
+          req.userId,
         );
         if (!comments) return res.status(404).send();
 
