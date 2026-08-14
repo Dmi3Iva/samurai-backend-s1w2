@@ -173,6 +173,7 @@ export class CommentsService {
     return result ? ERemoveUserState.SUCESS : ERemoveUserState.FAILED;
   }
 }
+
 function mergeCommentsWithUserLikes(
   comments: GetCommentsResponse,
   usersLikes: (ILikeType & { _id: Types.ObjectId } & { __v: number })[],

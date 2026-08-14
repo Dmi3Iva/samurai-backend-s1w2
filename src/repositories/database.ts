@@ -6,7 +6,7 @@ const mongoURI: string = process.env.MONGO_URI || "mongodb://0.0.0.0:27017";
 
 export const runDB = async () => {
   try {
-    await connect(mongoURI, { dbName });
+    await connect(mongoURI, { dbName, serverSelectionTimeoutMS: 10000 });
 
     if (connection.readyState !== ConnectionStates.connected) {
       throw new Error("Mongoose readyState is not connected");
