@@ -28,10 +28,9 @@ export class CommentsRepository {
 
   async getCommentById(id: string): Promise<IDBCommentType | null> {
     try {
-      const findResult = await CommentModel.findOne({
-        _id: new ObjectId(id),
-      });
-      return findResult ?? null;
+      const findResult = await CommentModel.findById(id).lean();
+
+      return findResult;
     } catch (e) {
       console.error(`error while try to get comment with id = ${id}`);
       return null;
@@ -119,5 +118,32 @@ export class CommentsRepository {
       console.error("failed to update comment", commentId);
       return false;
     }
+  }
+
+  async getLikesCount(commentId: string): Promise<[number, number]> {
+    try {
+      const comment = await CommentModel.findById(commentId);
+
+      if (!comment || !comment?.likesInfo) return [0, 0];
+
+      const { likesCount, dislikesCount } = comment.likesInfo;
+
+      return [likesCount ?? 0, dislikesCount ?? 0];
+    } catch (e: unknown) {
+      console.error(e);
+      return [0, 0];
+    }
+  }
+
+  async updateLikes(commentId: string, newLikesCount: [number, number]) {
+    const comment = await CommentModel.findById(commentId);
+
+    if (comment === null) return;
+
+    comment.likesInfo = {
+      likesCount: newLikesCount[0],
+      dislikesCount: newLikesCount[1],
+    };
+    await comment.save();
   }
 }

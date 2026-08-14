@@ -7,7 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
-  DEFAULT_LIKES_INFO,
+  expectCommentView,
 } from "./commentsTestManager";
 import {
   ROUTES,
@@ -66,12 +66,10 @@ describe("PUT /comments/:id", () => {
 
     const updatedComment = await commentsTestManager.getEntity(comment.id);
 
-    expect(updatedComment).toEqual({
+    expectCommentView(updatedComment, {
       id: comment.id,
       content: updatedContent,
       commentatorInfo: comment.commentatorInfo,
-      createdAt: expect.any(String),
-      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

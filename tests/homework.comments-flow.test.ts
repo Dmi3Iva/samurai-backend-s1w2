@@ -7,7 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
-  DEFAULT_LIKES_INFO,
+  expectCommentView,
 } from "./commentsTestManager";
 import {
   ROUTES,
@@ -62,15 +62,12 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
       accessToken,
     );
 
-    expect(comment).toEqual({
-      id: expect.any(String),
+    expectCommentView(comment, {
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: {
         userId: expect.any(String),
         userLogin: HOMEWORK_USER.login,
       },
-      createdAt: expect.any(String),
-      likesInfo: DEFAULT_LIKES_INFO,
     });
 
     const fetched = await commentsTestManager.getEntity(comment.id);
@@ -108,20 +105,15 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
 
     const comments = await commentsTestManager.getEntitiesForPost(post.id);
 
-    expect(comments).toEqual({
-      items: [
-        {
-          id: comment.id,
-          content: VALID_COMMENT_CONTENT,
-          commentatorInfo: comment.commentatorInfo,
-          createdAt: expect.any(String),
-          likesInfo: DEFAULT_LIKES_INFO,
-        },
-      ],
-      page: 1,
-      pageSize: 10,
-      pagesCount: 1,
-      totalCount: 1,
+    expect(comments.page).toBe(1);
+    expect(comments.pageSize).toBe(10);
+    expect(comments.pagesCount).toBe(1);
+    expect(comments.totalCount).toBe(1);
+    expect(comments.items).toHaveLength(1);
+    expectCommentView(comments.items[0], {
+      id: comment.id,
+      content: VALID_COMMENT_CONTENT,
+      commentatorInfo: comment.commentatorInfo,
     });
   });
 
@@ -136,12 +128,10 @@ describe("Homework 6 — Comments for posts with auth (remote checker parity)", 
 
     const comment = await commentsTestManager.getEntity(created.id);
 
-    expect(comment).toEqual({
+    expectCommentView(comment, {
       id: created.id,
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: created.commentatorInfo,
-      createdAt: expect.any(String),
-      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

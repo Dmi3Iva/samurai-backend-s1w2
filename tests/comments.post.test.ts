@@ -7,7 +7,7 @@ import { blogsTestManager } from "./blogsTestManager";
 import { postsTestManager } from "./postsTestManager";
 import {
   commentsTestManager,
-  DEFAULT_LIKES_INFO,
+  expectCommentView,
 } from "./commentsTestManager";
 import {
   ROUTES,
@@ -56,15 +56,12 @@ describe("POST /posts/:postId/comments", () => {
       accessToken,
     );
 
-    expect(comment).toEqual({
-      id: expect.any(String),
+    expectCommentView(comment, {
       content: VALID_COMMENT_CONTENT,
       commentatorInfo: {
         userId: user.id,
         userLogin: "commenter",
       },
-      createdAt: expect.any(String),
-      likesInfo: DEFAULT_LIKES_INFO,
     });
   });
 

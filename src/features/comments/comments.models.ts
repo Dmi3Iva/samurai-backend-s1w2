@@ -11,6 +11,13 @@ const CommentSchema = new Schema(
       },
       required: true,
     },
+    likesInfo: {
+      type: {
+        likesCount: { type: Number, required: true },
+        dislikesCount: { type: Number, required: true },
+      },
+      required: true,
+    },
   },
   {
     timestamps: true,
