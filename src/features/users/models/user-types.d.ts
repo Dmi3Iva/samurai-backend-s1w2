@@ -1,16 +1,5 @@
 import { OptionalId, WithId, WithoutId } from "mongodb";
 
-export interface IEmailConfirmation {
-  confirmationCode: string;
-  expirationDate: Date;
-  isConfirmed: boolean;
-}
-
-export interface IPasswordRecovery {
-  code?: string;
-  expirationDate?: Date;
-}
-
 export interface IUserType {
   login: string;
   email: string;
@@ -22,6 +11,19 @@ export interface IUserType {
 
 export interface IUserView extends Omit<IUserType, "password"> {
   id: string;
+}
+
+export interface IUserDTO {}
+
+export interface IEmailConfirmation {
+  confirmationCode: string;
+  expirationDate: Date;
+  isConfirmed: boolean;
+}
+
+export interface IPasswordRecovery {
+  code?: string;
+  expirationDate?: Date;
 }
 
 export type IDBUserType = WithId<IUserType>;

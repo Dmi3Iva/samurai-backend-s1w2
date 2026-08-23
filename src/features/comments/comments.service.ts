@@ -13,6 +13,7 @@ import { CommentsRepository } from "./comments.repository";
 import { LikesRepository } from "../likes/likes.repository";
 import { ELikeStatus, ILikeType } from "../likes/like.model";
 import { Types } from "mongoose";
+import { UsersReadRepository } from "../users/users-read.repository";
 
 const mapDbCommentToView = (dbComment: IDBCommentType): ICommentView => {
   const commentatorInfo: ICommentView["commentatorInfo"] = {
@@ -53,6 +54,8 @@ export class CommentsService {
     private usersService: UsersService,
     @inject(LikesRepository)
     private likesRepository: LikesRepository,
+    @inject(UsersReadRepository)
+    private usersReadRepository: UsersReadRepository,
   ) {}
 
   async getCommentById(id: string, userId?: string | null) {
@@ -79,7 +82,7 @@ export class CommentsService {
     content: string;
     userId: string;
   }): Promise<ICommentView | null> {
-    const user = await this.usersService.getUserById(userId);
+    const user = await this.usersReadRepository.findUserById(userId);
 
     const commentModel: ICommentCreateModel = {
       content: content,

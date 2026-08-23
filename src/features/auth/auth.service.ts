@@ -84,29 +84,29 @@ export class AuthService {
     if (isCodeExpired) return false;
 
     const result = await this.usersRepository.confirmRegistrationByUserId(
-      user._id.toString()
+      user._id.toString(),
     );
 
     return result;
   }
 
   async registrationEmailResending(email: string): Promise<boolean> {
-    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
-      emailMapping: true,
-    });
-    if (!userWithPassword) return false;
-    if (userWithPassword.user.emailConfirmation?.isConfirmed) return false;
+    const user = await this.usersRepository.findUserByEmail(email);
+    if (!user) return false;
+    if (user.emailConfirmation?.isConfirmed) return false;
+    // TODO:: add user method updatedConfirmationCode
     const confirmationCode = crypto.randomUUID();
 
     const updatedConfirmationCode =
       await this.usersRepository.updateConfirmRegistrationByUserId(
-        userWithPassword.user.id,
+        user.id,
         confirmationCode,
       );
+
     if (!updatedConfirmationCode) return false;
 
     const result = await emailService.sendRegistrationConfirmationEmail({
-      toEmail: userWithPassword.user.email,
+      toEmail: user.email,
       confirmationCode,
     });
 
@@ -215,11 +215,8 @@ export class AuthService {
   }
 
   async passwordRecovery(email: string) {
-    const userWithPassword = await this.usersRepository.findUserByEmail(email, {
-      emailMapping: true,
-    });
-    if (!userWithPassword) return false;
-    const { user } = userWithPassword;
+    const user = await this.usersRepository.findUserByEmail(email);
+    if (!user) return false;
     if (user.emailConfirmation?.isConfirmed) return false;
 
     const isUserRecoveryCodeExpired =
@@ -257,10 +254,12 @@ export class AuthService {
     }
 
     const newPasswordHash = await encryptPassword(newPassword);
-    const result = await this.usersRepository.setNewPassword(
-      user.id,
-      newPasswordHash,
-    );
-    return result;
+
+    user.password = newPasswordHash;
+    user.passwordRecovery = null;
+
+    await this.usersRepository.save(user);
+
+    return true;
   }
 }

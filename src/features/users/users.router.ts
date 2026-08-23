@@ -8,6 +8,7 @@ import { inputValidationMiddleware } from "../../middleware/inputValidation.midd
 import { ErrorResponseBody } from "../../types/response.type";
 import { UsersRepository } from "./users.repository";
 import { inject, injectable } from "inversify";
+import { UsersReadRepository } from "./users-read.repository";
 
 @injectable()
 export class UsersController {
@@ -18,6 +19,8 @@ export class UsersController {
     private usersService: UsersService,
     @inject(UsersRepository)
     private usersRepository: UsersRepository,
+    @inject(UsersReadRepository)
+    private usersReadRepository: UsersReadRepository,
   ) {
     this.registerDeleteHandler();
     this.registerGetHandler();
@@ -58,7 +61,8 @@ export class UsersController {
       async (req: RequestWithQuery<IUsersGetQueries>, res) => {
         const queries = matchedData<IUsersGetQueries>(req);
 
-        const result = await this.usersRepository.getUsersWithQuery(queries);
+        const result =
+          await this.usersReadRepository.getUsersWithQuery(queries);
 
         return res.status(200).send(result);
       },

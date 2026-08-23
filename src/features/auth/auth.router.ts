@@ -13,6 +13,7 @@ import { deviceNameMiddleware } from "../../middleware/device-name.middleware";
 import { rateLimitMiddleware } from "../../middleware/rate-limit.middleware";
 import { UsersService } from "../users/users.service";
 import { inject, injectable } from "inversify";
+import { UsersReadRepository } from "../users/users-read.repository";
 
 export interface LoginBodyParams {
   loginOrEmail: string;
@@ -73,6 +74,8 @@ export class AuthController {
     private authService: AuthService,
     @inject(UsersService)
     private usersService: UsersService,
+    @inject(UsersReadRepository)
+    private usersReadRepository: UsersReadRepository,
   ) {
     this.registerLogin();
     this.registerLogout();
@@ -121,6 +124,7 @@ export class AuthController {
         });
 
         if (session === null) {
+          console.error("/login 500, no session");
           return res.status(500).send();
         }
 
@@ -231,7 +235,7 @@ export class AuthController {
           return res.status(401).send();
         }
 
-        const user = await this.usersService.getUserById(userId);
+        const user = await this.usersReadRepository.findUserById(userId);
 
         if (!user) {
           return res.status(401).send();

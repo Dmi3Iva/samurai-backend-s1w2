@@ -1,86 +1,48 @@
-import { ObjectId, WithId } from "mongodb";
+import { WithId } from "mongodb";
 import {
   ICreatedDBUserParam,
   ICreateRegistrationDataBaseBody,
-  IDBUserType,
-  IUsersGetQueries,
   IUserType,
   IUserView,
 } from "./models/user-types";
 import { add } from "date-fns";
 import { injectable } from "inversify";
-import { UserModel } from "./models/user.model";
+import { User, UserType } from "./models/user.model";
 
 @injectable()
 export class UsersRepository {
-  mapDBUserToView = (
-    dbUser: IDBUserType,
-    options?: { emailMapping?: boolean },
-  ): IUserView => {
-    return {
-      id: dbUser._id.toString(),
-      createdAt: dbUser.createdAt,
-      email: dbUser.email,
-      login: dbUser.login,
-      ...(options?.emailMapping && dbUser.emailConfirmation
-        ? {
-            emailConfirmation: {
-              expirationDate: dbUser.emailConfirmation.expirationDate,
-              isConfirmed: dbUser.emailConfirmation.isConfirmed,
-              confirmationCode: dbUser.emailConfirmation.confirmationCode,
-            },
-          }
-        : {}),
-    };
-  };
-
-  async findUserByLogin(
-    login: string,
-    options?: { emailMapping?: boolean },
-  ): Promise<{ user: IUserView; password: string } | null> {
-    const result = await UserModel.findOne({ login });
-
-    return result
-      ? {
-          user: this.mapDBUserToView(result, options),
-          password: result.password,
-        }
-      : null;
+  async save(user: UserType) {
+    return user.save();
   }
 
-  async findUserByEmail(
+  async findUserByLoginOrEmail(
+    login: string,
     email: string,
-    options?: { emailMapping?: boolean },
-  ): Promise<{ user: IUserView; password: string } | null> {
-    const result = await UserModel.findOne({ email });
+  ): Promise<UserType | null> {
+    return await User.findOne({ $or: [{ login }, { email }] });
+  }
 
-    return result
-      ? {
-          user: this.mapDBUserToView(result, options),
-          password: result.password,
-        }
-      : null;
+  async findUserByLogin(login: string): Promise<UserType | null> {
+    return await User.findOne({ login });
+  }
+
+  async findUserByEmail(email: string): Promise<UserType | null> {
+    return await User.findOne({ email });
   }
 
   async findUserById(userId: string): Promise<IUserView | null> {
-    const result = await UserModel.findById(userId);
+    const user = await User.findById(userId);
+    if (!user) return null;
 
-    return result ? this.mapDBUserToView(result) : null;
-  }
-
-  async createUser(dbUserData: ICreatedDBUserParam): Promise<IUserView> {
-    const model = new UserModel(dbUserData);
-    const result = await model.save();
-
-    return this.mapDBUserToView(result);
+    return user.toView();
   }
 
   async createRegistrationUser(
     dbUserData: ICreateRegistrationDataBaseBody,
   ): Promise<string | null> {
     try {
-      const model = new UserModel(dbUserData);
-      const result = await model.save();
+      const user = new User(dbUserData);
+      const result = await user.save();
 
       return result.id;
     } catch (e) {
@@ -90,7 +52,7 @@ export class UsersRepository {
 
   async removeUserById(id: string) {
     try {
-      const result = await UserModel.findByIdAndDelete(id);
+      const result = await User.findByIdAndDelete(id);
 
       return result !== null;
     } catch (e) {
@@ -99,60 +61,14 @@ export class UsersRepository {
     }
   }
 
-  async getUsersWithQuery(queries: IUsersGetQueries) {
-    const {
-      searchEmailTerm = null,
-      searchLoginTerm = null,
-      sortBy = "createdAt",
-      sortDirection = "desc",
-      pageNumber = 1,
-      pageSize = 10,
-    } = queries;
-    const skip = (Number(pageNumber) - 1) * Number(pageSize);
-    const limit = Number(pageSize);
-
-    const filter = {
-      ...(searchEmailTerm || searchLoginTerm
-        ? {
-            $or: [
-              ...(searchLoginTerm
-                ? [{ login: { $regex: searchLoginTerm, $options: "i" } }]
-                : []),
-              ...(searchEmailTerm
-                ? [{ email: { $regex: searchEmailTerm, $options: "i" } }]
-                : []),
-            ],
-          }
-        : {}),
-    };
-
-    const result = await UserModel.find(filter)
-      .sort({ [sortBy]: sortDirection === "asc" ? 1 : -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const totalCount = await UserModel.countDocuments(filter);
-    const pagesCount = Math.ceil(totalCount / Number(pageSize));
-    const page = Number(pageNumber);
-    const items = result.map((item) => this.mapDBUserToView(item));
-
-    return {
-      pagesCount,
-      page,
-      pageSize: Number(pageSize),
-      totalCount,
-      items,
-    };
-  }
   async removeAll() {
-    return await UserModel.deleteMany({});
+    return await User.deleteMany({});
   }
 
   async findUserByConfirmationCode(
     confirmationCode: string,
   ): Promise<WithId<IUserType> | null> {
-    const result = await UserModel.findOne({
+    const result = await User.findOne({
       "emailConfirmation.confirmationCode": confirmationCode,
     }).lean();
 
@@ -160,7 +76,7 @@ export class UsersRepository {
   }
 
   async confirmRegistrationByUserId(userId: string): Promise<boolean> {
-    const result = await UserModel.findByIdAndUpdate(userId, {
+    const result = await User.findByIdAndUpdate(userId, {
       "emailConfirmation.isConfirmed": true,
     });
 
@@ -171,7 +87,7 @@ export class UsersRepository {
     userId: string,
     confirmationCode: string,
   ): Promise<boolean> {
-    const result = await UserModel.updateOne(
+    const result = await User.updateOne(
       { _id: userId },
       {
         $set: {
@@ -191,7 +107,7 @@ export class UsersRepository {
     userId: string,
     confirmationCode: string,
   ): Promise<boolean> {
-    const result = await UserModel.updateOne(
+    const result = await User.updateOne(
       { _id: userId },
       {
         $set: {
@@ -207,27 +123,9 @@ export class UsersRepository {
     return result.modifiedCount === 1;
   }
 
-  async getUserByRecoveryCode(code: string): Promise<IUserView | null> {
-    const userDB = await UserModel.findOne({
+  async getUserByRecoveryCode(code: string): Promise<UserType | null> {
+    return await User.findOne({
       "passwordRecovery.code": code,
     });
-
-    if (userDB === null) return null;
-
-    return this.mapDBUserToView(userDB);
-  }
-
-  async setNewPassword(userId: string, newPassword: string): Promise<boolean> {
-    const result = await UserModel.updateOne(
-      { _id: userId },
-      {
-        $set: {
-          password: newPassword,
-          passwordRecovery: null,
-        },
-      },
-    );
-
-    return result.modifiedCount === 1;
   }
 }
