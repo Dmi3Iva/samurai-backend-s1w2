@@ -1,4 +1,4 @@
-import e from "express";
+import e, { NextFunction, Request, Response } from "express";
 import { ROUTES } from "./consants/routes.conts";
 import cookieParser from "cookie-parser";
 import { iocContainer } from "./composition-root";
@@ -15,6 +15,11 @@ export const app = e();
 app.use(e.json());
 app.use(cookieParser());
 app.set("trust proxy", true);
+
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(err);
+  res.status(500).send();
+});
 
 const usersController = iocContainer.get(UsersController);
 const commentsController = iocContainer.get(CommentsController);

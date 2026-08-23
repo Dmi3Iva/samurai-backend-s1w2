@@ -48,14 +48,18 @@ export class BlogsService {
   async findPostsByBlogId(
     blogId: string,
     searchTerm: IFindPostsByBlogSearchTerm,
+    userId: string | undefined,
   ) {
     const blog = await this.blogsRepository.findBlog(blogId);
 
     if (!blog) return null;
-    return await this.postsRepository.getPosts({
-      ...searchTerm,
-      blogId,
-    });
+    return await this.postsRepository.getPosts(
+      {
+        ...searchTerm,
+        blogId,
+      },
+      userId,
+    );
   }
 
   async createBlog(createBlogModelData: CreateBlogModel): Promise<IBlogType> {

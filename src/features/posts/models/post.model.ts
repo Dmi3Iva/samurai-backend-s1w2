@@ -1,8 +1,9 @@
 import { model, Schema } from "mongoose";
 import { ESortDirection } from "../../../types/common.type";
 import { WithId } from "mongodb";
+import { IExtendedLikesInfo } from "../../post-likes/post-like.types";
 
-export interface IPostType {
+interface IPostType {
   title: string;
   shortDescription: string;
   content: string;
@@ -23,7 +24,9 @@ export type IPostCreateModel = Pick<
 >;
 export type IPostUpadteModel = IPostCreateModel;
 export interface IPostView extends IPostType {
+  id: string;
   blogName: string;
+  extendedLikesInfo: IExtendedLikesInfo;
 }
 
 export interface GetPostsResponse {

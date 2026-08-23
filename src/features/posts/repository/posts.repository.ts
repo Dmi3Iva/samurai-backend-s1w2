@@ -4,21 +4,31 @@ import {
   IDBPostType,
   IFindPostsSearchTerm,
   IPostCreateModel,
-  IPostType,
   IPostUpadteModel,
+  IPostView,
   IViewPostType,
   PostModel,
 } from "../models/post.model";
 import { BlogsRepository } from "../../blogs/blogs.repository";
 import { injectable, inject } from "inversify";
+import { PostLikeRepository } from "../../post-likes/post-like.repository";
 
 @injectable()
 export class PostsRepository {
   constructor(
     @inject(BlogsRepository) private blogsRepository: BlogsRepository,
+    @inject(PostLikeRepository) private postLikeRepository: PostLikeRepository,
   ) {}
 
-  mapToPostType = (p: IDBPostType): IViewPostType => {
+  mapToPostType = async (
+    p: IDBPostType,
+    userId?: string,
+  ): Promise<IPostView> => {
+    const extendedLikesInfo = await this.postLikeRepository.getLikesInfo({
+      userId,
+      postId: p._id.toString(),
+    });
+
     return {
       id: p._id?.toString() || "not-existing-id",
       title: p.title,
@@ -27,10 +37,11 @@ export class PostsRepository {
       blogId: p.blogId,
       createdAt: p.createdAt,
       blogName: p.blogName,
+      extendedLikesInfo,
     };
   };
 
-  async getPost(id: string): Promise<IPostType | null> {
+  async getPost(id: string): Promise<IViewPostType | null> {
     try {
       const findResult = await PostModel.findById(id);
       return findResult ? this.mapToPostType(findResult) : null;
@@ -42,6 +53,7 @@ export class PostsRepository {
 
   async getPosts(
     findPostsSearchTerm: IFindPostsSearchTerm,
+    userId: string | undefined,
   ): Promise<GetPostsResponse> {
     const {
       pageNumber = 1,
@@ -64,7 +76,9 @@ export class PostsRepository {
       .lean();
 
     const rawItems = findResult;
-    const items = rawItems.map(this.mapToPostType);
+    const items = await Promise.all(
+      rawItems.map((i) => this.mapToPostType(i, userId)),
+    );
     const page = Number(pageNumber);
     const totalCount = await PostModel.countDocuments(filter);
     const pagesCount = Math.ceil(totalCount / Number(pageSize));
@@ -78,7 +92,7 @@ export class PostsRepository {
     };
   }
 
-  async createPost(postBody: IPostCreateModel): Promise<IPostType | null> {
+  async createPost(postBody: IPostCreateModel): Promise<IPostView | null> {
     try {
       const blog = await this.blogsRepository.findBlog(postBody.blogId);
 

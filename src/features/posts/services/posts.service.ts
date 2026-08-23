@@ -3,11 +3,13 @@ import { BlogsRepository } from "../../blogs/blogs.repository";
 import {
   IFindPostsSearchTerm,
   IPostCreateModel,
-  IPostType,
   IPostUpadteModel,
   IPostView,
+  IViewPostType,
 } from "../models/post.model";
 import { PostsRepository } from "../repository/posts.repository";
+import { ELikeStatus } from "../../likes/like.model";
+import { PostLikeRepository } from "../../post-likes/post-like.repository";
 
 @injectable()
 export class PostsService {
@@ -16,28 +18,47 @@ export class PostsService {
     private postsRepository: PostsRepository,
     @inject(BlogsRepository)
     private blogsRepository: BlogsRepository,
+    @inject(PostLikeRepository) private postLikeRepository: PostLikeRepository,
   ) {}
 
-  mapToPostView = async (p: IPostType): Promise<IPostView> => {
+  // TODO:: pass userId;
+  mapToPostView = async (
+    p: IViewPostType,
+    userId: string | undefined,
+  ): Promise<IPostView> => {
     const foundBlog = await this.blogsRepository.findBlog(p.blogId);
+    const extendedLikesInfo = await this.postLikeRepository.getLikesInfo({
+      userId,
+      postId: p.id,
+    });
     const blogName = foundBlog?.name || "";
     return {
       ...p,
       blogName,
+      extendedLikesInfo,
     };
   };
 
-  async getPost(id: string): Promise<IPostView | null> {
+  async getPost(
+    id: string,
+    userId: string | undefined,
+  ): Promise<IPostView | null> {
     const rawPost = await this.postsRepository.getPost(id);
     if (!rawPost) return null;
-    return await this.mapToPostView(rawPost);
+    return await this.mapToPostView(rawPost, userId);
   }
 
-  async getPosts(findPostsSearchTerm: IFindPostsSearchTerm) {
-    return await this.postsRepository.getPosts(findPostsSearchTerm);
+  async getPosts(
+    findPostsSearchTerm: IFindPostsSearchTerm,
+    userId: string | undefined,
+  ) {
+    return await this.postsRepository.getPosts(findPostsSearchTerm, userId);
   }
 
-  async createPost(postBody: IPostCreateModel): Promise<IPostView | null> {
+  async createPost(
+    postBody: IPostCreateModel,
+    userId: string | undefined,
+  ): Promise<IPostView | null> {
     const foundBlog = await this.blogsRepository.findBlog(postBody.blogId);
     if (!foundBlog) return null;
 
@@ -46,7 +67,7 @@ export class PostsService {
     if (!createResult) {
       return null;
     }
-    const result = await this.mapToPostView(createResult);
+    const result = await this.mapToPostView(createResult, userId);
 
     return result;
   }
@@ -68,6 +89,16 @@ export class PostsService {
   async deletePost(id: string): Promise<boolean> {
     return await this.postsRepository.deletePost(id);
   }
+
+  // async setLike({
+  //   userId,
+  //   postId,
+  //   likeStatus,
+  // }: {
+  //   userId: string;
+  //   postId: string;
+  //   likeStatus: ELikeStatus;
+  // }) {}
 
   async removeAll() {
     return await this.postsRepository.removeAll();

@@ -1,4 +1,3 @@
-import { ObjectId, WithId } from "mongodb";
 import {
   ICreatedDBUserParam,
   ICreateRegistrationDataBaseBody,

@@ -19,6 +19,9 @@ import { authorizationTokenMiddleware } from "../../middleware/authorizationToke
 import { CommentsService } from "../comments/comments.service";
 import { inject, injectable } from "inversify";
 import { authorizationTokenWithoutRestriction } from "../../middleware/authorizationTokenWihtoutRestriction.middleware";
+import { PostLikeService } from "../post-likes/post-like.service";
+import { POST_LIKE_VALUES } from "../post-likes/post-like.model";
+import { IPostLikeStatusDTO } from "../post-likes/post-like.types";
 
 interface PostsIdParam {
   id: string;
@@ -71,6 +74,8 @@ export class PostsController {
     private postsService: PostsService,
     @inject(CommentsService)
     private commentsService: CommentsService,
+    @inject(PostLikeService)
+    private postLikeService: PostLikeService,
   ) {
     this.registerGet();
     this.registerPost();
@@ -79,6 +84,7 @@ export class PostsController {
     this.registerDeleteById();
     this.registerPostCommentById();
     this.registerGetCommentById();
+    this.registerLikeUpdates();
   }
 
   getRouter() {
@@ -88,11 +94,15 @@ export class PostsController {
   registerGet() {
     this.router.get(
       "/",
+      authorizationTokenWithoutRestriction,
       async (
         req: RequestWithQuery<IFindPostsSearchTerm>,
         res: Response<GetPostsResponse>,
       ) => {
-        const posts = await this.postsService.getPosts(req.query);
+        const posts = await this.postsService.getPosts(
+          req.query,
+          req.userId ?? undefined,
+        );
         res.send(posts);
       },
     );
@@ -106,11 +116,15 @@ export class PostsController {
       shortDescriptionValidation,
       contentValidation,
       blogIdValidation,
+      authorizationTokenWithoutRestriction,
       inputValidationMiddleware,
       async (req: RequestWithBody<IPostCreateModel>, res: Response) => {
         const data = matchedData<IPostCreateModel>(req);
 
-        const createdPost = await this.postsService.createPost(data);
+        const createdPost = await this.postsService.createPost(
+          data,
+          req.userId ?? undefined,
+        );
 
         if (!createdPost) {
           return res.status(404).json(`Not found blog with id ${data.blogId}`);
@@ -124,10 +138,14 @@ export class PostsController {
     this.router.get(
       "/:id",
       param("id"),
+      authorizationTokenWithoutRestriction,
       inputValidationMiddleware,
       async (req, res) => {
         const data = matchedData<PostsIdParam>(req);
-        const post = await this.postsService.getPost(data.id);
+        const post = await this.postsService.getPost(
+          data.id,
+          req?.userId ?? undefined,
+        );
 
         if (!post) {
           res.status(404).json({ message: "Post not found" });
@@ -186,7 +204,6 @@ export class PostsController {
   }
 
   registerPostCommentById() {
-    // POST /posts/{postId}/comments
     this.router.post(
       "/:postId/comments",
       authorizationTokenMiddleware,
@@ -199,7 +216,10 @@ export class PostsController {
           content: string;
         }>(req);
         const userId = req.userId;
-        const post = await this.postsService.getPost(postId);
+        const post = await this.postsService.getPost(
+          postId,
+          req.userId ?? undefined,
+        );
 
         if (!userId) {
           return res.status(401).send();
@@ -220,7 +240,7 @@ export class PostsController {
   }
 
   registerGetCommentById() {
-    // GET /posts/{postId}/comments
+    // TODO:: extendedLikesInfo
     this.router.get(
       "/:postId/comments",
       param("postId").notEmpty().isString(),
@@ -230,11 +250,44 @@ export class PostsController {
         const comments = await this.commentsService.getComments(
           postId,
           req.query,
-          req.userId,
+          req?.userId ?? undefined,
         );
         if (!comments) return res.status(404).send();
 
         return res.status(200).send(comments);
+      },
+    );
+  }
+
+  registerLikeUpdates() {
+    this.router.put(
+      "/:postId/like-status",
+      authorizationTokenMiddleware,
+      param("postId").notEmpty().isString(),
+      body("likeStatus").notEmpty().isIn(POST_LIKE_VALUES),
+      inputValidationMiddleware,
+      async (req: RequestWithBody<IPostLikeStatusDTO>, res: Response) => {
+        if (!req.userId) {
+          return res.status(401).send("Unauthorized");
+        }
+
+        const { postId, likeStatus: postLikeStatus } =
+          matchedData<IPostLikeStatusDTO>(req);
+        const postExists = await this.postsService.getPost(postId, req.userId);
+
+        if (!postExists) {
+          return res
+            .status(404)
+            .send(`post with specified postId doesn't exists`);
+        }
+
+        await this.postLikeService.set({
+          userId: req.userId,
+          postId,
+          postLikeStatus,
+        });
+
+        return res.status(204).send();
       },
     );
   }

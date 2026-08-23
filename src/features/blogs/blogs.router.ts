@@ -18,6 +18,7 @@ import { BlogIdParam, IdParam } from "../../types/common.type";
 import { inputValidationMiddleware } from "../../middleware/inputValidation.middleware";
 import { inject, injectable } from "inversify";
 import { IPostCreateModel } from "../comments/comments.types";
+import { authorizationTokenWithoutRestriction } from "../../middleware/authorizationTokenWihtoutRestriction.middleware";
 
 const nameValidation = body("name")
   .exists()
@@ -163,6 +164,7 @@ export class BlogsController {
   registerGetPostsById() {
     this.router.get(
       "/:id/posts",
+      authorizationTokenWithoutRestriction,
       inputValidationMiddleware,
       param("id"),
       async (
@@ -171,7 +173,11 @@ export class BlogsController {
       ) => {
         const { id: blogId } = matchedData<IdParam>(req);
         const query = req.query;
-        const posts = await this.blogsService.findPostsByBlogId(blogId, query);
+        const posts = await this.blogsService.findPostsByBlogId(
+          blogId,
+          query,
+          req.userId ?? undefined,
+        );
 
         if (!posts) {
           res

@@ -16,11 +16,11 @@ export interface IUserStaticMethods {
   createUser: (data: IUsersPostBody) => Promise<UserType>;
 }
 
-export type User = Model<IUserType, {}, IUserMethods> & IUserStaticMethods;
+type UserModel = Model<IUserType, {}, IUserMethods> & IUserStaticMethods;
 
 export type UserType = HydratedDocument<IUserType, IUserMethods>;
 
-export const userSchema = new Schema<IUserType, User, IUserMethods>(
+export const userSchema = new Schema<IUserType, UserModel, IUserMethods>(
   {
     login: { type: String, required: true },
     email: { type: String, required: true },
@@ -80,4 +80,4 @@ export const userSchema = new Schema<IUserType, User, IUserMethods>(
   },
 );
 
-export const User = model<IUserType, User>("user", userSchema);
+export const User = model<IUserType, UserModel>("user", userSchema);

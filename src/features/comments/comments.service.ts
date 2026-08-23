@@ -130,9 +130,9 @@ export class CommentsService {
   async getComments(
     postId: string,
     query: IFindCommentsSearchTerm,
-    userId?: string | null,
+    userId: string | undefined,
   ): Promise<GetCommentsResponse | null> {
-    const isPostExists = await this.postsService.getPost(postId);
+    const isPostExists = await this.postsService.getPost(postId, userId);
     if (!isPostExists) {
       return null;
     }

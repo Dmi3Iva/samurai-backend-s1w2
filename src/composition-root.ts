@@ -22,6 +22,8 @@ import { RateLimitService } from "./features/rate-limit/rate-limit.service";
 import { LikeService } from "./features/likes/like.service";
 import { LikesRepository } from "./features/likes/likes.repository";
 import { UsersReadRepository } from "./features/users/users-read.repository";
+import { PostLikeRepository } from "./features/post-likes/post-like.repository";
+import { PostLikeService } from "./features/post-likes/post-like.service";
 
 export const iocContainer = new Container();
 
@@ -53,6 +55,9 @@ iocContainer.bind(UsersController).toSelf();
 iocContainer.bind(UsersService).toSelf();
 iocContainer.bind(UsersRepository).toSelf();
 iocContainer.bind(UsersReadRepository).toSelf();
+
+iocContainer.bind(PostLikeRepository).toSelf();
+iocContainer.bind(PostLikeService).toSelf();
 
 iocContainer.bind(TestingController).toSelf();
 
